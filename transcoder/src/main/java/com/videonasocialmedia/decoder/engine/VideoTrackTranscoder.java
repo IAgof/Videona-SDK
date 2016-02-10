@@ -56,13 +56,16 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private boolean mEncoderStarted;
     private long mWrittenPresentationTimeUs;
 
-    private int numFrames;
+    private int numFramesDecoded;
 
     private Drawable watermark;
     private List<Drawable> animatedOverlay;
+    private int numDropFrames = 0;
+    private int numFramesEncoded;
 
     public VideoTrackTranscoder(MediaExtractor extractor, int trackIndex,
-                                MediaFormat outputFormat, Muxer muxer, Drawable drawable, List<Drawable> drawableList) {
+                                MediaFormat outputFormat, Muxer muxer, Drawable drawable,
+                                List<Drawable> drawableList) {
         mExtractor = extractor;
         mTrackIndex = trackIndex;
         mOutputFormat = outputFormat;
@@ -70,11 +73,14 @@ public class VideoTrackTranscoder implements TrackTranscoder {
 
         watermark = drawable;
         animatedOverlay = drawableList;
+
     }
 
 
     @Override
     public void setup() {
+
+
         mExtractor.selectTrack(mTrackIndex);
         try {
             mEncoder = MediaCodec.createEncoderByType(mOutputFormat.getString(MediaFormat.KEY_MIME));
@@ -105,6 +111,24 @@ public class VideoTrackTranscoder implements TrackTranscoder {
         mDecoder.start();
         mDecoderStarted = true;
         mDecoderInputBuffers = mDecoder.getInputBuffers();
+
+    }
+
+    @Override
+    public void advanceStart(int startTimeMs) {
+
+        long timeUs = startTimeMs*1000;
+
+        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime());
+        while(mExtractor.getSampleTime()<timeUs) {
+            mExtractor.advance();
+            Log.d(TAG, "seekTo Previous advance extractor " + mExtractor.getSampleTime());
+            numDropFrames++;
+            Log.d("MediaTranscoderEngine", "advanceVideo frame " + numDropFrames);
+        }
+
+        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
     }
 
     @Override
@@ -208,14 +232,32 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             mDecoderOutputSurfaceWrapper.awaitNewImage();
             mDecoderOutputSurfaceWrapper.drawImage();
 
-            mEncoderInputSurfaceWrapper.setPresentationTime(mBufferInfo.presentationTimeUs * 1000);
-            mEncoderInputSurfaceWrapper.swapBuffers();
+            if(numFramesDecoded > numDropFrames) {
 
-            numFrames++;
-            Log.d(TAG, "numFrames decoded " + numFrames );
+                mEncoderInputSurfaceWrapper.setPresentationTime(mBufferInfo.presentationTimeUs * 1000);
+                mEncoderInputSurfaceWrapper.swapBuffers();
+                
+                numFramesEncoded++;
+                if(numFramesEncoded > 150){
+                    mDecoder.stop();
+                    mDecoder.signalEndOfInputStream();
+                    mIsDecoderEOS = true;
+
+                }
+
+            }
+
+            numFramesDecoded++;
+            Log.d(TAG, "numFramesDecoded " + numFramesDecoded);
 
         }
         return DRAIN_STATE_CONSUMED;
+    }
+
+    private void endVideoTrackTranscoder() {
+
+
+
     }
 
     private int drainEncoder(long timeoutUs) {

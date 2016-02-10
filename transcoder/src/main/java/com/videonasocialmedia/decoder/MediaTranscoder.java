@@ -78,7 +78,8 @@ public class MediaTranscoder {
      */
     public Future<Void> transcodeVideo(final String inPath, final String outPath,
                                        final MediaFormatStrategy outFormatStrategy,
-                                       final MediaTranscoderListener listener, Drawable drawable, List<Drawable> drawableList) throws IOException {
+                                       final MediaTranscoderListener listener, Drawable drawable,
+                                       List<Drawable> drawableList, int startTimeMs, int endTimeMs) throws IOException {
         FileInputStream fileInputStream = null;
         FileDescriptor inFileDescriptor;
         try {
@@ -126,7 +127,7 @@ public class MediaTranscoder {
                     Log.e(TAG, "Can't close input stream: ", e);
                 }
             }
-        }, drawable, drawableList);
+        }, drawable, drawableList, startTimeMs, endTimeMs);
     }
 
     /**
@@ -141,7 +142,8 @@ public class MediaTranscoder {
      */
     public Future<Void> transcodeVideo(final FileDescriptor inFileDescriptor, final String outPath,
                                        final MediaFormatStrategy outFormatStrategy,
-                                       final MediaTranscoderListener listener, final Drawable drawable, final List<Drawable> animatedOverlayFrames) {
+                                       final MediaTranscoderListener listener, final Drawable drawable,
+                                       final List<Drawable> animatedOverlayFrames, final int startTimeUs, final int endTimeUs) {
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
         final Handler handler = new Handler(looper);
@@ -164,7 +166,7 @@ public class MediaTranscoder {
                         }
                     });
                     engine.setDataSource(inFileDescriptor);
-                    engine.transcodeVideo(outPath, outFormatStrategy, drawable, animatedOverlayFrames);
+                    engine.transcodeVideo(outPath, outFormatStrategy, drawable, animatedOverlayFrames, startTimeUs, endTimeUs);
                 } catch (IOException e) {
                     Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
                             + " or could not open output file ('" + outPath + "') .", e);

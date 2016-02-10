@@ -51,8 +51,9 @@ public class MediaTranscoderEngine {
     private long mDurationUs;
 
     private Drawable watermark;
-
     private List<Drawable> animatedOverlay;
+    private int endTimeMs;
+    private int startTimeMs;
 
     /**
      * Do not use this constructor unless you know what you are doing.
@@ -89,11 +90,15 @@ public class MediaTranscoderEngine {
      * @throws InvalidOutputFormatException when output format is not supported.
      * @throws InterruptedException         when cancel to transcode.
      */
-    public void transcodeVideo(String outputPath, MediaFormatStrategy formatStrategy, Drawable drawable, List<Drawable> drawableList)
+    public void transcodeVideo(String outputPath, MediaFormatStrategy formatStrategy,
+                               Drawable drawable, List<Drawable> drawableList, int startTimeMs, int endTimeMs)
             throws IOException, InterruptedException {
 
         watermark = drawable;
         animatedOverlay = drawableList;
+        this.startTimeMs = startTimeMs;
+        this.endTimeMs = endTimeMs;
+
 
         if (outputPath == null) {
             throw new NullPointerException("Output path cannot be null.");
@@ -108,7 +113,6 @@ public class MediaTranscoderEngine {
             mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             setupMetadata();
             setupTrackTranscoders(formatStrategy);
-            advancedVideo(15500000);
             runPipelines();
             mMuxer.stop();
         } finally {
@@ -180,9 +184,11 @@ public class MediaTranscoderEngine {
         });
 
         if (videoOutputFormat == null) {
-            mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
+            mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex,
+                    muxer, Muxer.SampleType.VIDEO);
         } else {
-            mVideoTrackTranscoder = new VideoTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex, videoOutputFormat, muxer, watermark, animatedOverlay);
+            mVideoTrackTranscoder = new VideoTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex,
+                    videoOutputFormat, muxer, watermark, animatedOverlay);
         }
         mVideoTrackTranscoder.setup();
         if (audioOutputFormat == null) {
@@ -193,6 +199,8 @@ public class MediaTranscoderEngine {
         mAudioTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
         mExtractor.selectTrack(trackResult.mAudioTrackIndex);
+
+        mVideoTrackTranscoder.advanceStart(startTimeMs);
     }
 
     private void runPipelines() {
@@ -203,6 +211,8 @@ public class MediaTranscoderEngine {
             if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
         }
         while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
+        //while (mExtractor.getSampleTime() < (endTimeMs*1000)) {
+            Log.d(TAG, "sampleTime " + mExtractor.getSampleTime());
             boolean stepped = mVideoTrackTranscoder.stepPipeline()
                     || mAudioTrackTranscoder.stepPipeline();
             loopCount++;
@@ -219,21 +229,8 @@ public class MediaTranscoderEngine {
                 } catch (InterruptedException e) {
                     // nothing to do
                 }
+
             }
-        }
-    }
-
-    private void advancedVideo(long timeUs){
-
-        int countFrames = 0;
-
-        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-        Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime());
-        while(mExtractor.getSampleTime()<timeUs) {
-            mExtractor.advance();
-            Log.d(TAG, "seekTo Previous advance extractor " + mExtractor.getSampleTime());
-            countFrames++;
-            Log.d("MediaTranscoderEngine", "advanceVideo frame " + countFrames);
         }
     }
 

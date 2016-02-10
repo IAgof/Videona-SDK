@@ -27,6 +27,7 @@ import java.util.concurrent.Future;
 
 
 public class TranscoderActivity extends Activity {
+
     private static final String TAG = "TranscoderActivity";
     private static final int REQUEST_CODE_PICK = 1;
     private static final int PROGRESS_BAR_MAX = 1000;
@@ -109,7 +110,7 @@ public class TranscoderActivity extends Activity {
                     List<Drawable> animatedOverlayFrames = getAnimatedOverlay();
 
                     mFuture = MediaTranscoder.getInstance().transcodeVideo(fileDescriptor, file.getAbsolutePath(),
-                            new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720), animatedOverlayFrames);
+                            new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720), animatedOverlayFrames, 19500,20500);
                     switchButtonEnabled(true);
                 }
                 break;

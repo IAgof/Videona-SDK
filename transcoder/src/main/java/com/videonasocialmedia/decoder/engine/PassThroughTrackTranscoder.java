@@ -24,6 +24,9 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
 public class PassThroughTrackTranscoder implements TrackTranscoder {
+
+    private static final String TAG = "PassThroughTrackTranscoder";
+    
     private final MediaExtractor mExtractor;
     private final int mTrackIndex;
     private final Muxer mMuxer;
@@ -34,6 +37,7 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
     private boolean mIsEOS;
     private MediaFormat mActualOutputFormat;
     private long mWrittenPresentationTimeUs;
+    private int numDropFrames;
 
     public PassThroughTrackTranscoder(MediaExtractor extractor, int trackIndex,
                                       Muxer muxer, Muxer.SampleType sampleType) {
@@ -50,6 +54,23 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
 
     @Override
     public void setup() {
+    }
+
+    @Override
+    public void advanceStart(int startTimeMs) {
+
+      /*  long timeUs = startTimeMs*1000;
+
+        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime());
+        while(mExtractor.getSampleTime()<timeUs) {
+            mExtractor.advance();
+            Log.d(TAG, "seekTo Previous advance extractor " + mExtractor.getSampleTime());
+            numDropFrames++;
+            Log.d("MediaTranscoderEngine", "advanceVideo frame " + numDropFrames);
+        }
+
+        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC); */
     }
 
     @Override
