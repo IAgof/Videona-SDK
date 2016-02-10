@@ -41,6 +41,7 @@ public class MediaTranscoder {
     private static volatile MediaTranscoder sMediaTranscoder;
     private ThreadPoolExecutor mExecutor;
 
+
     private MediaTranscoder() {
         mExecutor = new ThreadPoolExecutor(
                 0, MAXIMUM_THREAD, 60, TimeUnit.SECONDS,

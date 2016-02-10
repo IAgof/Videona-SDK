@@ -108,6 +108,7 @@ public class MediaTranscoderEngine {
             mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
             setupMetadata();
             setupTrackTranscoders(formatStrategy);
+            advancedVideo(15500000);
             runPipelines();
             mMuxer.stop();
         } finally {
@@ -219,6 +220,20 @@ public class MediaTranscoderEngine {
                     // nothing to do
                 }
             }
+        }
+    }
+
+    private void advancedVideo(long timeUs){
+
+        int countFrames = 0;
+
+        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime());
+        while(mExtractor.getSampleTime()<timeUs) {
+            mExtractor.advance();
+            Log.d(TAG, "seekTo Previous advance extractor " + mExtractor.getSampleTime());
+            countFrames++;
+            Log.d("MediaTranscoderEngine", "advanceVideo frame " + countFrames);
         }
     }
 

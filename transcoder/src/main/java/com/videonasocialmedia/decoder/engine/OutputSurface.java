@@ -33,6 +33,7 @@ import android.view.Surface;
 import com.videonasocialmedia.decoder.Filters;
 import com.videonasocialmedia.decoder.FullFrameRect;
 import com.videonasocialmedia.decoder.Texture2dProgram;
+import com.videonasocialmedia.decoder.format.SessionConfig;
 import com.videonasocialmedia.decoder.overlay.Filter;
 import com.videonasocialmedia.decoder.overlay.Overlay;
 import com.videonasocialmedia.decoder.overlay.Watermark;
@@ -87,6 +88,8 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     private final Object mSurfaceTextureFence = new Object();   // guards mSurfaceTexture shared with GLSurfaceView.Renderer
 
+    private SessionConfig config;
+
 
     /**
      * Creates an OutputSurface backed by a pbuffer with the specifed dimensions.  The new
@@ -105,11 +108,14 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Creates an OutputSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    public OutputSurface(Drawable drawable, List<Drawable> drawableList) {
+    public OutputSurface(Drawable drawable, List<Drawable> drawableList, SessionConfig config) {
+
+        this.config = config;
+
         setup();
 
         addWatermark(drawable, false);
-        addOverlayFilter(drawableList.get(1), 1280, 720);
+        addOverlayFilter(drawableList.get(0),config.getVideoWidth() , config.getVideoHeight());
 
     }
     /**
@@ -158,7 +164,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
             if (mFullScreen != null) mFullScreen.release();
             mFullScreen = new FullFrameRect(
                     new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
-            mFullScreen.getProgram().setTexSize(1280, 720);
+            mFullScreen.getProgram().setTexSize(config.getVideoWidth(), config.getVideoHeight());
             mIncomingSizeUpdated = true;
 
         }
@@ -328,7 +334,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         }
 
         if (mIncomingSizeUpdated) {
-            mFullScreen.getProgram().setTexSize(1280, 720);
+            mFullScreen.getProgram().setTexSize(config.getVideoWidth(), config.getVideoHeight());
             mIncomingSizeUpdated = false;
         }
 
@@ -337,7 +343,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         mSurfaceTexture.getTransformMatrix(mTransform);
         if (TRACE) Trace.beginSection("drawVEncoderFrame");
-        GLES20.glViewport(0, 0, 1280, 720);
+        GLES20.glViewport(0, 0, config.getVideoWidth(), config.getVideoHeight());
         mFullScreen.drawFrame(mTextureId, mTransform);
         drawOverlayList();
         if (watermark != null) {
@@ -450,13 +456,13 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     }
 
     private int[] calculateDefaultWatermarkSize() {
-        int width = (1280 * 265) / 1280;
-        int height = (720 * 36) / 720;
+        int width = (config.getVideoWidth() * 265) / 1280;
+        int height = (config.getVideoHeight() * 36) / 720;
         return new int[]{width, height};
     }
 
     private int calculateWatermarkDefaultPosition() {
-        return (1280 * 15) / 1280;
+        return (config.getVideoWidth() * 15) / 1280;
     }
 
     public void removeWaterMark() {

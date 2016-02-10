@@ -18,11 +18,17 @@ import com.videonasocialmedia.decoder.exceptions.OutputFormatUnavailableExceptio
 public class VideonaFormat implements MediaFormatStrategy {
 
     private static final String TAG = "VideonaFormat";
-    private static final int LONGER_LENGTH = 1280;
-    private static final int SHORTER_LENGTH = 720;
+    private static final int LONGER_LENGTH = 1920;
+    private static final int SHORTER_LENGTH = 1080;
     private static final int DEFAULT_BITRATE = 5000 * 1000;
     private final int DEFAULT_FRAME_RATE = 30;
     private final int DEFAULT_KEY_I_FRAME = 1;
+
+    public VideonaFormat(){
+
+
+
+    }
 
 
     @Override

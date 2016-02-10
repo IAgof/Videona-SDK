@@ -22,6 +22,7 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.videonasocialmedia.decoder.format.MediaFormatExtraConstants;
+import com.videonasocialmedia.decoder.format.SessionConfig;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -94,7 +95,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             // refer: https://android.googlesource.com/platform/frameworks/av/+blame/lollipop-release/media/libstagefright/Utils.cpp
             inputFormat.setInteger(MediaFormatExtraConstants.KEY_ROTATION_DEGREES, 0);
         }
-        mDecoderOutputSurfaceWrapper = new OutputSurface(watermark, animatedOverlay);
+        mDecoderOutputSurfaceWrapper = new OutputSurface(watermark, animatedOverlay, new SessionConfig());
         try {
             mDecoder = MediaCodec.createDecoderByType(inputFormat.getString(MediaFormat.KEY_MIME));
         } catch (IOException e) {
