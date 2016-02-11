@@ -15,7 +15,7 @@ public class SessionConfig {
      *
      */
     public SessionConfig() {
-        mVideoConfig = new VideoEncoderConfig(1920, 1080, 5 * 1000 * 1000);
+        mVideoConfig = new VideoEncoderConfig(1280, 720, 5 * 1000 * 1000);
         mAudioConfig = new AudioEncoderConfig(1, 48000, 192 * 1000);
     }
 

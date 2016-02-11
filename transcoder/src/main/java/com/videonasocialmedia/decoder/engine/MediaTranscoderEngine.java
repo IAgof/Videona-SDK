@@ -200,7 +200,17 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
         mExtractor.selectTrack(trackResult.mAudioTrackIndex);
 
-        mVideoTrackTranscoder.advanceStart(startTimeMs);
+        if(startTimeMs*1000 > mDurationUs) {
+          throw new InvalidOutputFormatException("start time bigger than durations file");
+        } else {
+            mVideoTrackTranscoder.advanceStart(startTimeMs);
+        }
+
+        if(endTimeMs*1000 > mDurationUs){
+            throw new InvalidOutputFormatException("end time bigger than durations file");
+        } else {
+            mVideoTrackTranscoder.endOfDecoder(endTimeMs);
+        }
     }
 
     private void runPipelines() {
@@ -211,8 +221,7 @@ public class MediaTranscoderEngine {
             if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
         }
         while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
-        //while (mExtractor.getSampleTime() < (endTimeMs*1000)) {
-            Log.d(TAG, "sampleTime " + mExtractor.getSampleTime());
+
             boolean stepped = mVideoTrackTranscoder.stepPipeline()
                     || mAudioTrackTranscoder.stepPipeline();
             loopCount++;

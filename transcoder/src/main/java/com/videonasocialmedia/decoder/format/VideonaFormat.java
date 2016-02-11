@@ -12,24 +12,16 @@ package com.videonasocialmedia.decoder.format;
 
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
-
-import com.videonasocialmedia.decoder.exceptions.OutputFormatUnavailableException;
+import android.util.Log;
 
 public class VideonaFormat implements MediaFormatStrategy {
 
     private static final String TAG = "VideonaFormat";
-    private static final int LONGER_LENGTH = 1920;
-    private static final int SHORTER_LENGTH = 1080;
+    private static final int LONGER_LENGTH = 1280;
+    private static final int SHORTER_LENGTH = 720;
     private static final int DEFAULT_BITRATE = 5000 * 1000;
     private final int DEFAULT_FRAME_RATE = 30;
     private final int DEFAULT_KEY_I_FRAME = 1;
-
-    public VideonaFormat(){
-
-
-
-    }
-
 
     @Override
     public MediaFormat createVideoOutputFormat(MediaFormat inputFormat) {
@@ -48,13 +40,13 @@ public class VideonaFormat implements MediaFormatStrategy {
             outHeight = LONGER_LENGTH;
         }
         if (longer * 9 != shorter * 16) {
-            throw new OutputFormatUnavailableException("This video is not 16:9, and is not able to transcode. (" + width + "x" + height + ")");
+           // throw new OutputFormatUnavailableException("This video is not 16:9, and is not able to transcode. (" + width + "x" + height + ")");
         }
-       /* Passthrough del vídeo.
+       // Passthrough del vídeo.
         if (shorter <= SHORTER_LENGTH) {
             Log.d(TAG, "This video is less or equal to 720p, pass-through. (" + width + "x" + height + ")");
-            return null;
-        } */
+           // return null;
+        }
 
         MediaFormat format = MediaFormat.createVideoFormat("video/avc", outWidth, outHeight);
         format.setInteger(MediaFormat.KEY_BIT_RATE, DEFAULT_BITRATE);
