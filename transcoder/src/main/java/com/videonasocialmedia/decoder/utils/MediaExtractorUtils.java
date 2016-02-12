@@ -60,4 +60,26 @@ public class MediaExtractorUtils {
         }
         return trackResult;
     }
+
+    public static TrackResult getFirstVideoTrack(MediaExtractor extractor) {
+        TrackResult trackResult = new TrackResult();
+        trackResult.mVideoTrackIndex = -1;
+        int trackCount = extractor.getTrackCount();
+        for (int i = 0; i < trackCount; i++) {
+            MediaFormat format = extractor.getTrackFormat(i);
+            String mime = format.getString(MediaFormat.KEY_MIME);
+            if (trackResult.mVideoTrackIndex < 0 && mime.startsWith("video/")) {
+                trackResult.mVideoTrackIndex = i;
+                trackResult.mVideoTrackMime = mime;
+                trackResult.mVideoTrackFormat = format;
+            } else if (trackResult.mAudioTrackIndex < 0 && mime.startsWith("audio/")) {
+
+            }
+            if (trackResult.mVideoTrackIndex >= 0) break;
+        }
+        if (trackResult.mVideoTrackIndex < 0 ) {
+            throw new IllegalArgumentException("extractor does not contain video and/or audio tracks.");
+        }
+        return trackResult;
+    }
 }

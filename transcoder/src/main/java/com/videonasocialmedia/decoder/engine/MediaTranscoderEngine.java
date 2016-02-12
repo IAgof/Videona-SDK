@@ -221,7 +221,6 @@ public class MediaTranscoderEngine {
             if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
         }
         while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
-
             boolean stepped = mVideoTrackTranscoder.stepPipeline()
                     || mAudioTrackTranscoder.stepPipeline();
             loopCount++;
@@ -238,7 +237,6 @@ public class MediaTranscoderEngine {
                 } catch (InterruptedException e) {
                     // nothing to do
                 }
-
             }
         }
     }

@@ -52,11 +52,11 @@ public interface TrackTranscoder {
      * Time to advance transcoder to start, milliseconds
      * @param timeMs
      */
-    void advanceStart(int timeMs);
+    void advanceStart(long timeMs);
 
     /**
      * End time of file to decode. End of trimming file
      * @param timeMs
      */
-    void endOfDecoder(int timeMs);
+    void endOfDecoder(long timeMs);
 }

@@ -19,7 +19,6 @@ import android.annotation.SuppressLint;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
-import android.util.Log;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -43,7 +42,8 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
 
     private int offset = 0;
     private int framesToEncoded;
-    private int startVideoTime;
+    private long startVideoTime;
+    private long framesToEncode;
 
     public PassThroughTrackTranscoder(MediaExtractor extractor, int trackIndex,
                                       Muxer muxer, Muxer.SampleType sampleType) {
@@ -63,12 +63,12 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
     }
 
     @Override
-    public void advanceStart(int startTimeMs) {
+    public void advanceStart(long startTimeMs) {
 
         long timeUs = startTimeMs*1000;
 
-        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-        Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime() );
+        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_CLOSEST_SYNC);
+       /* Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime() );
 
         while(mExtractor.getSampleTime()<timeUs) {
             mExtractor.advance();
@@ -77,13 +77,16 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
         }
 
         mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
-        startVideoTime = startTimeMs;
+        startVideoTime = startTimeMs; */
+
+
     }
 
     @Override
-    public void endOfDecoder(int endTimeMs) {
+    public void endOfDecoder(long endTimeMs) {
 
-        framesToEncoded = (endTimeMs - startVideoTime)*30;
+        float videoTrimmedDurationS = (startVideoTime - endTimeMs) / 1000;
+        framesToEncode = (long) videoTrimmedDurationS * 30;
 
     }
 
@@ -111,7 +114,7 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
         assert sampleSize <= mBufferSize;
         boolean isKeyFrame = (mExtractor.getSampleFlags() & MediaExtractor.SAMPLE_FLAG_SYNC) != 0;
         int flags = isKeyFrame ? MediaCodec.BUFFER_FLAG_SYNC_FRAME : 0;
-        mBufferInfo.set(offset*numDropFrames, sampleSize, mExtractor.getSampleTime(), flags);
+        mBufferInfo.set(0, sampleSize, mExtractor.getSampleTime(), flags);
         mMuxer.writeSampleData(mSampleType, mBuffer, mBufferInfo);
         mWrittenPresentationTimeUs = mBufferInfo.presentationTimeUs;
 
@@ -132,4 +135,5 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
     @Override
     public void release() {
     }
+    
 }
