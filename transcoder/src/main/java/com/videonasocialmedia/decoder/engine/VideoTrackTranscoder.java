@@ -147,6 +147,11 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     }
 
     @Override
+    public boolean isEncodedFinished() {
+        return endOfVideoToEncode;
+    }
+
+    @Override
     public MediaFormat getDeterminedFormat() {
         return mActualOutputFormat;
     }
@@ -258,6 +263,10 @@ public class VideoTrackTranscoder implements TrackTranscoder {
                 numFramesEncoded++;
 
                 Log.d(TAG, "numFramesEncoded " + numFramesEncoded);
+
+                if(numFramesEncoded == framesToEncode){
+                    endOfVideoToEncode = true;
+                }
 
             }
 

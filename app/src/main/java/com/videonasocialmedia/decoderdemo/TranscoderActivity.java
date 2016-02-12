@@ -110,7 +110,7 @@ public class TranscoderActivity extends Activity {
                     List<Drawable> animatedOverlayFrames = getAnimatedOverlay();
 
                     mFuture = MediaTranscoder.getInstance().transcodeVideo(fileDescriptor, file.getAbsolutePath(),
-                            new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720), animatedOverlayFrames, 10500,25000);
+                            new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720), animatedOverlayFrames, 10500,15500);
                     switchButtonEnabled(true);
                 }
                 break;

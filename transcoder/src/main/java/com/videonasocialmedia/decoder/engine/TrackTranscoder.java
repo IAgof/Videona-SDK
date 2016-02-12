@@ -59,4 +59,9 @@ public interface TrackTranscoder {
      * @param timeMs
      */
     void endOfDecoder(long timeMs);
+
+    /**
+     * End of videos encoded
+     */
+    boolean isEncodedFinished();
 }

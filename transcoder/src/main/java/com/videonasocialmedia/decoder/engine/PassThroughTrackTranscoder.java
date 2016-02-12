@@ -91,6 +91,11 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
     }
 
     @Override
+    public boolean isEncodedFinished() {
+        return false;
+    }
+
+    @Override
     public MediaFormat getDeterminedFormat() {
         return mActualOutputFormat;
     }
