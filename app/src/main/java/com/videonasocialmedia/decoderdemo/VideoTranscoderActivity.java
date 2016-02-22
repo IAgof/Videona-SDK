@@ -20,10 +20,10 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
 
-import com.videonasocialmedia.decoder.videonaengine.SessionConfig;
-import com.videonasocialmedia.decoder.videonaengine.VideonaFormat;
-import com.videonasocialmedia.decoder.videonaengine.VideonaFormatStrategy;
-import com.videonasocialmedia.decoder.videonaengine.VideonaMediaTranscoder;
+import com.videonasocialmedia.sdk.format.SessionConfig;
+import com.videonasocialmedia.sdk.format.VideonaFormat;
+import com.videonasocialmedia.sdk.format.VideonaFormatStrategy;
+import com.videonasocialmedia.sdk.transcoder.VideonaMediaTranscoder;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -46,9 +46,9 @@ public class VideoTranscoderActivity extends Activity {
             public void onClick(View v) {
 
                 String videoExample = Environment.getExternalStoragePublicDirectory(
-                        Environment.DIRECTORY_MOVIES) + File.separator + "testsdk.mp4";
+                        Environment.DIRECTORY_MOVIES) + File.separator + "InputVideo.mp4";
                 File example = new File(videoExample);
-                String outputPath = example.getAbsolutePath();
+               // String outputPath = example.getAbsolutePath();
                 ContentResolver resolver = getContentResolver();
                 final ParcelFileDescriptor parcelFileDescriptor;
                 try {
@@ -62,10 +62,14 @@ public class VideoTranscoderActivity extends Activity {
 
                 final FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
 
+                String outputPath = example.getParent() + File.separator + "OutputVideo.mp4";
+                Log.d("Activity", " outputPath " + outputPath);
+
+                File testOutput = new File(outputPath);
+                testOutput.deleteOnExit();
 
                 VideonaFormatStrategy formatStrategy = new VideonaFormat(new SessionConfig());
 
-                //VideonaMediaTranscoder videonaMediaTranscoder = ;
                 VideonaMediaTranscoder.getInstance().setDataSource(fileDescriptor);
                 try {
                     VideonaMediaTranscoder.getInstance().transcodeVideoFile(outputPath, formatStrategy);
