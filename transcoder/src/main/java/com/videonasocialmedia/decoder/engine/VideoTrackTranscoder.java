@@ -12,7 +12,8 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- */
+ *//*
+
 package com.videonasocialmedia.decoder.engine;
 
 import android.graphics.drawable.Drawable;
@@ -23,6 +24,9 @@ import android.util.Log;
 
 import com.videonasocialmedia.decoder.format.MediaFormatExtraConstants;
 import com.videonasocialmedia.decoder.format.SessionConfig;
+import com.videonasocialmedia.decoder.videonaengine.InputSurface;
+import com.videonasocialmedia.decoder.videonaengine.OutputSurface;
+import com.videonasocialmedia.decoder.videonaengine.VideonaMuxer;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -40,7 +44,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private final MediaExtractor mExtractor;
     private final int mTrackIndex;
     private final MediaFormat mOutputFormat;
-    private final Muxer mMuxer;
+    private final VideonaMuxer mMuxer;
     private final MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
     private MediaCodec mDecoder;
     private MediaCodec mEncoder;
@@ -67,7 +71,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private boolean endOfVideoToEncode = false;
 
     public VideoTrackTranscoder(MediaExtractor extractor, int trackIndex,
-                                MediaFormat outputFormat, Muxer muxer, Drawable drawable,
+                                MediaFormat outputFormat, VideonaMuxer muxer, Drawable drawable,
                                 List<Drawable> drawableList) {
         mExtractor = extractor;
         mTrackIndex = trackIndex;
@@ -118,9 +122,9 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     }
 
     @Override
-    public void advanceStart(long startTime) {
+    public void advanceStart(long startTimeMs) {
 
-        long timeUs = startTime*1000;
+        long timeUs = startTimeMs*1000;
 
         mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime());
@@ -133,7 +137,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
 
         mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
 
-        startVideoTime = startTime;
+        startVideoTime = startTimeMs;
     }
 
     @Override
@@ -288,7 +292,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
                 if (mActualOutputFormat != null)
                     throw new RuntimeException("Video output format changed twice.");
                 mActualOutputFormat = mEncoder.getOutputFormat();
-                mMuxer.setOutputFormat(Muxer.SampleType.VIDEO, mActualOutputFormat);
+                mMuxer.setOutputFormat(VideonaMuxer.SampleType.VIDEO, mActualOutputFormat);
                 return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
             case MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED:
                 mEncoderOutputBuffers = mEncoder.getOutputBuffers();
@@ -307,9 +311,9 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             mEncoder.releaseOutputBuffer(result, false);
             return DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY;
         }
-        mMuxer.writeSampleData(Muxer.SampleType.VIDEO, mEncoderOutputBuffers[result], mBufferInfo);
+        mMuxer.writeSampleData(VideonaMuxer.SampleType.VIDEO, mEncoderOutputBuffers[result], mBufferInfo);
         mWrittenPresentationTimeUs = mBufferInfo.presentationTimeUs;
         mEncoder.releaseOutputBuffer(result, false);
         return DRAIN_STATE_CONSUMED;
     }
-}
+}*/

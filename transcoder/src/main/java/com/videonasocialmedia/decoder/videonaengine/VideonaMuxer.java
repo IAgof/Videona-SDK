@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.videonasocialmedia.decoder.engine;
+package com.videonasocialmedia.decoder.videonaengine;
 
 import android.media.MediaCodec;
 import android.media.MediaFormat;
@@ -28,7 +28,7 @@ import java.util.List;
 /**
  * This class queues until all output track formats are determined.
  */
-public class Muxer {
+public class VideonaMuxer {
 
     private static final String TAG = "Muxer";
 
@@ -43,7 +43,7 @@ public class Muxer {
     private final List<SampleInfo> mSampleInfoList;
     private boolean mStarted;
 
-    public Muxer(MediaMuxer muxer, Listener listener) {
+    public VideonaMuxer(MediaMuxer muxer, Listener listener) {
         mMuxer = muxer;
         mListener = listener;
         mSampleInfoList = new ArrayList<>();

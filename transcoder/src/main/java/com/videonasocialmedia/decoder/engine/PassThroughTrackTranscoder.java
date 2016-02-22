@@ -20,6 +20,8 @@ import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
+import com.videonasocialmedia.decoder.videonaengine.VideonaMuxer;
+
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
@@ -30,8 +32,8 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
     
     private final MediaExtractor mExtractor;
     private final int mTrackIndex;
-    private final Muxer mMuxer;
-    private final Muxer.SampleType mSampleType;
+    private final VideonaMuxer mMuxer;
+    private final VideonaMuxer.SampleType mSampleType;
     private final MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
     private int mBufferSize;
     private ByteBuffer mBuffer;
@@ -46,7 +48,7 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
     private long framesToEncode;
 
     public PassThroughTrackTranscoder(MediaExtractor extractor, int trackIndex,
-                                      Muxer muxer, Muxer.SampleType sampleType) {
+                                      VideonaMuxer muxer, VideonaMuxer.SampleType sampleType) {
         mExtractor = extractor;
         mTrackIndex = trackIndex;
         mMuxer = muxer;

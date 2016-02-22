@@ -14,7 +14,7 @@ import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.videonasocialmedia.decoder.MediaTranscoder;
-import com.videonasocialmedia.decoder.MediaTranscoderListener;
+import com.videonasocialmedia.decoder.format.SessionConfig;
 import com.videonasocialmedia.decoder.format.VideonaFormat;
 
 import java.io.File;
@@ -77,7 +77,7 @@ public class TranscoderActivity extends Activity {
                     final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);
                     progressBar.setMax(PROGRESS_BAR_MAX);
                     final long startTime = SystemClock.uptimeMillis();
-                    MediaTranscoderListener listener = new MediaTranscoderListener() {
+                    MediaTranscoder.Listener listener = new MediaTranscoder.Listener() {
                         @Override
                         public void onTranscodeProgress(double progress) {
                             if (progress < 0) {
@@ -109,9 +109,31 @@ public class TranscoderActivity extends Activity {
 
                     List<Drawable> animatedOverlayFrames = getAnimatedOverlay();
 
+                   /* String videoExample = Environment.getExternalStoragePublicDirectory(
+                            Environment.DIRECTORY_MOVIES) + File.separator + "testsdk.mp4";
+                    File example = new File(videoExample);
+                    String outputPath = example.getAbsolutePath(); */
+
+                    final ParcelFileDescriptor parcelFileDescriptor2;
+                    try {
+                        //parcelFileDescriptor2 = ParcelFileDescriptor.open(example, ParcelFileDescriptor.MODE_READ_ONLY); //resolver.openFileDescriptor(data.getData(), "r");
+                        parcelFileDescriptor2 = resolver.openFileDescriptor(data.getData(), "r");
+                    } catch (FileNotFoundException e) {
+                       // Log.w("Could not open '" + example.getAbsolutePath() + "'", e);
+                        Toast.makeText(TranscoderActivity.this, "File not found.", Toast.LENGTH_LONG).show();
+                        return;
+                    }
+
+                    final FileDescriptor fileDescriptor2 = parcelFileDescriptor2.getFileDescriptor();
+
+
+                   // mFuture = MediaTranscoder.getInstance().transcodeVideo(fileDescriptor2, file.getAbsolutePath(),
+                     //       new VideonaFormat(new SessionConfig()), listener);
+                    Log.d(TAG, "transcoding into " + file);
                     mFuture = MediaTranscoder.getInstance().transcodeVideo(fileDescriptor, file.getAbsolutePath(),
-                            new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720), animatedOverlayFrames, 10500,15500);
+                            new VideonaFormat(new SessionConfig()), listener);
                     switchButtonEnabled(true);
+
                 }
                 break;
             }

@@ -1,4 +1,4 @@
-package com.videonasocialmedia.decoder.format;
+package com.videonasocialmedia.decoder.videonaengine;
 /*
  * Copyright (C) 2015 Videona Socialmedia SL
  * http://www.videona.com
@@ -14,7 +14,7 @@ import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
 import android.util.Log;
 
-public class VideonaFormat implements MediaFormatStrategy {
+public class VideonaFormat implements VideonaFormatStrategy {
 
     private static final String TAG = "VideonaFormat";
     //private static final int LONGER_LENGTH = 1280;

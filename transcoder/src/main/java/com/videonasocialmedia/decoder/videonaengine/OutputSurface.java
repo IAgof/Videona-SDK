@@ -16,7 +16,7 @@
 // from: https://android.googlesource.com/platform/cts/+/lollipop-release/tests/tests/media/src/android/media/cts/OutputSurface.java
 // blob: fc8ad9cd390c5c311f015d3b7c1359e4d295bc52
 // modified: change TIMEOUT_MS from 500 to 10000
-package com.videonasocialmedia.decoder.engine;
+package com.videonasocialmedia.decoder.videonaengine;
 
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.Drawable;
@@ -59,7 +59,7 @@ import java.util.List;
 class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     private static final String TAG = "OutputSurface";
-    private static final boolean VERBOSE = false;
+    private static final boolean VERBOSE = true;
     private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
     private EGLContext mEGLContext = EGL14.EGL_NO_CONTEXT;
     private EGLSurface mEGLSurface = EGL14.EGL_NO_SURFACE;
@@ -67,7 +67,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private Surface mSurface;
     private Object mFrameSyncObject = new Object();     // guards mFrameAvailable
     private boolean mFrameAvailable;
-    private TextureRender mTextureRender;
+    private TextureRenderGL mTextureRender;
 
     private float[] mTransform = new float[16];
 
@@ -114,10 +114,18 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         setup();
 
-        addWatermark(drawable, false);
-        addOverlayFilter(drawableList.get(0),config.getVideoWidth() , config.getVideoHeight());
+      //  addWatermark(drawable, false);
+       // addOverlayFilter(drawableList.get(0),config.getVideoWidth() , config.getVideoHeight());
 
     }
+
+    public OutputSurface() {
+
+        this.config = new SessionConfig();
+
+        setup();
+    }
+
     /**
      * Creates instances of TextureRender and SurfaceTexture, and a Surface associated
      * with the SurfaceTexture.
@@ -126,7 +134,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         synchronized (mSurfaceTextureFence) {
 
-            mTextureRender = new TextureRender(this);
+            mTextureRender = new TextureRenderGL(this);
 
             mTextureRender.surfaceCreated();
             // Even if we don't access the SurfaceTexture after the constructor returns, we
@@ -415,8 +423,8 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         Overlay overlayToAdd = new Filter(overlayImage, height, width);
         if (overlayList == null) {
             overlayList = new ArrayList<>();
-            if (mTextureRender != null)
-                mTextureRender.setOverlayList(overlayList);
+            //if (mTextureRender != null)
+              //  mTextureRender.setOverlayList(overlayList);
         }
         overlayList.add(overlayToAdd);
     }
@@ -437,15 +445,15 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     public void removeOverlayFilter(Overlay overlay) {
 
         overlayList = null;
-        mTextureRender.setOverlayList(null);
+       // mTextureRender.setOverlayList(null);
         //overlayList.remove(overlay);
     }
 
     public void addWatermark(Drawable overlayImage,
                              int positionX, int positionY, int width, int height, boolean preview) {
         this.watermark = new Watermark(overlayImage, height, width, positionX, positionY);
-        if (preview && mTextureRender != null)
-            mTextureRender.setWatermark(watermark);
+        //if (preview && mTextureRender != null)
+           // mTextureRender.setWatermark(watermark);
     }
 
     public void addWatermark(Drawable overlayImage, boolean preview) {
@@ -467,7 +475,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     public void removeWaterMark() {
         watermark = null;
-        mTextureRender.removeWatermark();
+       // mTextureRender.removeWatermark();
     }
 
 
@@ -498,10 +506,10 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     @Override
     public void onFrameAvailable(SurfaceTexture st) {
-        if (VERBOSE) Log.d(TAG, "new frame available");
+        if (VERBOSE) Log.d(TAG, "onFrameAvailable new frame available " + mFrameNum);
         synchronized (mFrameSyncObject) {
             if (mFrameAvailable) {
-                throw new RuntimeException("mFrameAvailable already set, frame could be dropped");
+                throw new RuntimeException("onFrameAvailable already set, frame could be dropped");
             }
             mFrameAvailable = true;
             mFrameSyncObject.notifyAll();

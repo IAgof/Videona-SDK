@@ -73,7 +73,7 @@ public class MediaExtractorUtils {
                 trackResult.mVideoTrackMime = mime;
                 trackResult.mVideoTrackFormat = format;
             } else if (trackResult.mAudioTrackIndex < 0 && mime.startsWith("audio/")) {
-
+                // audio track
             }
             if (trackResult.mVideoTrackIndex >= 0) break;
         }

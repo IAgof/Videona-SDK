@@ -1,21 +1,15 @@
+package com.videonasocialmedia.decoder.videonaengine;
 /*
- * Copyright (C) 2014 Yuya Tanaka
+ * Copyright (C) 2015 Videona Socialmedia SL
+ * http://www.videona.com
+ * info@videona.com
+ * All rights reserved
  *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
+ * Authors:
+ * Álvaro Martínez Marco
  *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
  */
-package com.videonasocialmedia.decoder.engine;
 
-import android.graphics.drawable.Drawable;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.media.MediaMetadataRetriever;
@@ -23,66 +17,63 @@ import android.media.MediaMuxer;
 import android.util.Log;
 
 import com.videonasocialmedia.decoder.exceptions.InvalidOutputFormatException;
-import com.videonasocialmedia.decoder.format.MediaFormatStrategy;
 import com.videonasocialmedia.decoder.utils.MediaExtractorUtils;
-import com.videonasocialmedia.decoder.videonaengine.PassThroughTrackEncoder;
-import com.videonasocialmedia.decoder.videonaengine.VideonaMuxer;
-import com.videonasocialmedia.decoder.videonaengine.VideonaTrack;
-import com.videonasocialmedia.decoder.videonaengine.VideonaTrackTranscoder;
 
 import java.io.FileDescriptor;
 import java.io.IOException;
-import java.util.List;
+import java.util.concurrent.Future;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
-/**
- * Internal engine, do not use this directly.
- */
-// TODO: treat encrypted data
-public class MediaTranscoderEngine {
+public class VideonaMediaTranscoder {
 
-    private static final String TAG = "MediaTranscoderEngine";
+    private static final String TAG = "VideonaMediaTranscoder";
 
-    private static final double PROGRESS_UNKNOWN = -1.0;
-    private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
-    private static final long PROGRESS_INTERVAL_STEPS = 10;
     private FileDescriptor mInputFileDescriptor;
-    private VideonaTrack mVideoTrackTranscoder;
-    private VideonaTrack mAudioTrackTranscoder;
     private MediaExtractor mExtractor;
     private MediaMuxer mMuxer;
-    private volatile double mProgress;
-    private ProgressCallback mProgressCallback;
+
+    private VideonaTrack mVideoTrackTranscoder;
+    private VideonaTrack mAudioTrackTranscoder;
+
+    private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
+
     private long mDurationUs;
 
-    private Drawable watermark;
-    private List<Drawable> animatedOverlay;
-    private int endTimeMs;
-    private int startTimeMs;
+    private static volatile VideonaMediaTranscoder sMediaTranscoder;
+    private ThreadPoolExecutor mExecutor;
+    private static final int MAXIMUM_THREAD = 1; // TODO
+
+    private String outputPathVideo;
 
 
-    /**
-     * Do not use this constructor unless you know what you are doing.
-     */
-    public MediaTranscoderEngine() {
+    private VideonaMediaTranscoder() {
+        mExecutor = new ThreadPoolExecutor(
+                0, MAXIMUM_THREAD, 60, TimeUnit.SECONDS,
+                new LinkedBlockingQueue<Runnable>(),
+                new ThreadFactory() {
+                    @Override
+                    public Thread newThread(Runnable r) {
+                        return new Thread(r, "MediaTranscoder-Worker");
+                    }
+                });
+    }
+
+    public static VideonaMediaTranscoder getInstance() {
+        if (sMediaTranscoder == null) {
+            synchronized (VideonaMediaTranscoder.class) {
+                if (sMediaTranscoder == null) {
+                    sMediaTranscoder = new VideonaMediaTranscoder();
+                }
+            }
+        }
+        return sMediaTranscoder;
     }
 
     public void setDataSource(FileDescriptor fileDescriptor) {
         mInputFileDescriptor = fileDescriptor;
-    }
-
-    public ProgressCallback getProgressCallback() {
-        return mProgressCallback;
-    }
-
-    public void setProgressCallback(ProgressCallback progressCallback) {
-        mProgressCallback = progressCallback;
-    }
-
-    /**
-     * NOTE: This method is thread safe.
-     */
-    public double getProgress() {
-        return mProgress;
     }
 
     /**
@@ -95,7 +86,7 @@ public class MediaTranscoderEngine {
      * @throws InvalidOutputFormatException when output format is not supported.
      * @throws InterruptedException         when cancel to transcode.
      */
-    public void transcodeVideo(String outputPath, MediaFormatStrategy formatStrategy)
+    public Future<Void> transcodeVideoFile(String outputPath, VideonaFormatStrategy formatStrategy)
             throws IOException, InterruptedException {
 
 
@@ -106,6 +97,7 @@ public class MediaTranscoderEngine {
             throw new IllegalStateException("Data source is not set.");
         }
 
+        outputPathVideo = outputPath;
 
         try {
             // NOTE: use single extractor to keep from running out audio track fast.
@@ -144,6 +136,7 @@ public class MediaTranscoderEngine {
                 Log.e(TAG, "Failed to release muxer.", e);
             }
         }
+        return null;
     }
 
     private void setupMetadata() throws IOException {
@@ -169,7 +162,7 @@ public class MediaTranscoderEngine {
         Log.d(TAG, "Duration (us): " + mDurationUs);
     }
 
-    private void setupTrackTranscoders(MediaFormatStrategy formatStrategy) {
+    private void setupTrackTranscoders(VideonaFormatStrategy formatStrategy) {
         MediaExtractorUtils.TrackResult trackResult = MediaExtractorUtils.getFirstVideoAndAudioTrack(mExtractor);
         MediaFormat videoOutputFormat = formatStrategy.createVideoOutputFormat(trackResult.mVideoTrackFormat);
         MediaFormat audioOutputFormat = formatStrategy.createAudioOutputFormat(trackResult.mAudioTrackFormat);
@@ -179,8 +172,8 @@ public class MediaTranscoderEngine {
         VideonaMuxer muxer = new VideonaMuxer(mMuxer, new VideonaMuxer.Listener() {
             @Override
             public void onDetermineOutputFormat() {
-                MediaFormatValidator.validateVideoOutputFormat(mVideoTrackTranscoder.getDeterminedFormat());
-                MediaFormatValidator.validateAudioOutputFormat(mAudioTrackTranscoder.getDeterminedFormat());
+           //     VideonaMediaFormatValidator.validateVideoOutputFormat(mVideoTrackTranscoder.getDeterminedFormat());
+            //    VideonaMediaFormatValidator.validateAudioOutputFormat(mAudioTrackTranscoder.getDeterminedFormat());
             }
         });
 
@@ -189,11 +182,7 @@ public class MediaTranscoderEngine {
                     muxer, VideonaMuxer.SampleType.VIDEO);
         } else {
             mVideoTrackTranscoder = new VideonaTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex,
-                    videoOutputFormat, muxer); //, watermark, animatedOverlay);
-
-           // mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex,
-             //       muxer, VideonaMuxer.SampleType.VIDEO);
-
+                    videoOutputFormat, muxer);
         }
         mVideoTrackTranscoder.setup();
         if (audioOutputFormat == null) {
@@ -205,8 +194,8 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
         mExtractor.selectTrack(trackResult.mAudioTrackIndex);
 
-        if(startTimeMs*1000 > mDurationUs) {
-          throw new InvalidOutputFormatException("start time bigger than durations file");
+       /* if(startTimeMs*1000 > mDurationUs) {
+            throw new InvalidOutputFormatException("start time bigger than durations file");
         } else {
             mVideoTrackTranscoder.advanceStart(startTimeMs);
         }
@@ -215,16 +204,12 @@ public class MediaTranscoderEngine {
             throw new InvalidOutputFormatException("end time bigger than durations file");
         } else {
             mVideoTrackTranscoder.endOfDecoder(endTimeMs);
-        }
+        } */
     }
 
     private void runPipelines() {
         long loopCount = 0;
-        if (mDurationUs <= 0) {
-            double progress = PROGRESS_UNKNOWN;
-            mProgress = progress;
-            if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
-        }
+
         while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
 
             if(mVideoTrackTranscoder.isEncodedFinished()){
@@ -234,13 +219,7 @@ public class MediaTranscoderEngine {
             boolean stepped = mVideoTrackTranscoder.stepPipeline()
                     || mAudioTrackTranscoder.stepPipeline();
             loopCount++;
-            if (mDurationUs > 0 && loopCount % PROGRESS_INTERVAL_STEPS == 0) {
-                double videoProgress = mVideoTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mVideoTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
-                double audioProgress = mAudioTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mAudioTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
-                double progress = (videoProgress + audioProgress) / 2.0;
-                mProgress = progress;
-                if (mProgressCallback != null) mProgressCallback.onProgress(progress);
-            }
+
             if (!stepped) {
                 try {
                     Thread.sleep(SLEEP_TO_WAIT_TRACK_TRANSCODERS);
@@ -259,4 +238,6 @@ public class MediaTranscoderEngine {
          */
         void onProgress(double progress);
     }
+
+
 }

@@ -15,7 +15,6 @@
  */
 package com.videonasocialmedia.decoder;
 
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
@@ -26,7 +25,6 @@ import com.videonasocialmedia.decoder.format.MediaFormatStrategy;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -78,8 +76,7 @@ public class MediaTranscoder {
      */
     public Future<Void> transcodeVideo(final String inPath, final String outPath,
                                        final MediaFormatStrategy outFormatStrategy,
-                                       final MediaTranscoderListener listener, Drawable drawable,
-                                       List<Drawable> drawableList, int startTimeMs, int endTimeMs) throws IOException {
+                                       final Listener listener) throws IOException {
         FileInputStream fileInputStream = null;
         FileDescriptor inFileDescriptor;
         try {
@@ -96,7 +93,7 @@ public class MediaTranscoder {
             throw e;
         }
         final FileInputStream finalFileInputStream = fileInputStream;
-        return transcodeVideo(inFileDescriptor, outPath, outFormatStrategy, new MediaTranscoderListener() {
+        return transcodeVideo(inFileDescriptor, outPath, outFormatStrategy, new Listener() {
             @Override
             public void onTranscodeProgress(double progress) {
                 listener.onTranscodeProgress(progress);
@@ -127,7 +124,7 @@ public class MediaTranscoder {
                     Log.e(TAG, "Can't close input stream: ", e);
                 }
             }
-        }, drawable, drawableList, startTimeMs, endTimeMs);
+        });
     }
 
     /**
@@ -137,13 +134,10 @@ public class MediaTranscoder {
      * @param outPath           File path for output.
      * @param outFormatStrategy Strategy for output video format.
      * @param listener          Listener instance for callback.
-     * @param drawable
-     * @param animatedOverlayFrames
      */
     public Future<Void> transcodeVideo(final FileDescriptor inFileDescriptor, final String outPath,
                                        final MediaFormatStrategy outFormatStrategy,
-                                       final MediaTranscoderListener listener, final Drawable drawable,
-                                       final List<Drawable> animatedOverlayFrames, final int startTimeUs, final int endTimeUs) {
+                                       final Listener listener) {
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
         final Handler handler = new Handler(looper);
@@ -166,7 +160,7 @@ public class MediaTranscoder {
                         }
                     });
                     engine.setDataSource(inFileDescriptor);
-                    engine.transcodeVideo(outPath, outFormatStrategy, drawable, animatedOverlayFrames, startTimeUs, endTimeUs);
+                    engine.transcodeVideo(outPath, outFormatStrategy);
                 } catch (IOException e) {
                     Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
                             + " or could not open output file ('" + outPath + "') .", e);
@@ -202,6 +196,33 @@ public class MediaTranscoder {
         });
         futureReference.set(createdFuture);
         return createdFuture;
+    }
+
+    public interface Listener {
+        /**
+         * Called to notify progress.
+         *
+         * @param progress Progress in [0.0, 1.0] range, or negative value if progress is unknown.
+         */
+        void onTranscodeProgress(double progress);
+
+        /**
+         * Called when transcode completed.
+         */
+        void onTranscodeCompleted();
+
+        /**
+         * Called when transcode canceled.
+         */
+        void onTranscodeCanceled();
+
+        /**
+         * Called when transcode failed.
+         *
+         * @param exception Exception thrown from {@link MediaTranscoderEngine#transcodeVideo(String, MediaFormatStrategy)}.
+         *                  Note that it IS NOT {@link java.lang.Throwable}. This means {@link java.lang.Error} won't be caught.
+         */
+        void onTranscodeFailed(Exception exception);
     }
 
 }
