@@ -1,4 +1,4 @@
-package com.videonasocialmedia.decoderdemo;
+package com.videonasocialmedia.demosdk;
 
 import android.app.Application;
 import android.test.ApplicationTestCase;
