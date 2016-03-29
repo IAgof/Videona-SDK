@@ -64,7 +64,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private Surface mSurface;
     private Object mFrameSyncObject = new Object();     // guards mFrameAvailable
     private boolean mFrameAvailable;
-    private TextureRenderGL mTextureRender;
+    private TextureRender mTextureRender;
 
     private float[] mTransform = new float[16];
 
@@ -131,7 +131,7 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         synchronized (mSurfaceTextureFence) {
 
-            mTextureRender = new TextureRenderGL(this);
+            mTextureRender = new TextureRender(this);
 
             mTextureRender.surfaceCreated();
             // Even if we don't access the SurfaceTexture after the constructor returns, we
@@ -295,6 +295,8 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         // Latch the data.
         mTextureRender.checkGlError("before updateTexImage");
         mSurfaceTexture.updateTexImage();
+
+        Log.d(TAG, "awaitNewImage");
     }
     /**
      * Wait up to given timeout until new image become available.
@@ -327,6 +329,9 @@ public class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Draws the data from SurfaceTexture onto the current EGL surface.
      */
     public void drawImage() {
+
+        Log.d(TAG, "drawImage");
+
         mTextureRender.drawFrame(mSurfaceTexture);
 
         mFrameNum++;

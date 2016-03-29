@@ -31,7 +31,7 @@ import java.util.List;
 /**
  * Code for rendering a texture onto a surface using OpenGL ES 2.0.
  */
-class TextureRender {
+public class TextureRender {
 
     private static final String TAG = "TextureRender";
     private static final boolean VERBOSE = true;

@@ -35,7 +35,7 @@ import javax.microedition.khronos.opengles.GL10;
 /**
  * Code for rendering a texture onto a surface using OpenGL ES 2.0.
  */
-class TextureRenderGL implements GLSurfaceView.Renderer {
+public class TextureRenderGL implements GLSurfaceView.Renderer {
 
     private static final String TAG = "TextureRender";
     private static final boolean VERBOSE = true;
@@ -49,7 +49,7 @@ class TextureRenderGL implements GLSurfaceView.Renderer {
 
     private FullFrameRect mFullScreenOutput;
     private int mInputTextureId;
-    private OutputSurface mOutputSurface;
+    private OutputPlayerSurface mOutputSurface;
     private int mFrameCount;
 
     // Keep track of selected filters + relevant state
@@ -66,7 +66,7 @@ class TextureRenderGL implements GLSurfaceView.Renderer {
     private List<Overlay> overlayList;
     private Watermark watermark;
 
-    public TextureRenderGL(OutputSurface outputSurface) {
+    public TextureRenderGL(OutputPlayerSurface outputSurface) {
 
 
         mOutputSurface = outputSurface;
