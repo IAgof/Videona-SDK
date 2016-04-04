@@ -21,7 +21,7 @@ import com.videonasocialmedia.sdk.opengl.OutputSurface;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class VideoTrackDecoder implements VideonaDecoder {
+public class VideoTrackDecoderOld implements VideonaDecoderOld {
 
     private static final String TAG = "VideoTrackDecoder";
 
@@ -49,7 +49,7 @@ public class VideoTrackDecoder implements VideonaDecoder {
 
     private boolean IsRender;
 
-    public VideoTrackDecoder(MediaExtractor mediaExtractor, int trackIndex){
+    public VideoTrackDecoderOld(MediaExtractor mediaExtractor, int trackIndex){
         mExtractor = mediaExtractor;
         mTrackIndex = trackIndex;
     }

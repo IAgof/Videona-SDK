@@ -13,8 +13,8 @@ package com.videonasocialmedia.sdk.transcoder;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
-import com.videonasocialmedia.sdk.decoder.VideoTrackDecoder;
-import com.videonasocialmedia.sdk.decoder.VideonaDecoder;
+import com.videonasocialmedia.sdk.decoder.VideoTrackDecoderOld;
+import com.videonasocialmedia.sdk.decoder.VideonaDecoderOld;
 import com.videonasocialmedia.sdk.encoder.VideoTrackEncoder;
 import com.videonasocialmedia.sdk.encoder.VideonaEncoder;
 import com.videonasocialmedia.sdk.muxer.VideonaMuxer;
@@ -37,7 +37,7 @@ public class VideonaTrackTranscoder implements VideonaTrack {
     private final MediaFormat mOutputFormat;
     private final VideonaMuxer mMuxer;
 
-    private VideonaDecoder decoder;
+    private VideonaDecoderOld decoder;
     private VideonaEncoder encoder;
     private OutputSurface outputSurface;
 
@@ -78,7 +78,7 @@ public class VideonaTrackTranscoder implements VideonaTrack {
 
     private void setupDecoder() {
 
-        decoder = new VideoTrackDecoder(mExtractor, mTrackIndex);
+        decoder = new VideoTrackDecoderOld(mExtractor, mTrackIndex);
         outputSurface = new OutputSurface();
         decoder.setOutSurface(outputSurface);
         decoder.setup();
