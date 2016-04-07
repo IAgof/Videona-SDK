@@ -1,4 +1,4 @@
-package com.videonasocialmedia.sdk.decoder;
+package com.videonasocialmedia.sdk.examples;
 /*
  * Copyright (C) 2015 Videona Socialmedia SL
  * http://www.videona.com
@@ -15,6 +15,7 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 
+import com.videonasocialmedia.sdk.examples.VideonaDecoderOld;
 import com.videonasocialmedia.sdk.format.MediaFormatExtraConstants;
 import com.videonasocialmedia.sdk.opengl.OutputSurface;
 

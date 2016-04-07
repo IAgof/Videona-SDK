@@ -6,7 +6,6 @@ import android.media.MediaExtractor;
 import android.opengl.GLSurfaceView;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
-import android.view.Surface;
 
 import java.io.File;
 import java.io.FileDescriptor;
@@ -24,10 +23,12 @@ public class VideonaDecoder implements Decoder, Runnable, MediaCodecWrapper.Outp
     private MediaCodecWrapper mediaCodecWrapper;
     private String inputSourcePath;
     private SurfaceTexture outputSurface;
-    private final Object pauseLock = new Object();            // guards pause/running
+    private final Object pauseLock = new Object();        // guards pause/running
     private boolean running;
     private boolean paused;
     private boolean finished;
+    private boolean isDecodingForRequestedFrame;
+    private int numFramesToRequestedFrame = 0;
 
     public VideonaDecoder(VideonaDecoderListener listener) {
         this.videonaDecoderListener = listener;
@@ -35,6 +36,7 @@ public class VideonaDecoder implements Decoder, Runnable, MediaCodecWrapper.Outp
 
     @Override
     public void setOutputSurface(GLSurfaceView textureView) {
+        //TODO define this output surface correctly
         outputSurface = new SurfaceTexture(textureView.getId());
     }
 
@@ -54,25 +56,29 @@ public class VideonaDecoder implements Decoder, Runnable, MediaCodecWrapper.Outp
                     ParcelFileDescriptor.MODE_READ_ONLY);
             fileDescriptor = parcelFileDescriptor.getFileDescriptor();
             extractor.setDataSource(fileDescriptor);
-            int nTracks = extractor.getTrackCount();
+            int numOfTracks = extractor.getTrackCount();
             // Begin by unselecting all of the tracks in the extractor, so we won't see
             // any tracks that we haven't explicitly selected.
-            for (int i = 0; i < nTracks; ++i) {
+            for (int i = 0; i < numOfTracks; ++i) {
                 extractor.unselectTrack(i);
             }
-            for (int i = 0; i < nTracks; ++i) {
-                mediaCodecWrapper = MediaCodecWrapper.fromVideoFormat(extractor.getTrackFormat(i),
-                        outputSurface);
-                if (mediaCodecWrapper != null) {
-                    extractor.selectTrack(i);
-                    break;
-                }
-            }
-            mediaCodecWrapper.setOutputSampleListener(this);
+            selectTracks(numOfTracks);
+            if(mediaCodecWrapper != null)
+                mediaCodecWrapper.setOutputSampleListener(this);
             startDecodeThread();
         } catch (IOException e) {
             Log.w("Could not open '" + source.getAbsolutePath() + "'", e);
-            return;
+        }
+    }
+
+    private void selectTracks(int numOfTracks) throws IOException {
+        for (int i = 0; i < numOfTracks; ++i) {
+            mediaCodecWrapper = MediaCodecWrapper.fromVideoFormat(extractor.getTrackFormat(i),
+                    outputSurface);
+            if (mediaCodecWrapper != null) {
+                extractor.selectTrack(i);
+                break;
+            }
         }
     }
 
@@ -90,7 +96,8 @@ public class VideonaDecoder implements Decoder, Runnable, MediaCodecWrapper.Outp
     @Override
     public void outputSample(MediaCodecWrapper sender, MediaCodec.BufferInfo info, ByteBuffer buffer,
                              SurfaceTexture surfaceTexture) {
-        videonaDecoderListener.onFrameAvailable(surfaceTexture);
+        if(!isDecodingForRequestedFrame)
+            videonaDecoderListener.onFrameAvailable(surfaceTexture);
     }
 
     @Override
@@ -119,9 +126,12 @@ public class VideonaDecoder implements Decoder, Runnable, MediaCodecWrapper.Outp
     public void seekTo(long time) {
         pause();
         extractor.seekTo(time, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        numFramesToRequestedFrame = 0;
         while(extractor.getSampleTime() < time) {
             extractor.advance();
+            numFramesToRequestedFrame++;
         }
+        extractor.seekTo(time, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         resume();
     }
 
@@ -145,6 +155,7 @@ public class VideonaDecoder implements Decoder, Runnable, MediaCodecWrapper.Outp
                     try {
                         pauseLock.wait();
                     } catch (InterruptedException e) {
+                        Log.e(TAG, "Error", e);
                     }
                 }
                 checkAvailableFrame();
@@ -159,8 +170,14 @@ public class VideonaDecoder implements Decoder, Runnable, MediaCodecWrapper.Outp
         if (!isEos) {
             boolean result = mediaCodecWrapper.writeSample(extractor, false,
                     extractor.getSampleTime(), extractor.getSampleFlags());
-            if (result)
+            if (result) {
                 extractor.advance();
+                if(isDecodingForRequestedFrame) {
+                    numFramesToRequestedFrame--;
+                    if (numFramesToRequestedFrame <= 1)
+                        isDecodingForRequestedFrame = false;
+                }
+            }
         }
         MediaCodec.BufferInfo out_bufferInfo = new MediaCodec.BufferInfo();
 

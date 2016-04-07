@@ -1,4 +1,4 @@
-package com.videonasocialmedia.sdk.decoder;
+package com.videonasocialmedia.sdk.examples;
 /*
  * Copyright (C) 2015 Videona Socialmedia SL
  * http://www.videona.com

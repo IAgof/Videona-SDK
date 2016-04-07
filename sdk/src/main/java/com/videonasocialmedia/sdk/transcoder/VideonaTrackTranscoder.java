@@ -13,8 +13,8 @@ package com.videonasocialmedia.sdk.transcoder;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
 
-import com.videonasocialmedia.sdk.decoder.VideoTrackDecoderOld;
-import com.videonasocialmedia.sdk.decoder.VideonaDecoderOld;
+import com.videonasocialmedia.sdk.examples.VideoTrackDecoderOld;
+import com.videonasocialmedia.sdk.examples.VideonaDecoderOld;
 import com.videonasocialmedia.sdk.encoder.VideoTrackEncoder;
 import com.videonasocialmedia.sdk.encoder.VideonaEncoder;
 import com.videonasocialmedia.sdk.muxer.VideonaMuxer;
