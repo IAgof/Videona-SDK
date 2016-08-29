@@ -188,7 +188,8 @@ public class MediaTrimmerEngine {
         if (audioOutputFormat == null) {
             mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor, trackResult.mAudioTrackIndex, muxer, Muxer.SampleType.AUDIO);
         } else {
-            throw new UnsupportedOperationException("Transcoding audio tracks currently not supported.");
+            mAudioTrackTranscoder = new AudioTrackTranscoder(mExtractor, trackResult.mAudioTrackIndex, audioOutputFormat, muxer);
+            //throw new UnsupportedOperationException("Transcoding audio tracks currently not supported.");
         }
         mAudioTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);

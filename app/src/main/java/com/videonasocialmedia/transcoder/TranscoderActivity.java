@@ -14,6 +14,7 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
+import com.videonasocialmedia.transcoder.engine.MediaTrimmerEngine;
 import com.videonasocialmedia.transcoder.format.VideonaFormat;
 
 import java.io.File;
@@ -108,7 +109,8 @@ public class TranscoderActivity extends Activity {
                     List<Drawable> animatedOverlayFrames = getAnimatedOverlay();
 
                     mFuture = MediaTranscoder.getInstance().transcodeVideo(fileDescriptor, file.getAbsolutePath(),
-                            new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720), animatedOverlayFrames, 10500,15500);
+                            new VideonaFormat(), listener, 10500,15500);
+
                     switchButtonEnabled(true);
                 }
                 break;
