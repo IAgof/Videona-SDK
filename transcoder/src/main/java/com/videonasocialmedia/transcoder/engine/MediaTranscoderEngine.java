@@ -188,7 +188,7 @@ public class MediaTranscoderEngine {
                     muxer, Muxer.SampleType.VIDEO);
         } else {
             mVideoTrackTranscoder = new VideoTrackTranscoder(mExtractor, trackResult.mVideoTrackIndex,
-                    videoOutputFormat, muxer, watermark, animatedOverlay);
+                    videoOutputFormat, muxer, watermark);
         }
         mVideoTrackTranscoder.setup();
         if (audioOutputFormat == null) {

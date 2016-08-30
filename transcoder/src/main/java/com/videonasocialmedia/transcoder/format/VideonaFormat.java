@@ -28,7 +28,6 @@ public class VideonaFormat implements MediaFormatStrategy {
 
     private int videoWidth = 1280;
     private int videoHeight = 720;
-    private int videoFrameRate = 30;
     private int videoBitrate = 5000 * 1000;
     private int audioBitrate = 192 * 1000;
     private int audioChannels = 2;

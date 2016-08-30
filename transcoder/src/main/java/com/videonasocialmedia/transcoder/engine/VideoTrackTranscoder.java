@@ -22,10 +22,8 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.videonasocialmedia.transcoder.format.MediaFormatExtraConstants;
-import com.videonasocialmedia.transcoder.format.SessionConfig;
 
 import java.io.IOException;
-import java.nio.ByteBuffer;
 import java.util.List;
 
 // Refer: https://android.googlesource.com/platform/cts/+/lollipop-release/tests/tests/media/src/android/media/cts/ExtractDecodeEditEncodeMuxTest.java
@@ -58,23 +56,18 @@ public class VideoTrackTranscoder implements TrackTranscoder {
 
     private int numFramesDecoded;
 
-    private Drawable watermark;
-    private List<Drawable> animatedOverlay;
+    private Drawable overlayImage;
     private int numDropFrames = 0;
     private long endVideoTimeUs;
     private boolean endOfVideoToEncode = false;
 
     public VideoTrackTranscoder(MediaExtractor extractor, int trackIndex,
-                                MediaFormat outputFormat, Muxer muxer, Drawable drawable,
-                                List<Drawable> drawableList) {
+                                MediaFormat outputFormat, Muxer muxer, Drawable drawable) {
         mExtractor = extractor;
         mTrackIndex = trackIndex;
         mOutputFormat = outputFormat;
         mMuxer = muxer;
-
-        watermark = drawable;
-        animatedOverlay = drawableList;
-
+        overlayImage = drawable;
     }
 
     public VideoTrackTranscoder(MediaExtractor extractor, int trackIndex,
@@ -89,7 +82,6 @@ public class VideoTrackTranscoder implements TrackTranscoder {
 
     @Override
     public void setup() {
-
 
         mExtractor.selectTrack(mTrackIndex);
         try {
@@ -111,9 +103,15 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             // refer: https://android.googlesource.com/platform/frameworks/av/+blame/lollipop-release/media/libstagefright/Utils.cpp
             inputFormat.setInteger(MediaFormatExtraConstants.KEY_ROTATION_DEGREES, 0);
         }
-        // mDecoderOutputSurfaceWrapper = new OutputSurface(watermark, animatedOverlay, new SessionConfig());
 
-        mDecoderOutputSurfaceWrapper = new OutputSurface(new SessionConfig());
+        int width = mOutputFormat.getInteger(MediaFormat.KEY_WIDTH);
+        int height = mOutputFormat.getInteger(MediaFormat.KEY_HEIGHT);
+
+        if(overlayImage == null) {
+            mDecoderOutputSurfaceWrapper = new OutputSurface(width, height);
+        } else {
+            mDecoderOutputSurfaceWrapper = new OutputSurface(width, height, overlayImage);
+        }
         try {
             mDecoder = MediaCodec.createDecoderByType(inputFormat.getString(MediaFormat.KEY_MIME));
         } catch (IOException e) {

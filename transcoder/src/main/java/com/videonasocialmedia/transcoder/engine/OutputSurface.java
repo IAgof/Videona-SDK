@@ -33,7 +33,6 @@ import android.view.Surface;
 import com.videonasocialmedia.transcoder.Filters;
 import com.videonasocialmedia.transcoder.FullFrameRect;
 import com.videonasocialmedia.transcoder.Texture2dProgram;
-import com.videonasocialmedia.transcoder.format.SessionConfig;
 import com.videonasocialmedia.transcoder.overlay.Filter;
 import com.videonasocialmedia.transcoder.overlay.Overlay;
 import com.videonasocialmedia.transcoder.overlay.Watermark;
@@ -88,7 +87,16 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     private final Object mSurfaceTextureFence = new Object();   // guards mSurfaceTexture shared with GLSurfaceView.Renderer
 
-    private SessionConfig config;
+    private int videoWidth = 1280;
+    private int videoHeight = 720;
+
+    public int getVideoHeight() {
+        return videoHeight;
+    }
+
+    public int getVideoWidth() {
+        return videoWidth;
+    }
 
 
     /**
@@ -96,40 +104,43 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * EGL context and surface will be made current.  Creates a Surface that can be passed
      * to MediaCodec.configure().
      */
-    public OutputSurface(int width, int height) {
+ /*   public OutputSurface(int width, int height) {
         if (width <= 0 || height <= 0) {
             throw new IllegalArgumentException();
         }
         eglSetup(width, height);
         makeCurrent();
         setup();
-    }
-    /**
-     * Creates an OutputSurface using the current EGL context (rather than establishing a
-     * new one).  Creates a Surface that can be passed to MediaCodec.configure().
-     */
-    public OutputSurface(Drawable drawable, List<Drawable> drawableList, SessionConfig config) {
-
-        this.config = config;
-
-        setup();
-
-        addWatermark(drawable, false);
-        addOverlayFilter(drawableList.get(0),config.getVideoWidth() , config.getVideoHeight());
-
-    }
+    }*/
 
 
     /**
      * Creates an OutputSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    public OutputSurface(SessionConfig config) {
+    public OutputSurface(int width, int height) {
 
-        this.config = config;
+        this.videoWidth = width;
+        this.videoHeight = height;
 
         setup();
+    }
 
+    /**
+     * Creates an OutputSurface using the current EGL context (rather than establishing a
+     * new one).  Creates a Surface that can be passed to MediaCodec.configure().
+     */
+    public OutputSurface(int width, int height, Drawable drawable) {
+
+        this.videoWidth = width;
+        this.videoHeight = height;
+
+        eglSetup(width, height);
+        makeCurrent();
+
+        setup();
+        addOverlayFilter(drawable,width,height);
+        //addOverlayImage(drawable, false);
     }
 
     /**
@@ -178,7 +189,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
             if (mFullScreen != null) mFullScreen.release();
             mFullScreen = new FullFrameRect(
                     new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_EXT));
-            mFullScreen.getProgram().setTexSize(config.getVideoWidth(), config.getVideoHeight());
+            mFullScreen.getProgram().setTexSize(videoWidth, videoHeight);
             mIncomingSizeUpdated = true;
 
         }
@@ -348,7 +359,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         }
 
         if (mIncomingSizeUpdated) {
-            mFullScreen.getProgram().setTexSize(config.getVideoWidth(), config.getVideoHeight());
+            mFullScreen.getProgram().setTexSize(videoWidth, videoHeight);
             mIncomingSizeUpdated = false;
         }
 
@@ -357,7 +368,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
         mSurfaceTexture.getTransformMatrix(mTransform);
         if (TRACE) Trace.beginSection("drawVEncoderFrame");
-        GLES20.glViewport(0, 0, config.getVideoWidth(), config.getVideoHeight());
+        GLES20.glViewport(0, 0,videoWidth, videoHeight);
         mFullScreen.drawFrame(mTextureId, mTransform);
         drawOverlayList();
         if (watermark != null) {
@@ -455,28 +466,27 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         //overlayList.remove(overlay);
     }
 
-    public void addWatermark(Drawable overlayImage,
-                             int positionX, int positionY, int width, int height, boolean preview) {
+    public void addOverlayImage(Drawable overlayImage,
+                                int positionX, int positionY, int width, int height, boolean preview) {
         this.watermark = new Watermark(overlayImage, height, width, positionX, positionY);
         if (preview && mTextureRender != null)
             mTextureRender.setWatermark(watermark);
     }
 
-    public void addWatermark(Drawable overlayImage, boolean preview) {
+    public void addOverlayImage(Drawable overlayImage, boolean preview) {
         int[] size = calculateDefaultWatermarkSize();
         int margin = calculateWatermarkDefaultPosition();
-        //addWatermark(overlayImage, 15, 15, 265, 36, preview);
-        addWatermark(overlayImage, margin, margin, size[0], size[1], preview);
+        addOverlayImage(overlayImage, margin, margin, size[0], size[1], preview);
     }
 
     private int[] calculateDefaultWatermarkSize() {
-        int width = (config.getVideoWidth() * 265) / 1280;
-        int height = (config.getVideoHeight() * 36) / 720;
+        int width = (videoWidth * 265) / 1280;
+        int height = (videoHeight * 36) / 720;
         return new int[]{width, height};
     }
 
     private int calculateWatermarkDefaultPosition() {
-        return (config.getVideoWidth() * 15) / 1280;
+        return (videoWidth * 15) / 1280;
     }
 
     public void removeWaterMark() {

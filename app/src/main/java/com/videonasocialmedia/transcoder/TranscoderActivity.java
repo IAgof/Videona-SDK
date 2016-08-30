@@ -1,10 +1,12 @@
 package com.videonasocialmedia.transcoder;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.ParcelFileDescriptor;
@@ -14,7 +16,6 @@ import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.videonasocialmedia.transcoder.engine.MediaTrimmerEngine;
 import com.videonasocialmedia.transcoder.format.VideonaFormat;
 
 import java.io.File;
@@ -53,6 +54,7 @@ public class TranscoderActivity extends Activity {
         });
     }
 
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         switch (requestCode) {
@@ -106,12 +108,13 @@ public class TranscoderActivity extends Activity {
                     };
                     Log.d(TAG, "transcoding into " + file);
 
-                    List<Drawable> animatedOverlayFrames = getAnimatedOverlay();
+                    mFuture = MediaTranscoder.getInstance().transcodeAndOverlayImageVideo(fileDescriptor, file.getAbsolutePath(),
+                         new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720));
 
-                    mFuture = MediaTranscoder.getInstance().transcodeVideo(fileDescriptor, file.getAbsolutePath(),
-                            new VideonaFormat(), listener, 10500,15500);
+                  //  mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fileDescriptor,
+                      //      file.getAbsolutePath(), new VideonaFormat(), listener, 10000, 15000);
 
-                    switchButtonEnabled(true);
+                            switchButtonEnabled(true);
                 }
                 break;
             }
@@ -119,14 +122,6 @@ public class TranscoderActivity extends Activity {
                 super.onActivityResult(requestCode, resultCode, data);
         }
     }
-
-    private List<Drawable> getAnimatedOverlay() {
-        List<Drawable> animatedOverlayFrames = new ArrayList<>();
-        animatedOverlayFrames.add(this.getResources().getDrawable(R.drawable.overlay_filter_autumn));
-        animatedOverlayFrames.add(this.getResources().getDrawable(R.drawable.overlay_filter_bokeh));
-        return animatedOverlayFrames;
-    }
-
 
     private void onTranscodeFinished(boolean isSuccess, String toastMessage, ParcelFileDescriptor parcelFileDescriptor) {
         final ProgressBar progressBar = (ProgressBar) findViewById(R.id.progress_bar);

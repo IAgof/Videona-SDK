@@ -73,11 +73,8 @@ class TextureRender {
         mInputTextureId = -1;
         mFrameCount = -1;
 
-        //SessionConfig config = recorder.getConfig();
-        //mIncomingWidth = config.getVideoWidth();
-        //mIncomingHeight = config.getVideoHeight();
-        mIncomingWidth = 1280;
-        mIncomingHeight = 720;
+        mIncomingWidth = outputSurface.getVideoWidth();
+        mIncomingHeight = outputSurface.getVideoHeight();
         mIncomingSizeUpdated = true;        // Force texture size update on next onDrawFrame
 
         // There is not onSurfaceChange
