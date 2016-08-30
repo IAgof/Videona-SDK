@@ -135,12 +135,9 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         this.videoWidth = width;
         this.videoHeight = height;
 
-        eglSetup(width, height);
-        makeCurrent();
-
         setup();
-        addOverlayFilter(drawable,width,height);
-        //addOverlayImage(drawable, false);
+       // addOverlayFilter(drawable,width,height);
+        addOverlayImage(drawable, false);
     }
 
     /**

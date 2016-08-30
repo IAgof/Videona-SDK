@@ -74,6 +74,7 @@ public class MediaTrimmerEngine {
         return mProgress;
     }
 
+
     /**
      * Run video transcoding. Blocks current thread.
      *
@@ -83,7 +84,7 @@ public class MediaTrimmerEngine {
      * @throws InvalidOutputFormatException when output format is not supported.
      * @throws InterruptedException         when cancel to transcode.
      */
-    public void transcodeVideo(String outputPath, MediaFormatStrategy formatStrategy)
+    public void transcodeOnlyVideo(String outputPath, MediaFormatStrategy formatStrategy)
             throws IOException, InterruptedException {
 
 
@@ -131,6 +132,7 @@ public class MediaTrimmerEngine {
             }
         }
     }
+
 
     /**
      * Run video transcoding. Blocks current thread.
@@ -307,6 +309,7 @@ public class MediaTrimmerEngine {
         mAudioTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
         mExtractor.selectTrack(trackResult.mAudioTrackIndex);
+
     }
 
     private void setupTrackTranscoders(MediaFormatStrategy formatStrategy, Drawable overlayImage) {
@@ -333,13 +336,15 @@ public class MediaTrimmerEngine {
         }
         mVideoTrackTranscoder.setup();
         if (audioOutputFormat == null) {
-            mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor, trackResult.mAudioTrackIndex, muxer, Muxer.SampleType.AUDIO);
+            mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
+                    trackResult.mAudioTrackIndex, muxer, Muxer.SampleType.AUDIO);
         } else {
             mAudioTrackTranscoder = new AudioTrackTranscoder(mExtractor, trackResult.mAudioTrackIndex, audioOutputFormat, muxer);
         }
         mAudioTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
         mExtractor.selectTrack(trackResult.mAudioTrackIndex);
+
     }
 
     private void setupTrackTranscoders(MediaFormatStrategy formatStrategy, int startTimeMs, int endTimeMs) {

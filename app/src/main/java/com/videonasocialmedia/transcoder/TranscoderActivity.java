@@ -114,6 +114,9 @@ public class TranscoderActivity extends Activity {
                   //  mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fileDescriptor,
                       //      file.getAbsolutePath(), new VideonaFormat(), listener, 10000, 15000);
 
+                 //   mFuture = MediaTranscoder.getInstance().transcodeOnlyVideo(fileDescriptor,
+                   //              file.getAbsolutePath(), new VideonaFormat(), listener);
+
                             switchButtonEnabled(true);
                 }
                 break;

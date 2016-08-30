@@ -24,6 +24,7 @@ import android.util.Log;
 import com.videonasocialmedia.transcoder.format.MediaFormatExtraConstants;
 
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.List;
 
 // Refer: https://android.googlesource.com/platform/cts/+/lollipop-release/tests/tests/media/src/android/media/cts/ExtractDecodeEditEncodeMuxTest.java
@@ -261,10 +262,9 @@ public class VideoTrackTranscoder implements TrackTranscoder {
                 mEncoderInputSurfaceWrapper.setPresentationTime(mBufferInfo.presentationTimeUs * 1000);
                 mEncoderInputSurfaceWrapper.swapBuffers();
 
-                if(mExtractor.getSampleTime() > endVideoTimeUs){
+                if(endVideoTimeUs > 0 && mExtractor.getSampleTime() > endVideoTimeUs){
                     endOfVideoToEncode = true;
                 }
-
             }
 
             numFramesDecoded++;
