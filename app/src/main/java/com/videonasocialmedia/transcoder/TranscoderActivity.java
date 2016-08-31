@@ -108,8 +108,12 @@ public class TranscoderActivity extends Activity {
                     };
                     Log.d(TAG, "transcoding into " + file);
 
+                    String pathName = "/sdcard/overlay.png";
+                    Drawable d = Drawable.createFromPath(pathName);
+
+
                     mFuture = MediaTranscoder.getInstance().transcodeAndOverlayImageVideo(fileDescriptor, file.getAbsolutePath(),
-                         new VideonaFormat(), listener, getResources().getDrawable(R.drawable.watermark720));
+                         new VideonaFormat(), listener, d); // getDrawable(R.drawable.overlay_filter_party));
 
                   //  mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fileDescriptor,
                       //      file.getAbsolutePath(), new VideonaFormat(), listener, 10000, 15000);

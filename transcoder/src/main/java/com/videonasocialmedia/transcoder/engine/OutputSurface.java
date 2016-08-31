@@ -136,8 +136,8 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         this.videoHeight = height;
 
         setup();
-       // addOverlayFilter(drawable,width,height);
-        addOverlayImage(drawable, false);
+        addOverlayFilter(drawable,width,height);
+       // addOverlayImage(drawable, false);
     }
 
     /**
@@ -471,8 +471,8 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     }
 
     public void addOverlayImage(Drawable overlayImage, boolean preview) {
-        int[] size = calculateDefaultWatermarkSize();
-        int margin = calculateWatermarkDefaultPosition();
+        int[] size = new int[] {videoWidth, videoHeight}; // calculateDefaultWatermarkSize();
+        int margin = 0; //calculateWatermarkDefaultPosition();
         addOverlayImage(overlayImage, margin, margin, size[0], size[1], preview);
     }
 

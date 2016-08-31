@@ -25,7 +25,7 @@ public abstract class Overlay {
 
     public Overlay(Drawable overlayImage, int height, int width, int positionX, int positionY) {
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
-        Matrix.scaleM(IDENTITY_MATRIX,0,-1,-1,-1);
+        Matrix.scaleM(IDENTITY_MATRIX,0,1,-1,-1);
         this.overlayImage = overlayImage;
         this.height = height;
         this.width = width;
@@ -37,7 +37,7 @@ public abstract class Overlay {
      * Creates a texture and a shader program. It MUST be called on the GL thread
      */
     public final void initProgram() {
-        textureId = GlUtil.createTextureFromDrawable(overlayImage);
+        textureId = GlUtil.createTextureFromDrawable(overlayImage, width, height);
         Texture2dProgram program =
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D);
         program.setTexSize(width, height);
