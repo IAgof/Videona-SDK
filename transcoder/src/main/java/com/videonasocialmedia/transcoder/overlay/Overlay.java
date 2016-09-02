@@ -14,7 +14,7 @@ import com.videonasocialmedia.transcoder.Texture2dProgram;
  */
 public abstract class Overlay {
 
-    Drawable overlayImage;
+    Drawable drawableImage;
     private float[] IDENTITY_MATRIX = new float[16];
     private FullFrameRect overlayLayer;
     private int height;
@@ -23,21 +23,32 @@ public abstract class Overlay {
     private int positionY;
     private int textureId;
 
-    public Overlay(Drawable overlayImage, int height, int width, int positionX, int positionY) {
+    public Overlay(Drawable drawableImage, int width, int height, int positionX, int positionY) {
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
         Matrix.scaleM(IDENTITY_MATRIX,0,1,-1,-1);
-        this.overlayImage = overlayImage;
-        this.height = height;
+        this.drawableImage = drawableImage;
         this.width = width;
+        this.height = height;
         this.positionX = positionX;
         this.positionY = positionY;
     }
+
+    public Overlay(String drawableImagePath, int width, int height, int positionX, int positionY) {
+        Matrix.setIdentityM(IDENTITY_MATRIX, 0);
+        Matrix.scaleM(IDENTITY_MATRIX,0,1,-1,-1);
+        this.drawableImage = Drawable.createFromPath(drawableImagePath);;
+        this.width = width;
+        this.height = height;
+        this.positionX = positionX;
+        this.positionY = positionY;
+    }
+
 
     /**
      * Creates a texture and a shader program. It MUST be called on the GL thread
      */
     public final void initProgram() {
-        textureId = GlUtil.createTextureFromDrawable(overlayImage, width, height);
+        textureId = GlUtil.createTextureFromDrawable(drawableImage, width, height);
         Texture2dProgram program =
                 new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D);
         program.setTexSize(width, height);
@@ -63,6 +74,18 @@ public abstract class Overlay {
 
     public int getWidth() {
         return width;
+    }
+
+    public Drawable getDrawableImage(){
+        return drawableImage;
+    }
+
+    public int getPositionX(){
+        return positionX;
+    }
+
+    public int getPositionY(){
+        return positionY;
     }
 
     public boolean isInitialized() {

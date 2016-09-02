@@ -27,7 +27,7 @@ import com.videonasocialmedia.transcoder.Filters;
 import com.videonasocialmedia.transcoder.FullFrameRect;
 import com.videonasocialmedia.transcoder.Texture2dProgram;
 import com.videonasocialmedia.transcoder.overlay.Overlay;
-import com.videonasocialmedia.transcoder.overlay.Watermark;
+import com.videonasocialmedia.transcoder.overlay.Image;
 
 import java.util.List;
 
@@ -63,7 +63,7 @@ class TextureRender {
     private int screenHeight;
 
     private List<Overlay> overlayList;
-    private Watermark watermark;
+    private Image image;
 
     public TextureRender(OutputSurface outputSurface) {
 
@@ -97,7 +97,7 @@ class TextureRender {
 
         if (VERBOSE) {
             if (mFrameCount % 30 == 0) {
-                Log.d(TAG, "onDrawFrame tex=" + mInputTextureId);
+               // Log.d(TAG, "onDrawFrame tex=" + mInputTextureId);
                // mOutputSurface.logSavedEglState();
             }
         }
@@ -122,12 +122,11 @@ class TextureRender {
             mFullScreenOutput.drawFrame(mInputTextureId, mSTMatrix);
 
             drawOverlayList();
-            if (watermark != null) {
-                if (!watermark.isInitialized())
-                    watermark.initProgram();
-                watermark.draw();
+            if (image != null) {
+                if (!image.isInitialized())
+                    image.initProgram();
+                image.draw();
             }
-
             GLES20.glDisable(GLES20.GL_BLEND);
         }
         mFrameCount++;
@@ -192,11 +191,11 @@ class TextureRender {
         this.overlayList = overlayList;
     }
 
-    public void setWatermark(Watermark watermark) {
-        this.watermark = watermark;
+    public void setImage(Image image) {
+        this.image = image;
     }
 
     public void removeWatermark() {
-        watermark = null;
+        image = null;
     }
 }

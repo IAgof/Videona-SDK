@@ -18,11 +18,16 @@ import com.videonasocialmedia.transcoder.exceptions.OutputFormatUnavailableExcep
 
 public class VideonaFormat implements MediaFormatStrategy {
 
+    public static final int VIDEO_BITRATE_AS_IS = -1;
+    public static final int VIDEO_WIDTH_AS_IS = -1;
+    public static final int VIDEO_HEIGHT_AS_IS = -1;
+
     public static final int AUDIO_BITRATE_AS_IS = -1;
     public static final int AUDIO_CHANNELS_AS_IS = -1;
 
+
     private static final String TAG = "VideonaFormat";
-    private static final int DEFAULT_BITRATE = 5000 * 1000;
+
     private final int DEFAULT_FRAME_RATE = 30;
     private final int DEFAULT_KEY_I_FRAME = 1;
 
@@ -30,18 +35,17 @@ public class VideonaFormat implements MediaFormatStrategy {
     private int videoHeight = 720;
     private int videoBitrate = 5000 * 1000;
     private int audioBitrate = 192 * 1000;
-    private int audioChannels = 2;
+    private int audioChannels = 1;
 
     public VideonaFormat(){
-        this(DEFAULT_BITRATE);
     }
 
-    public VideonaFormat(int videoBitrate){
-        this(videoBitrate, AUDIO_BITRATE_AS_IS, AUDIO_CHANNELS_AS_IS);
+    public VideonaFormat(int videoBitrate,int videoWidth, int videoHeight){
+        this(videoBitrate, videoWidth, videoHeight, AUDIO_BITRATE_AS_IS, AUDIO_CHANNELS_AS_IS);
     }
 
-    public VideonaFormat(int videoWidth, int videoHeight){
-        this(videoWidth, videoHeight, AUDIO_BITRATE_AS_IS, AUDIO_CHANNELS_AS_IS);
+    public VideonaFormat(int audioBitrate, int audioChannels){
+     this(VIDEO_BITRATE_AS_IS, VIDEO_WIDTH_AS_IS, VIDEO_HEIGHT_AS_IS, audioBitrate, audioChannels);
     }
 
     public VideonaFormat(int videoBitrate, int width, int height, int audioBitrate, int audioChannels){
@@ -53,21 +57,13 @@ public class VideonaFormat implements MediaFormatStrategy {
         this.audioChannels = audioChannels;
     }
 
-    public VideonaFormat(int videoBitrate, int audioBitrate, int audioChannels){
-        this.videoBitrate = videoBitrate;
-        this.audioBitrate = audioBitrate;
-        this.audioChannels = audioChannels;
-    }
-
-    public VideonaFormat(int videoWidth, int videoHeight, int audioBitrate, int audioChannels){
-        this.videoWidth = videoWidth;
-        this.videoHeight = videoHeight;
-        this.audioBitrate = audioBitrate;
-        this.audioChannels = audioChannels;
-    }
 
     @Override
     public MediaFormat createVideoOutputFormat(MediaFormat inputFormat) {
+
+        if (videoBitrate == VIDEO_BITRATE_AS_IS || videoWidth == VIDEO_WIDTH_AS_IS ||
+                videoHeight == VIDEO_HEIGHT_AS_IS) return null;
+
         int width = inputFormat.getInteger(MediaFormat.KEY_WIDTH);
         int height = inputFormat.getInteger(MediaFormat.KEY_HEIGHT);
         int longer, shorter, outWidth, outHeight;
@@ -105,5 +101,25 @@ public class VideonaFormat implements MediaFormatStrategy {
         format.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC);
         format.setInteger(MediaFormat.KEY_BIT_RATE, audioBitrate);
         return format;
+    }
+
+    public int getVideoWidth() {
+        return videoWidth;
+    }
+
+    public int getVideoHeight() {
+        return videoHeight;
+    }
+
+    public int getVideoBitrate() {
+        return videoBitrate;
+    }
+
+    public int getAudioBitrate() {
+        return audioBitrate;
+    }
+
+    public int getAudioChannels() {
+        return audioChannels;
     }
 }

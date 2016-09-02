@@ -35,7 +35,7 @@ import com.videonasocialmedia.transcoder.FullFrameRect;
 import com.videonasocialmedia.transcoder.Texture2dProgram;
 import com.videonasocialmedia.transcoder.overlay.Filter;
 import com.videonasocialmedia.transcoder.overlay.Overlay;
-import com.videonasocialmedia.transcoder.overlay.Watermark;
+import com.videonasocialmedia.transcoder.overlay.Image;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -59,6 +59,8 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     private static final String TAG = "OutputSurface";
     private static final boolean VERBOSE = false;
+    public static final int DEFAULT_VIDEONA_WIDTH = 1280;
+    public static final int DEFAULT_VIDEONA_HEIGHT = 720;
     private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
     private EGLContext mEGLContext = EGL14.EGL_NO_CONTEXT;
     private EGLSurface mEGLSurface = EGL14.EGL_NO_SURFACE;
@@ -78,7 +80,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private FullFrameRect mFullScreen;
     private int mTextureId;
     private List<Overlay> overlayList;
-    private Watermark watermark;
+    private Image image;
     private boolean mEncodedFirstFrame;
     private boolean mThumbnailRequested;
     private int mThumbnailScaleFactor;
@@ -130,15 +132,30 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Creates an OutputSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    public OutputSurface(int width, int height, Drawable drawable) {
+    public OutputSurface(Drawable drawable, int videoWidth, int videoHeight) {
 
-        this.videoWidth = width;
-        this.videoHeight = height;
+        this.videoWidth = videoWidth;
+        this.videoHeight = videoHeight;
 
         setup();
-        addOverlayFilter(drawable,width,height);
-       // addOverlayImage(drawable, false);
+        addOverlayFilter(drawable,videoWidth, videoHeight);
     }
+
+    public OutputSurface(Overlay overlay, int videoWidth, int videoHeight) {
+
+        this.videoWidth = videoWidth;
+        this.videoHeight = videoHeight;
+
+        setup();
+
+        if(overlay instanceof Filter) {
+            addOverlayFilter(overlay.getDrawableImage(), videoWidth, videoHeight);
+        } else {
+            addOverlayImage(overlay.getDrawableImage(), overlay.getWidth(), overlay.getWidth(),
+                    overlay.getPositionX(), overlay.getPositionY());
+        }
+    }
+
 
     /**
      * Creates instances of TextureRender and SurfaceTexture, and a Surface associated
@@ -368,10 +385,10 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         GLES20.glViewport(0, 0,videoWidth, videoHeight);
         mFullScreen.drawFrame(mTextureId, mTransform);
         drawOverlayList();
-        if (watermark != null) {
-            if (!watermark.isInitialized())
-                watermark.initProgram();
-            watermark.draw();
+        if (image != null) {
+            if (!image.isInitialized())
+                image.initProgram();
+            image.draw();
         }
         if (TRACE) Trace.endSection();
         if (!mEncodedFirstFrame) {
@@ -444,18 +461,6 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     }
 
 
-   /* public void addAnimatedOverlayFilter(List<Drawable> images, int videoWidth, int videoHeight) {
-        AnimatedOverlay overlayToAdd = new AnimatedOverlay(images, videoHeight, videoWidth);
-        if(this.overlayList == null) {
-            this.overlayList = new ArrayList();
-            if(this.mTextureRender != null) {
-                this.mTextureRender.setOverlayList(this.overlayList);
-            }
-        }
-
-        this.overlayList.add(overlayToAdd);
-    }*/
-
     public void removeOverlayFilter(Overlay overlay) {
 
         overlayList = null;
@@ -463,34 +468,26 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         //overlayList.remove(overlay);
     }
 
+
     public void addOverlayImage(Drawable overlayImage,
-                                int positionX, int positionY, int width, int height, boolean preview) {
-        this.watermark = new Watermark(overlayImage, height, width, positionX, positionY);
-        if (preview && mTextureRender != null)
-            mTextureRender.setWatermark(watermark);
+                                int width, int height, int positionX, int positionY) {
+        int[] size = calculateOverlayImageSize(width,height);
+        int[] margin =calculateOverlayImagePosition(positionX, positionY);
+        this.image = new Image(overlayImage, size[0], size[1], margin[0], margin[1]);
     }
 
-    public void addOverlayImage(Drawable overlayImage, boolean preview) {
-        int[] size = new int[] {videoWidth, videoHeight}; // calculateDefaultWatermarkSize();
-        int margin = 0; //calculateWatermarkDefaultPosition();
-        addOverlayImage(overlayImage, margin, margin, size[0], size[1], preview);
+
+    private int[] calculateOverlayImageSize(int width, int height) {
+        int sizeWidth = (videoWidth * width) / DEFAULT_VIDEONA_WIDTH;
+        int sizeHeight = (videoHeight * height) / DEFAULT_VIDEONA_HEIGHT;
+        return new int[]{sizeWidth, sizeHeight};
     }
 
-    private int[] calculateDefaultWatermarkSize() {
-        int width = (videoWidth * 265) / 1280;
-        int height = (videoHeight * 36) / 720;
-        return new int[]{width, height};
+    private int[] calculateOverlayImagePosition(int positionX, int positionY) {
+        int marginX = (videoWidth * positionX) / DEFAULT_VIDEONA_WIDTH;
+        int marginY = (videoHeight * positionY) / DEFAULT_VIDEONA_HEIGHT;
+        return new int[]{marginX, marginY};
     }
-
-    private int calculateWatermarkDefaultPosition() {
-        return (videoWidth * 15) / 1280;
-    }
-
-    public void removeWaterMark() {
-        watermark = null;
-        mTextureRender.removeWatermark();
-    }
-
 
     /**
      * Request a thumbnail be generated from

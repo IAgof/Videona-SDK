@@ -8,8 +8,8 @@ import android.opengl.GLES20;
  */
 public class Filter extends Overlay{
 
-    public Filter(Drawable filterImage, int height, int width) {
-        super(filterImage, height, width, 0, 0);
+    public Filter(Drawable filterImage, int width, int height) {
+        super(filterImage, width, height, 0, 0);
     }
 
     @Override

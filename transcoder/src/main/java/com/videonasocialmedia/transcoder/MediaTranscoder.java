@@ -21,13 +21,13 @@ import android.os.Looper;
 import android.util.Log;
 
 import com.videonasocialmedia.transcoder.engine.MediaTranscoderEngine;
-import com.videonasocialmedia.transcoder.engine.MediaTrimmerEngine;
 import com.videonasocialmedia.transcoder.format.MediaFormatStrategy;
+import com.videonasocialmedia.transcoder.overlay.Image;
+import com.videonasocialmedia.transcoder.overlay.Overlay;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -45,7 +45,7 @@ public class MediaTranscoder {
 
     private MediaTranscoder() {
         mExecutor = new ThreadPoolExecutor(
-                0, MAXIMUM_THREAD, 60, TimeUnit.SECONDS,
+                0, MAXIMUM_THREAD, 300, TimeUnit.SECONDS,
                 new LinkedBlockingQueue<Runnable>(),
                 new ThreadFactory() {
                     @Override
@@ -70,14 +70,17 @@ public class MediaTranscoder {
     /**
      * Transcodes video file asynchronously.
      * Audio track will be kept unchanged.
-     * @param inFileDescriptor  FileDescriptor for input.
+     * @param inPath  FileDescriptor for input.
      * @param outPath           File path for output.
      * @param outFormatStrategy Strategy for output video format.
      * @param listener          Listener instance for callback.
      */
-    public Future<Void> transcodeOnlyVideo(final FileDescriptor inFileDescriptor, final String outPath,
+    public Future<Void> transcodeOnlyVideo(final String inPath, final String outPath,
                                               final MediaFormatStrategy outFormatStrategy,
-                                              final MediaTranscoderListener listener) {
+                                              final MediaTranscoderListener listener) throws IOException {
+
+        final FileDescriptor inFileDescriptor = getFileDescriptor(inPath);
+
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
         final Handler handler = new Handler(looper);
@@ -87,8 +90,8 @@ public class MediaTranscoder {
             public Void call() throws Exception {
                 Exception caughtException = null;
                 try {
-                    MediaTrimmerEngine engine = new MediaTrimmerEngine();
-                    engine.setProgressCallback(new MediaTrimmerEngine.ProgressCallback() {
+                    MediaTranscoderEngine engine = new MediaTranscoderEngine();
+                    engine.setProgressCallback(new MediaTranscoderEngine.ProgressCallback() {
                         @Override
                         public void onProgress(final double progress) {
                             handler.post(new Runnable() { // TODO: reuse instance
@@ -142,17 +145,20 @@ public class MediaTranscoder {
     /**
      * Transcodes video file asynchronously.
      * Audio track will be kept unchanged.
-     * @param inFileDescriptor  FileDescriptor for input.
+     * @param inPath  FileDescriptor for input.
      * @param outPath           File path for output.
      * @param outFormatStrategy Strategy for output video format.
      * @param startTimeUs
      * @param endTimeUs
      * @param listener          Listener instance for callback.
      */
-    public Future<Void> transcodeAndTrimVideo(final FileDescriptor inFileDescriptor, final String outPath,
+    public Future<Void> transcodeAndTrimVideo(final String inPath, final String outPath,
                                        final MediaFormatStrategy outFormatStrategy,
                                        final MediaTranscoderListener listener,
-                                       final int startTimeUs, final int endTimeUs) {
+                                       final int startTimeUs, final int endTimeUs)  throws IOException {
+
+        final FileDescriptor inFileDescriptor = getFileDescriptor(inPath);
+
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
         final Handler handler = new Handler(looper);
@@ -162,8 +168,8 @@ public class MediaTranscoder {
             public Void call() throws Exception {
                 Exception caughtException = null;
                 try {
-                    MediaTrimmerEngine engine = new MediaTrimmerEngine();
-                    engine.setProgressCallback(new MediaTrimmerEngine.ProgressCallback() {
+                    MediaTranscoderEngine engine = new MediaTranscoderEngine();
+                    engine.setProgressCallback(new MediaTranscoderEngine.ProgressCallback() {
                         @Override
                         public void onProgress(final double progress) {
                             handler.post(new Runnable() { // TODO: reuse instance
@@ -216,15 +222,20 @@ public class MediaTranscoder {
     /**
      * Transcodes video file asynchronously.
      * Audio track will be kept unchanged.
-     * @param inFileDescriptor  FileDescriptor for input.
+     * @param inPath  FileDescriptor for input.
      * @param outPath           File path for output.
      * @param outFormatStrategy Strategy for output video format.
      * @param listener          Listener instance for callback.
-     * @param overlayImage
+     * @param overlay
      */
-    public Future<Void> transcodeAndOverlayImageVideo(final FileDescriptor inFileDescriptor, final String outPath,
-                                       final MediaFormatStrategy outFormatStrategy,
-                                       final MediaTranscoderListener listener, final Drawable overlayImage) {
+    public Future<Void> transcodeAndOverlayImageToVideo(final String inPath, final String outPath,
+                                                        final MediaFormatStrategy outFormatStrategy,
+                                                        final MediaTranscoderListener listener,
+                                                        final Overlay overlay) throws IOException {
+
+
+        final FileDescriptor inFileDescriptor = getFileDescriptor(inPath);
+
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
         final Handler handler = new Handler(looper);
@@ -234,8 +245,8 @@ public class MediaTranscoder {
             public Void call() throws Exception {
                 Exception caughtException = null;
                 try {
-                    MediaTrimmerEngine engine = new MediaTrimmerEngine();
-                    engine.setProgressCallback(new MediaTrimmerEngine.ProgressCallback() {
+                    MediaTranscoderEngine engine = new MediaTranscoderEngine();
+                    engine.setProgressCallback(new MediaTranscoderEngine.ProgressCallback() {
                         @Override
                         public void onProgress(final double progress) {
                             handler.post(new Runnable() { // TODO: reuse instance
@@ -247,7 +258,7 @@ public class MediaTranscoder {
                         }
                     });
                     engine.setDataSource(inFileDescriptor);
-                    engine.transcodeAndOverlayImageVideo(outPath, outFormatStrategy, overlayImage);
+                    engine.transcodeAndOverlayImageVideo(outPath, outFormatStrategy, overlay);
                 } catch (IOException e) {
                     Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
                             + " or could not open output file ('" + outPath + "') .", e);
@@ -283,6 +294,49 @@ public class MediaTranscoder {
         });
         futureReference.set(createdFuture);
         return createdFuture;
+    }
+
+    /**
+     * Transcodes video file asynchronously.
+     * Audio track will be kept unchanged.
+     * @param inPath  FileDescriptor for input.
+     * @param outPath           File path for output.
+     * @param outFormatStrategy Strategy for output video format.
+     * @param listener          Listener instance for callback.
+     * @param overlayImagePath File path image to overlay
+     */
+    /*public Future<Void> transcodeAndOverlayImageToVideo(final String inPath, final String outPath,
+                                                        final MediaFormatStrategy outFormatStrategy,
+                                                        final MediaTranscoderListener listener,
+                                                        final String overlayImagePath) throws IOException {
+
+        Drawable overlayImage = getDrawableFromPath(overlayImagePath);
+
+
+       return this.transcodeAndOverlayImageToVideo(inPath, outPath, outFormatStrategy, listener,overlayImage);
+    }*/
+
+    private Drawable getDrawableFromPath(String overlayImagePath) {
+        return Drawable.createFromPath(overlayImagePath);
+    }
+
+    private FileDescriptor getFileDescriptor(String inPath) throws IOException {
+        FileInputStream fileInputStream = null;
+        final FileDescriptor inFileDescriptor;
+        try {
+            fileInputStream = new FileInputStream(inPath);
+            inFileDescriptor = fileInputStream.getFD();
+        } catch (IOException e) {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException eClose) {
+                    Log.e(TAG, "Can't close input stream: ", eClose);
+                }
+            }
+            throw e;
+        }
+        return inFileDescriptor;
     }
 
 }
