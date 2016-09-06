@@ -151,7 +151,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         if(overlay instanceof Filter) {
             addOverlayFilter(overlay.getDrawableImage(), videoWidth, videoHeight);
         } else {
-            addOverlayImage(overlay.getDrawableImage(), overlay.getWidth(), overlay.getWidth(),
+            addOverlayImage(overlay.getDrawableImage(), overlay.getWidth(), overlay.getHeight(),
                     overlay.getPositionX(), overlay.getPositionY());
         }
     }

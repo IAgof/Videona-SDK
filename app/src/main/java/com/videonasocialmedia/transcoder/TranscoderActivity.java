@@ -103,13 +103,14 @@ public class TranscoderActivity extends Activity {
                     };
                     Log.d(TAG, "transcoding " + inPath + " into " + file);
 
-                    String pathName = "/sdcard/imagen.png";
+                    String pathName = "/sdcard/DCIM/tempV1.png";
+                    Drawable drawable = Drawable.createFromPath(pathName);
 
                     VideonaFormat videonaFormat = new VideonaFormat(5000*1000,1920,1080);
-                    Image imageText = new Image(getDrawable(R.drawable.overlay_filter_party),
-                            320, 240, 160, 120);
-                    Filter imageFilter = new Filter(getDrawable(R.drawable.overlay_filter_party),
-                            videonaFormat.getVideoWidth(),videonaFormat.getVideoHeight());
+                    Image imageText = new Image(pathName,1280, 720, 0, 0);
+
+
+                    Filter imageFilter = new Filter(drawable,videonaFormat.getVideoWidth(),videonaFormat.getVideoHeight());
 
                     try {
                         MediaTranscoder.getInstance().transcodeAndOverlayImageToVideo(inPath,
