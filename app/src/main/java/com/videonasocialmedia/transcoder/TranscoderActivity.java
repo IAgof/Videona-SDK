@@ -113,8 +113,8 @@ public class TranscoderActivity extends Activity {
                     Filter imageFilter = new Filter(drawable,videonaFormat.getVideoWidth(),videonaFormat.getVideoHeight());
 
                     try {
-                        MediaTranscoder.getInstance().transcodeAndOverlayImageToVideo(inPath,
-                                file.getAbsolutePath(),videonaFormat, listener, imageText);
+                        MediaTranscoder.getInstance().transcodeTrimAndOverlayImageToVideo(inPath,
+                                file.getAbsolutePath(),videonaFormat, listener, imageText, 10000,20000);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
