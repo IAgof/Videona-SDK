@@ -79,7 +79,30 @@ public class MediaTranscoder {
                                               final MediaFormatStrategy outFormatStrategy,
                                               final MediaTranscoderListener listener) throws IOException {
 
-        final FileDescriptor inFileDescriptor = getFileDescriptor(inPath);
+        FileInputStream fileInputStream = null;
+        FileDescriptor inFileDescriptor;
+        try {
+            fileInputStream = new FileInputStream(inPath);
+            inFileDescriptor = fileInputStream.getFD();
+        } catch (IOException e) {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException eClose) {
+                    Log.e(TAG, "Can't close input stream: ", eClose);
+                }
+            }
+            throw e;
+        }
+
+        return transcodeOnlyVideo(fileInputStream, inFileDescriptor, outPath, outFormatStrategy,
+                listener);
+
+    }
+
+    public Future<Void> transcodeOnlyVideo(final FileInputStream fileInputStream,final FileDescriptor inFileDescriptor, final String outPath,
+                                           final MediaFormatStrategy outFormatStrategy,
+                                           final MediaTranscoderListener listener) throws IOException {
 
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
@@ -121,12 +144,15 @@ public class MediaTranscoder {
                     @Override
                     public void run() {
                         if (exception == null) {
+                            closeStream(fileInputStream);
                             listener.onTranscodeCompleted();
                         } else {
                             Future<Void> future = futureReference.get();
                             if (future != null && future.isCancelled()) {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeCanceled();
                             } else {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeFailed(exception);
                             }
                         }
@@ -157,7 +183,33 @@ public class MediaTranscoder {
                                        final MediaTranscoderListener listener,
                                        final int startTimeUs, final int endTimeUs)  throws IOException {
 
-        final FileDescriptor inFileDescriptor = getFileDescriptor(inPath);
+
+        FileInputStream fileInputStream = null;
+        FileDescriptor inFileDescriptor;
+        try {
+            fileInputStream = new FileInputStream(inPath);
+            inFileDescriptor = fileInputStream.getFD();
+        } catch (IOException e) {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException eClose) {
+                    Log.e(TAG, "Can't close input stream: ", eClose);
+                }
+            }
+            throw e;
+        }
+
+        return transcodeAndTrimVideo(fileInputStream, inFileDescriptor,outPath,outFormatStrategy,
+                listener,startTimeUs, endTimeUs);
+
+
+    }
+
+    public Future<Void> transcodeAndTrimVideo(final FileInputStream fileInputStream,final FileDescriptor inFileDescriptor, final String outPath,
+                                              final MediaFormatStrategy outFormatStrategy,
+                                              final MediaTranscoderListener listener,
+                                              final int startTimeUs, final int endTimeUs)  throws IOException {
 
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
@@ -199,12 +251,15 @@ public class MediaTranscoder {
                     @Override
                     public void run() {
                         if (exception == null) {
+                            closeStream(fileInputStream);
                             listener.onTranscodeCompleted();
                         } else {
                             Future<Void> future = futureReference.get();
                             if (future != null && future.isCancelled()) {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeCanceled();
                             } else {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeFailed(exception);
                             }
                         }
@@ -217,6 +272,7 @@ public class MediaTranscoder {
         });
         futureReference.set(createdFuture);
         return createdFuture;
+
     }
 
     /**
@@ -234,7 +290,32 @@ public class MediaTranscoder {
                                                         final Overlay overlay) throws IOException {
 
 
-        final FileDescriptor inFileDescriptor = getFileDescriptor(inPath);
+            FileInputStream fileInputStream = null;
+            FileDescriptor inFileDescriptor;
+            try {
+                fileInputStream = new FileInputStream(inPath);
+                inFileDescriptor = fileInputStream.getFD();
+            } catch (IOException e) {
+                if (fileInputStream != null) {
+                    try {
+                        fileInputStream.close();
+                    } catch (IOException eClose) {
+                        Log.e(TAG, "Can't close input stream: ", eClose);
+                    }
+                }
+                throw e;
+            }
+
+        return transcodeAndOverlayImageToVideo(fileInputStream, inFileDescriptor, outPath, outFormatStrategy,
+                listener, overlay);
+
+    }
+
+
+    public Future<Void> transcodeAndOverlayImageToVideo(final FileInputStream fileInputStream,final FileDescriptor inFileDescriptor,final String outPath,
+                                                        final MediaFormatStrategy outFormatStrategy,
+                                                        final MediaTranscoderListener listener,
+                                                        final Overlay overlay) throws IOException {
 
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
@@ -276,12 +357,15 @@ public class MediaTranscoder {
                     @Override
                     public void run() {
                         if (exception == null) {
+                            closeStream(fileInputStream);
                             listener.onTranscodeCompleted();
                         } else {
                             Future<Void> future = futureReference.get();
                             if (future != null && future.isCancelled()) {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeCanceled();
                             } else {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeFailed(exception);
                             }
                         }
@@ -295,6 +379,8 @@ public class MediaTranscoder {
         futureReference.set(createdFuture);
         return createdFuture;
     }
+
+
 
     /**
      * Transcodes video file asynchronously.
@@ -311,9 +397,33 @@ public class MediaTranscoder {
                                                         final MediaFormatStrategy outFormatStrategy,
                                                         final MediaTranscoderListener listener,
                                                         final Overlay overlay,final int startTimeUs, final int endTimeUs) throws IOException {
+        FileInputStream fileInputStream = null;
+        FileDescriptor inFileDescriptor;
+        try {
+            fileInputStream = new FileInputStream(inPath);
+            inFileDescriptor = fileInputStream.getFD();
+        } catch (IOException e) {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException eClose) {
+                    Log.e(TAG, "Can't close input stream: ", eClose);
+                }
+            }
+            throw e;
+        }
 
 
-        final FileDescriptor inFileDescriptor = getFileDescriptor(inPath);
+        return transcodeTrimAndOverlayImageToVideo(fileInputStream,inFileDescriptor, outPath, outFormatStrategy,
+                listener, overlay, startTimeUs, endTimeUs);
+
+
+    }
+
+    public Future<Void> transcodeTrimAndOverlayImageToVideo(final FileInputStream fileInputStream,final FileDescriptor inFileDescriptor, final String outPath,
+                                                            final MediaFormatStrategy outFormatStrategy,
+                                                            final MediaTranscoderListener listener,
+                                                            final Overlay overlay,final int startTimeUs, final int endTimeUs) throws IOException {
 
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
@@ -356,12 +466,15 @@ public class MediaTranscoder {
                     @Override
                     public void run() {
                         if (exception == null) {
+                            closeStream(fileInputStream);
                             listener.onTranscodeCompleted();
                         } else {
                             Future<Void> future = futureReference.get();
                             if (future != null && future.isCancelled()) {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeCanceled();
                             } else {
+                                closeStream(fileInputStream);
                                 listener.onTranscodeFailed(exception);
                             }
                         }
@@ -374,50 +487,16 @@ public class MediaTranscoder {
         });
         futureReference.set(createdFuture);
         return createdFuture;
+
     }
 
-
-    /**
-     * Transcodes video file asynchronously.
-     * Audio track will be kept unchanged.
-     * @param inPath  FileDescriptor for input.
-     * @param outPath           File path for output.
-     * @param outFormatStrategy Strategy for output video format.
-     * @param listener          Listener instance for callback.
-     * @param overlayImagePath File path image to overlay
-     */
-    /*public Future<Void> transcodeAndOverlayImageToVideo(final String inPath, final String outPath,
-                                                        final MediaFormatStrategy outFormatStrategy,
-                                                        final MediaTranscoderListener listener,
-                                                        final String overlayImagePath) throws IOException {
-
-        Drawable overlayImage = getDrawableFromPath(overlayImagePath);
-
-
-       return this.transcodeAndOverlayImageToVideo(inPath, outPath, outFormatStrategy, listener,overlayImage);
-    }*/
-
-    private Drawable getDrawableFromPath(String overlayImagePath) {
-        return Drawable.createFromPath(overlayImagePath);
-    }
-
-    private FileDescriptor getFileDescriptor(String inPath) throws IOException {
-        FileInputStream fileInputStream = null;
-        final FileDescriptor inFileDescriptor;
+    private void closeStream(FileInputStream fileInputStream) {
         try {
-            fileInputStream = new FileInputStream(inPath);
-            inFileDescriptor = fileInputStream.getFD();
+            fileInputStream.close();
         } catch (IOException e) {
-            if (fileInputStream != null) {
-                try {
-                    fileInputStream.close();
-                } catch (IOException eClose) {
-                    Log.e(TAG, "Can't close input stream: ", eClose);
-                }
-            }
-            throw e;
+            e.printStackTrace();
         }
-        return inFileDescriptor;
     }
+
 
 }
