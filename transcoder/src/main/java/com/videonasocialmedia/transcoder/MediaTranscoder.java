@@ -20,6 +20,8 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.videonasocialmedia.transcoder.audio_mixer.AudioMixer;
+import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.format.MediaFormatStrategy;
 import com.videonasocialmedia.transcoder.overlay.Image;
@@ -496,6 +498,50 @@ public class MediaTranscoder {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+
+    public Future<Void> mixTwoAudioFiles(final String inputFile1, final String inputFile2, final int volume,
+                                         final String tempDirectory, final String outputFile, final OnAudioMixerListener listener) throws IOException {
+
+        Looper looper = Looper.myLooper();
+        if (looper == null) looper = Looper.getMainLooper();
+        final Handler handler = new Handler(looper);
+        final AtomicReference<Future<Void>> futureReference = new AtomicReference<>();
+        final Future<Void> createdFuture = mExecutor.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                Exception caughtException = null;
+
+                    AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
+                            outputFile, listener);
+
+                    mixer.export();
+
+                final Exception exception = caughtException;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (exception == null) {
+                            listener.onAudioMixerSuccess(outputFile);
+                        } else {
+                            Future<Void> future = futureReference.get();
+                            if (future != null && future.isCancelled()) {
+                                listener.onAudioMixerCanceled();
+                            } else {
+                                listener.onAudioMixerError(exception.getMessage());
+                            }
+                        }
+                    }
+                });
+
+                if (exception != null) throw exception;
+                return null;
+            }
+        });
+        futureReference.set(createdFuture);
+        return createdFuture;
+
     }
 
 
