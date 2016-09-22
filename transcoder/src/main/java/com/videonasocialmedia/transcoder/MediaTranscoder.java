@@ -501,7 +501,7 @@ public class MediaTranscoder {
     }
 
 
-    public Future<Void> mixTwoAudioFiles(final String inputFile1, final String inputFile2, final int volume,
+    public Future<Void> mixTwoAudioFiles(final String inputFile1, final String inputFile2, final float volume,
                                          final String tempDirectory, final String outputFile, final OnAudioMixerListener listener) throws IOException {
 
         Looper looper = Looper.myLooper();

@@ -25,8 +25,10 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
+import java.nio.channels.FileChannel;
 
 public class MixSound {
 
@@ -58,142 +60,101 @@ public class MixSound {
     private FileInputStream fis1, fis2;
 
 
-    // Second method, create a white noisy background.
-    private void mixSound2() throws IOException {
+    public void mixTwoSoundAdvanced(String inputFileOne, String inputFileTwo, float scaleFactor,
+                            String outputFile) throws IOException {
 
-        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
-                48000, AudioFormat.CHANNEL_OUT_STEREO,
-                AudioFormat.ENCODING_PCM_16BIT, 48000, AudioTrack.MODE_STREAM);
+        File inputFile1 = new File(inputFileOne);
+        File inputFile2 = new File(inputFileTwo);
 
+        RandomAccessFile accessFileOne = new RandomAccessFile (inputFile1, "r");
+        FileChannel inChannel1 = accessFileOne.getChannel();
 
-        File inputFile1 = new File(UtilsAudio.mixfilePathInputPCM1);
-        File inputFile2 = new File(UtilsAudio.mixfilePathInputPCM2);
+        RandomAccessFile accessFileTwo   = new RandomAccessFile (inputFile2, "r");
+        FileChannel inChannel2 = accessFileTwo.getChannel();
 
-        fis1 = new FileInputStream(inputFile1);
-        fis2 = new FileInputStream(inputFile2);
+        int SIZE_4MB = 1024*1024*4;
 
-        length_array_music = Math.max(fis1.available(), fis2.available());
+        ByteBuffer buffer1 = ByteBuffer.allocate(SIZE_4MB);
+        ByteBuffer buffer2 = ByteBuffer.allocate(SIZE_4MB);
+        int i = 0;
 
+        int maxFlip = (int) Math.max(accessFileOne.length() / SIZE_4MB, accessFileTwo.length()/SIZE_4MB);
 
-        arrayMusic1 = null;
-        arrayMusic1 = new byte[fis1.available()];
+        int indexOutput = 0;
+        int sizeChannel1 = (int) inChannel1.size();
+        int sizeChannel2 = (int) inChannel2.size();
 
+        long maxSizeOutput = Math.max(accessFileOne.length(), accessFileTwo.length());
+        output = new byte[(int)maxSizeOutput];
+        int maxLength =  Math.max(buffer1.limit(), buffer2.limit());
 
-        arrayMusic2 = null;
-        arrayMusic2 = new byte[fis2.available()];
+        while(inChannel2.read(buffer2) > 0)
+        {
 
-
-        arrayMusic1 = createMusicArray(fis1);
-        fis1.close();
-
-        arrayMusic2 = createMusicArray(fis2);
-        fis2.close();
-
-
-        output = new byte[length_array_music];
-
-        audioTrack.play();
-
-        if(arrayMusic1.length > arrayMusic2.length) {
-
-            for (int i = 0; i < arrayMusic2.length; i++) {
-
-                    float samplef1 = (arrayMusic1[i] / 128.0f);
-                    float samplef2 = (arrayMusic2[i] / 128.0f);
-                    float mixed = samplef2 + samplef1;
-
-                    // reduce the volume a bit:
-                    mixed *= 0.8;
-
-                    // hard clipping
-                    if (mixed > 1.0f) mixed = 1.0f;
-                    if (mixed < -1.0f) mixed = -1.0f;
-
-                    // Soft clip (tanh)
-                    //mixed = (float)Math.tanh(mixed);
-                                    /*
-                     // Soft clip (tanh)
-                      mixed = (float)Math.tanh((double)mixed);
-
-                     short outputSample = (short)(mixed * 32768.0f);
-                    */
-
-                    byte outputSample = (byte) (mixed * 128.0f);
-                    output[i] = outputSample;
+            if(indexOutput + maxLength > output.length){
+                maxLength = output.length - indexOutput;
+                Log.d(LOG_TAG, "last Flip");
 
             }
 
-            for (int i = arrayMusic2.length; i < arrayMusic1.length; i++) {
+            if(indexOutput < Math.min(sizeChannel1, sizeChannel2)) {
 
-                // for(int k = arrayMusic2.length; k<arrayMusic1.length; k++){
-                // only arrayMusic1 data
-                float mixed = arrayMusic1[i] / 128.0f;
+                inChannel1.read(buffer1);
 
-                // reduce the volume a bit:
-                mixed *= 0.8;
-                // hard clipping
-                if (mixed > 1.0f) mixed = 1.0f;
-                if (mixed < -1.0f) mixed = -1.0f;
+                buffer2.flip();
+                buffer1.flip();
 
-                byte outputSample = (byte) (mixed * 128.0f);
-                output[i] = outputSample;
+                byte[] tempOutput = manipulateSamples(adjustVolume(buffer1.array(), scaleFactor),
+                        adjustVolume(buffer2.array(), (1-scaleFactor)));
 
-                //}
 
+                for (int j = 0; j < maxLength; j++) {
+                    output[indexOutput + j] = tempOutput[j];
+                }
+
+                buffer1.clear(); // do something with the data and clear/compact it.
+                buffer2.clear();
+
+            } else {
+
+                for (int j = 0; j < maxLength; j++) {
+                    if(sizeChannel1 >= sizeChannel2) {
+                        buffer1.flip();
+                        output[indexOutput + j] = buffer1.array()[j];
+                        buffer1.clear();
+
+                        inChannel2.close();
+                        accessFileTwo.close();
+
+                    } else {
+                        buffer2.flip();
+                        output[indexOutput + j] = buffer2.array()[j];
+                        buffer2.clear();
+
+                        inChannel1.close();
+                        accessFileOne.close();
+                    }
+                }
             }
 
-        } else {
+            indexOutput = indexOutput + maxLength;
 
-            for (int i = 0; i < arrayMusic1.length; i++) {
+            Log.d(LOG_TAG, "buffer flip " + i++ + " indexOutput " + indexOutput + " output " + output.length);
 
-                float samplef1 = (arrayMusic1[i] / 128.0f);
-                float samplef2 = (arrayMusic2[i] / 128.0f);
-                float mixed = samplef2 + samplef1;
-
-                // reduce the volume a bit:
-                mixed *= 0.8;
-
-                // hard clipping
-                if (mixed > 1.0f) mixed = 1.0f;
-                if (mixed < -1.0f) mixed = -1.0f;
-
-                // Soft clip (tanh)
-                //mixed = (float)Math.tanh(mixed);
-                                    /*
-                     // Soft clip (tanh)
-                      mixed = (float)Math.tanh((double)mixed);
-
-                     short outputSample = (short)(mixed * 32768.0f);
-                    */
-
-                byte outputSample = (byte) (mixed * 128.0f);
-                output[i] = outputSample;
-
-            }
-
-            for (int i = arrayMusic1.length; i < arrayMusic2.length; i++) {
-
-                // for(int k = arrayMusic2.length; k<arrayMusic1.length; k++){
-                // only arrayMusic1 data
-                float mixed = arrayMusic2[i] / 128.0f;
-
-                // reduce the volume a bit:
-                mixed *= 0.8;
-                // hard clipping
-                if (mixed > 1.0f) mixed = 1.0f;
-                if (mixed < -1.0f) mixed = -1.0f;
-
-                byte outputSample = (byte) (mixed * 128.0f);
-                output[i] = outputSample;
-
-            }
 
 
         }
 
-        audioTrack.write(output, 0, output.length);
+        inChannel1.close();
+        accessFileOne.close();
+        inChannel2.close();
+        accessFileTwo.close();
 
-        convertByteToFile(output);
+
+        convertByteToFile(output, outputFile);
+
+        listener.OnMixSoundSuccess(outputFile);
+
     }
 
     public void mixTwoSound(String inputFileOne, String inputFileTwo, float scaleFactor,
@@ -222,7 +183,6 @@ public class MixSound {
         fis2.close();
 
 
-       // float scaleFactor = 0.5f; // 30%
         output = manipulateSamples(adjustVolume(arrayMusic1,scaleFactor), adjustVolume(arrayMusic2, (1-scaleFactor)));
 
         convertByteToFile(output, outputFile);
@@ -291,14 +251,13 @@ public class MixSound {
             audioShortsOut[i] = Short.reverseBytes((short) ((audioFloats[i])*0x8000));
         }
 
-        byte byteArray[] = new byte[audioShorts1.length * 2];
+        byte byteArray[] = new byte[Math.max(audioShorts1.length,audioShorts2.length) * 2];
         ByteBuffer buffer = ByteBuffer.wrap(byteArray);
         sbuf1 = buffer.asShortBuffer();
         sbuf1.put(audioShortsOut);
         byte[] dataOutput = buffer.array();
 
         audioTrack.write(dataOutput, 0, dataOutput.length);
-
 
         return dataOutput;
 
@@ -507,6 +466,148 @@ public class MixSound {
         is.close();
 
         return bytes;
+    }
+
+    /**********************************************
+     * ********************************************
+     */
+
+    // Second method, create a white noisy background.
+    private void mixSound2() throws IOException {
+
+        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+                48000, AudioFormat.CHANNEL_OUT_STEREO,
+                AudioFormat.ENCODING_PCM_16BIT, 48000, AudioTrack.MODE_STREAM);
+
+
+        File inputFile1 = new File(UtilsAudio.mixfilePathInputPCM1);
+        File inputFile2 = new File(UtilsAudio.mixfilePathInputPCM2);
+
+        fis1 = new FileInputStream(inputFile1);
+        fis2 = new FileInputStream(inputFile2);
+
+        length_array_music = Math.max(fis1.available(), fis2.available());
+
+
+        arrayMusic1 = null;
+        arrayMusic1 = new byte[fis1.available()];
+
+
+        arrayMusic2 = null;
+        arrayMusic2 = new byte[fis2.available()];
+
+
+        arrayMusic1 = createMusicArray(fis1);
+        fis1.close();
+
+        arrayMusic2 = createMusicArray(fis2);
+        fis2.close();
+
+
+        output = new byte[length_array_music];
+
+        audioTrack.play();
+
+        if(arrayMusic1.length > arrayMusic2.length) {
+
+            for (int i = 0; i < arrayMusic2.length; i++) {
+
+                float samplef1 = (arrayMusic1[i] / 128.0f);
+                float samplef2 = (arrayMusic2[i] / 128.0f);
+                float mixed = samplef2 + samplef1;
+
+                // reduce the volume a bit:
+                mixed *= 0.8;
+
+                // hard clipping
+                if (mixed > 1.0f) mixed = 1.0f;
+                if (mixed < -1.0f) mixed = -1.0f;
+
+                // Soft clip (tanh)
+                //mixed = (float)Math.tanh(mixed);
+                                    /*
+                     // Soft clip (tanh)
+                      mixed = (float)Math.tanh((double)mixed);
+
+                     short outputSample = (short)(mixed * 32768.0f);
+                    */
+
+                byte outputSample = (byte) (mixed * 128.0f);
+                output[i] = outputSample;
+
+            }
+
+            for (int i = arrayMusic2.length; i < arrayMusic1.length; i++) {
+
+                // for(int k = arrayMusic2.length; k<arrayMusic1.length; k++){
+                // only arrayMusic1 data
+                float mixed = arrayMusic1[i] / 128.0f;
+
+                // reduce the volume a bit:
+                mixed *= 0.8;
+                // hard clipping
+                if (mixed > 1.0f) mixed = 1.0f;
+                if (mixed < -1.0f) mixed = -1.0f;
+
+                byte outputSample = (byte) (mixed * 128.0f);
+                output[i] = outputSample;
+
+                //}
+
+            }
+
+        } else {
+
+            for (int i = 0; i < arrayMusic1.length; i++) {
+
+                float samplef1 = (arrayMusic1[i] / 128.0f);
+                float samplef2 = (arrayMusic2[i] / 128.0f);
+                float mixed = samplef2 + samplef1;
+
+                // reduce the volume a bit:
+                mixed *= 0.8;
+
+                // hard clipping
+                if (mixed > 1.0f) mixed = 1.0f;
+                if (mixed < -1.0f) mixed = -1.0f;
+
+                // Soft clip (tanh)
+                //mixed = (float)Math.tanh(mixed);
+                                    /*
+                     // Soft clip (tanh)
+                      mixed = (float)Math.tanh((double)mixed);
+
+                     short outputSample = (short)(mixed * 32768.0f);
+                    */
+
+                byte outputSample = (byte) (mixed * 128.0f);
+                output[i] = outputSample;
+
+            }
+
+            for (int i = arrayMusic1.length; i < arrayMusic2.length; i++) {
+
+                // for(int k = arrayMusic2.length; k<arrayMusic1.length; k++){
+                // only arrayMusic1 data
+                float mixed = arrayMusic2[i] / 128.0f;
+
+                // reduce the volume a bit:
+                mixed *= 0.8;
+                // hard clipping
+                if (mixed > 1.0f) mixed = 1.0f;
+                if (mixed < -1.0f) mixed = -1.0f;
+
+                byte outputSample = (byte) (mixed * 128.0f);
+                output[i] = outputSample;
+
+            }
+
+
+        }
+
+        audioTrack.write(output, 0, output.length);
+
+        convertByteToFile(output);
     }
 
 }

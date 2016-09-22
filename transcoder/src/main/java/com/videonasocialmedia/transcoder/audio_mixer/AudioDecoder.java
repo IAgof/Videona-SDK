@@ -35,6 +35,7 @@ public class AudioDecoder {
     int numChannels;
     boolean isMono = false;
     int sampleRate = 0;
+    int bitRate = 192 * 1024;
 
     private int audioTrackId;
 
@@ -69,6 +70,7 @@ public class AudioDecoder {
             decoder = MediaCodec.createDecoderByType(format.getString(MediaFormat.KEY_MIME));
             //format = extractor.getTrackFormat(0);
             format.setInteger(MediaFormat.KEY_SAMPLE_RATE, sampleRate);
+            format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
             decoder.configure(format, null, null, 0);
             decoder.start();
         } catch (IOException e) {
@@ -252,6 +254,8 @@ public class AudioDecoder {
             listener.OnFileDecodedError(String.valueOf(e));
         }
         decoder.stop();
+        decoder.release();
+        extractor.release();
         listener.OnFileDecodedSuccess(inputFile);
     }
 
