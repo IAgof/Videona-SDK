@@ -514,7 +514,9 @@ public class MediaTranscoder {
                 Exception caughtException = null;
 
                     AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
-                            outputFile, listener);
+                            outputFile);
+
+                   // mixer.setOnAudioMixerListener(listener);
 
                     mixer.export();
 

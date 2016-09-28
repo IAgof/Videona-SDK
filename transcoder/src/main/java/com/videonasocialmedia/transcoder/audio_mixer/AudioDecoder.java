@@ -62,7 +62,7 @@ public class AudioDecoder {
             }
 
             numChannels = format.getInteger(MediaFormat.KEY_CHANNEL_COUNT);
-            if(numChannels == 1) isMono=true;
+            if(numChannels == 1) isMono=false;
             Log.d(LOG_TAG, "numChannels " + numChannels);
             sampleRate = format.getInteger(MediaFormat.KEY_SAMPLE_RATE);
             Log.d(LOG_TAG, "sampleRate " + sampleRate);

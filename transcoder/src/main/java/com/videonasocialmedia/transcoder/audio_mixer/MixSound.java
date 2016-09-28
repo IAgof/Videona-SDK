@@ -46,7 +46,7 @@ public class MixSound {
     private byte[] arrayMusic1;
     private byte[] arrayMusic2;
 
-    private int length_array_music;
+    private int lenght_array_music;
 
     private OnMixSoundListener listener;
 
@@ -166,22 +166,21 @@ public class MixSound {
         fis1 = new FileInputStream(inputFile1);
         fis2 = new FileInputStream(inputFile2);
 
-        length_array_music = Math.max(fis1.available(), fis2.available());
+        lenght_array_music = Math.max(fis1.available(), fis2.available());
 
         arrayMusic1 = null;
         arrayMusic1 = new byte[fis1.available()];
 
-
         arrayMusic2 = null;
         arrayMusic2 = new byte[fis2.available()];
 
+        output = new byte[lenght_array_music];
 
         arrayMusic1 = createMusicArray(fis1);
         fis1.close();
 
         arrayMusic2 = createMusicArray(fis2);
         fis2.close();
-
 
         output = manipulateSamples(adjustVolume(arrayMusic1,scaleFactor), adjustVolume(arrayMusic2, (1-scaleFactor)));
 
@@ -408,7 +407,7 @@ public class MixSound {
     public static byte[] createMusicArray(FileInputStream is) throws IOException {
 
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        //byte[] buff = new byte[length_array_music];
+        //byte[] buff = new byte[lenght_array_music];
         byte[] buff = new byte[10240];
         int i = Integer.MAX_VALUE;
         while ((i = is.read(buff, 0, buff.length)) > 0) {
@@ -486,7 +485,7 @@ public class MixSound {
         fis1 = new FileInputStream(inputFile1);
         fis2 = new FileInputStream(inputFile2);
 
-        length_array_music = Math.max(fis1.available(), fis2.available());
+        lenght_array_music = Math.max(fis1.available(), fis2.available());
 
 
         arrayMusic1 = null;
@@ -504,7 +503,7 @@ public class MixSound {
         fis2.close();
 
 
-        output = new byte[length_array_music];
+        output = new byte[lenght_array_music];
 
         audioTrack.play();
 

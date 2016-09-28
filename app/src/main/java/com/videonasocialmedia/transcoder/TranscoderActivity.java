@@ -96,6 +96,9 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
 
     private void mixAudio() {
 
+        String uno = externalDir + File.separator + "Uno.mp4";
+        String dos = externalDir + File.separator + "Dos.mp4";
+
         String inputVideo = externalDir + File.separator + "input_video.mp4";
         String inputVideo2 = externalDir + File.separator + "input_video_2.mp4";
         String inputAudio = externalDir + File.separator + "audio_folk.m4a";
@@ -121,7 +124,7 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
         }
 
         try {
-            MediaTranscoder.getInstance().mixTwoAudioFiles(inputVideo, inputAudio2, 0.5f, tempDir,outputAudio, this);
+            mFuture = MediaTranscoder.getInstance().mixTwoAudioFiles(uno, dos, 0.5f, tempDir,outputAudio, this);
         } catch (IOException e) {
             e.printStackTrace();
         }
