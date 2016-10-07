@@ -2,11 +2,11 @@ package com.videonasocialmedia.transcoder.audio_mixer;
 
 import android.support.annotation.NonNull;
 
+import com.videonasocialmedia.decoder.BuildConfig;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioEncoderListener;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnMixSoundListener;
-import com.videonasocialmedia.transcoder.engine.MediaTranscoderEngine;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +16,7 @@ import java.io.IOException;
  */
 public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener, OnAudioEncoderListener {
 
-    private boolean DEBUG = true;
+    private boolean DEBUG = BuildConfig.DEBUG;
 
     private String inputFile1;
     private String inputFile2;
@@ -90,7 +90,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener, O
         String tempMixAudio = tempDirectory + File.separator + "mixAudio.pcm";
 
         try {
-            mixSound.mixTwoSound(audioDecoder1.getOutputFile(), audioDecoder2.getOutputFile(),
+            mixSound.mixAudioTwoFiles(audioDecoder1.getOutputFile(), audioDecoder2.getOutputFile(),
                     volume, tempMixAudio);
         } catch (IOException e) {
             e.printStackTrace();
@@ -165,7 +165,8 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener, O
     public void OnFileEncodedSuccess(String outputFile) {
         if(listener!= null) listener.onAudioMixerProgress("Transcoded completed");
         if(listener!= null)  listener.onAudioMixerSuccess(outputFile);
-      //  cleanTempDirectory();
+        if(!DEBUG)
+            cleanTempDirectory();
     }
 
     @Override

@@ -21,6 +21,7 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.util.Log;
 
+import com.videonasocialmedia.decoder.BuildConfig;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioEncoderListener;
 
 import java.io.File;
@@ -43,6 +44,7 @@ public class AudioEncoder implements Runnable {
 
     int minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE, CHANNELS_COUNT, AudioFormat.ENCODING_PCM_16BIT);
 
+    private boolean DEBUG = BuildConfig.DEBUG;
     private String LOGTAG = "AudioEncoder";
 
     private MediaCodec mediaCodec;
@@ -102,7 +104,8 @@ public class AudioEncoder implements Runnable {
 
             //TODO use in a progress seekbar or similar
             percentComplete = (int) Math.round(((float) totalBytesRead / (float) inputFile.length()) * 100.0);
-            Log.v(LOGTAG, "Conversion % - " + percentComplete);
+            if(DEBUG)
+                Log.v(LOGTAG, "Conversion % - " + percentComplete);
 
         }
 
@@ -114,7 +117,8 @@ public class AudioEncoder implements Runnable {
 
         mediaMuxer.stop();
         mediaMuxer.release();
-        Log.v(LOGTAG, "Compression done ...");
+        if(DEBUG)
+            Log.v(LOGTAG, "Compression done ...");
         listener.OnFileEncodedSuccess(outputFile.getAbsolutePath());
 
     }

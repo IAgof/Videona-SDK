@@ -133,7 +133,7 @@ public class AudioDecoder {
             counter++;
             if (!sawInputEOS) {
                 inputBufIndex = decoder.dequeueInputBuffer(kTimeOutUs);
-                // Log.d(LOG_TAG, " bufIndexCheck " + bufIndexCheck);
+
                 if (inputBufIndex >= 0) {
                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
 
@@ -169,7 +169,7 @@ public class AudioDecoder {
             int res = decoder.dequeueOutputBuffer(BufInfo, kTimeOutUs);
 
             if (res >= 0) {
-                Log.i(LOG_TAG, "decoding: deqOutputBuffer >=0, counter=" + counter);
+
                 // Log.d(LOG_TAG, "got frame, size " + info.size + "/" +
                 // info.presentationTimeUs);
                 if (BufInfo.size > 0) {

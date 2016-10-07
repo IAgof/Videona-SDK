@@ -2,20 +2,15 @@ package com.videonasocialmedia.transcoder;
 
 import android.annotation.TargetApi;
 import android.app.Activity;
-import android.content.ContentResolver;
 import android.content.Intent;
-import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
-import android.os.ParcelFileDescriptor;
 import android.os.SystemClock;
 import android.provider.DocumentsContract;
-import android.provider.MediaStore;
-import android.provider.Settings;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
@@ -23,16 +18,12 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.videonasocialmedia.transcoder.audio_mixer.AudioMixer;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.overlay.Filter;
 import com.videonasocialmedia.transcoder.overlay.Image;
 
 import java.io.File;
-import java.io.FileDescriptor;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
@@ -71,11 +62,13 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
         });
 
         textViewInfoProgress = (TextView) findViewById(R.id.textViewProgressMixAudio);
+        textViewInfoProgress.setText("Videona SDK");
 
         btnMixAudio = (Button) findViewById(R.id.btnMixAudio);
         btnMixAudio.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
+                textViewInfoProgress.setText("Mezclando audio ...");
                 mixAudio();
             }
         });
@@ -96,35 +89,33 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
 
     private void mixAudio() {
 
-        String uno = externalDir + File.separator + "Uno.mp4";
-        String dos = externalDir + File.separator + "Dos.mp4";
-
-        String inputVideo = externalDir + File.separator + "input_video.mp4";
+        String inputVideo = externalDir + File.separator + "input_video_1.mp4";
         String inputVideo2 = externalDir + File.separator + "input_video_2.mp4";
-        String inputAudio = externalDir + File.separator + "audio_folk.m4a";
-        String inputAudio2 = externalDir + File.separator + "audio_birthday.m4a";
+
         String outputAudio = externalDir + File.separator + "AudioMixed_" + System.currentTimeMillis() + ".m4a";
 
         File inputFile1 = new File(inputVideo);
         if(!inputFile1.exists()){
             try {
-                Utils.copyResourceToTemp(this,externalDir, "input_video", R.raw.input_video, ".mp4");
+                textViewInfoProgress.setText("Copiando vídeo 1 a sdcard");
+                Utils.copyResourceToTemp(this,externalDir, "input_video_1", R.raw.video_uno, ".mp4");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
-        File inputFile2 = new File(inputAudio2);
+        File inputFile2 = new File(inputVideo2);
         if(!inputFile2.exists()){
             try {
-                Utils.copyResourceToTemp(this,externalDir, "audio_birthday", R.raw.audio_birthday, ".m4a");
+                textViewInfoProgress.setText("Copiando vídeo 2 a sdcard");
+                Utils.copyResourceToTemp(this,externalDir, "input_video_2", R.raw.video_dos, ".mp4");
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
 
         try {
-            mFuture = MediaTranscoder.getInstance().mixTwoAudioFiles(uno, dos, 0.5f, tempDir,outputAudio, this);
+            mFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputVideo, inputVideo2, 0.90f, tempDir,outputAudio, this);
         } catch (IOException e) {
             e.printStackTrace();
         }

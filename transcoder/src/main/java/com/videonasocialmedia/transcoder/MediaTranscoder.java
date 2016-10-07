@@ -501,7 +501,7 @@ public class MediaTranscoder {
     }
 
 
-    public Future<Void> mixTwoAudioFiles(final String inputFile1, final String inputFile2, final float volume,
+    public Future<Void> mixAudioTwoFiles(final String inputFile1, final String inputFile2, final float volume,
                                          final String tempDirectory, final String outputFile, final OnAudioMixerListener listener) throws IOException {
 
         Looper looper = Looper.myLooper();
@@ -515,8 +515,6 @@ public class MediaTranscoder {
 
                     AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
                             outputFile);
-
-                   // mixer.setOnAudioMixerListener(listener);
 
                     mixer.export();
 
@@ -543,8 +541,6 @@ public class MediaTranscoder {
         });
         futureReference.set(createdFuture);
         return createdFuture;
-
     }
-
 
 }

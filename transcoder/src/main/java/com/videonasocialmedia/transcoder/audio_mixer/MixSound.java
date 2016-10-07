@@ -60,8 +60,8 @@ public class MixSound {
     private FileInputStream fis1, fis2;
 
 
-    public void mixTwoSoundAdvanced(String inputFileOne, String inputFileTwo, float scaleFactor,
-                            String outputFile) throws IOException {
+    public void mixAudioTwoFiles(String inputFileOne, String inputFileTwo, float scaleFactor,
+                                 String outputFile) throws IOException {
 
         File inputFile1 = new File(inputFileOne);
         File inputFile2 = new File(inputFileTwo);
@@ -76,19 +76,15 @@ public class MixSound {
 
         ByteBuffer buffer1 = ByteBuffer.allocate(SIZE_4MB);
         ByteBuffer buffer2 = ByteBuffer.allocate(SIZE_4MB);
-        int i = 0;
 
-        int maxFlip = (int) Math.max(accessFileOne.length() / SIZE_4MB, accessFileTwo.length()/SIZE_4MB);
-
+        int maxLength = buffer1.limit();
         int indexOutput = 0;
         int sizeChannel1 = (int) inChannel1.size();
         int sizeChannel2 = (int) inChannel2.size();
-
         long maxSizeOutput = Math.max(accessFileOne.length(), accessFileTwo.length());
         output = new byte[(int)maxSizeOutput];
-        int maxLength =  Math.max(buffer1.limit(), buffer2.limit());
 
-        while(inChannel2.read(buffer2) > 0)
+        while(inChannel1.read(buffer1) > 0)
         {
 
             if(indexOutput + maxLength > output.length){
@@ -97,15 +93,15 @@ public class MixSound {
 
             }
 
-            if(indexOutput < Math.min(sizeChannel1, sizeChannel2)) {
+            if(indexOutput + buffer2.array().length < sizeChannel2) {
 
-                inChannel1.read(buffer1);
+                inChannel2.read(buffer2);
 
-                buffer2.flip();
                 buffer1.flip();
+                buffer2.flip();
 
-                byte[] tempOutput = manipulateSamples(adjustVolume(buffer1.array(), scaleFactor),
-                        adjustVolume(buffer2.array(), (1-scaleFactor)));
+                byte[] tempOutput = manipulateSamples(adjustVolume(buffer1.array(), (1-scaleFactor)),
+                        adjustVolume(buffer2.array(), scaleFactor));
 
 
                 for (int j = 0; j < maxLength; j++) {
@@ -117,31 +113,32 @@ public class MixSound {
 
             } else {
 
+                inChannel2.read(buffer2);
+
+                int leftOverBytes = (int) (inChannel2.size() - indexOutput);
+
+                buffer1.flip();
+                buffer2.flip();
+
+                byte[] leftOver = manipulateSamples(adjustVolume(buffer1.array(), (1-scaleFactor)),
+                        adjustVolume(buffer2.array(), scaleFactor));
+
+                byte[] aux = manipulateSamples(adjustVolume(buffer1.array(), (1-scaleFactor)),
+                        adjustVolume(buffer2.array(), 0.0f));
+
                 for (int j = 0; j < maxLength; j++) {
-                    if(sizeChannel1 >= sizeChannel2) {
-                        buffer1.flip();
-                        output[indexOutput + j] = buffer1.array()[j];
-                        buffer1.clear();
-
-                        inChannel2.close();
-                        accessFileTwo.close();
-
+                    if( j<leftOverBytes){
+                        output[indexOutput + j] = leftOver[j];
                     } else {
-                        buffer2.flip();
-                        output[indexOutput + j] = buffer2.array()[j];
-                        buffer2.clear();
-
-                        inChannel1.close();
-                        accessFileOne.close();
+                        output[indexOutput + j] = aux[j];
                     }
                 }
+
+                buffer1.clear();
+                buffer2.clear();
             }
 
             indexOutput = indexOutput + maxLength;
-
-            Log.d(LOG_TAG, "buffer flip " + i++ + " indexOutput " + indexOutput + " output " + output.length);
-
-
 
         }
 
@@ -150,47 +147,11 @@ public class MixSound {
         inChannel2.close();
         accessFileTwo.close();
 
-
         convertByteToFile(output, outputFile);
 
         listener.OnMixSoundSuccess(outputFile);
 
     }
-
-    public void mixTwoSound(String inputFileOne, String inputFileTwo, float scaleFactor,
-                            String outputFile) throws IOException {
-
-        File inputFile1 = new File(inputFileOne);
-        File inputFile2 = new File(inputFileTwo);
-
-        fis1 = new FileInputStream(inputFile1);
-        fis2 = new FileInputStream(inputFile2);
-
-        lenght_array_music = Math.max(fis1.available(), fis2.available());
-
-        arrayMusic1 = null;
-        arrayMusic1 = new byte[fis1.available()];
-
-        arrayMusic2 = null;
-        arrayMusic2 = new byte[fis2.available()];
-
-        output = new byte[lenght_array_music];
-
-        arrayMusic1 = createMusicArray(fis1);
-        fis1.close();
-
-        arrayMusic2 = createMusicArray(fis2);
-        fis2.close();
-
-        output = manipulateSamples(adjustVolume(arrayMusic1,scaleFactor), adjustVolume(arrayMusic2, (1-scaleFactor)));
-
-        convertByteToFile(output, outputFile);
-
-        listener.OnMixSoundSuccess(outputFile);
-
-    }
-
-
 
     private byte[] manipulateSamples(byte[] data1, byte[] data2) {
 
@@ -607,6 +568,45 @@ public class MixSound {
         audioTrack.write(output, 0, output.length);
 
         convertByteToFile(output);
+    }
+
+    /**********************************************
+     * ********************************************
+     *
+     *  Problem out of memory array
+     */
+
+    public void mixTwoSoundOutOfMemory(String inputFileOne, String inputFileTwo, float scaleFactor,
+                                       String outputFile) throws IOException {
+
+        File inputFile1 = new File(inputFileOne);
+        File inputFile2 = new File(inputFileTwo);
+
+        fis1 = new FileInputStream(inputFile1);
+        fis2 = new FileInputStream(inputFile2);
+
+        lenght_array_music = Math.max(fis1.available(), fis2.available());
+
+        arrayMusic1 = null;
+        arrayMusic1 = new byte[fis1.available()];
+
+        arrayMusic2 = null;
+        arrayMusic2 = new byte[fis2.available()];
+
+        output = new byte[lenght_array_music];
+
+        arrayMusic1 = createMusicArray(fis1);
+        fis1.close();
+
+        arrayMusic2 = createMusicArray(fis2);
+        fis2.close();
+
+        output = manipulateSamples(adjustVolume(arrayMusic1,scaleFactor), adjustVolume(arrayMusic2, (1-scaleFactor)));
+
+        convertByteToFile(output, outputFile);
+
+        listener.OnMixSoundSuccess(outputFile);
+
     }
 
 }
