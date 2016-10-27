@@ -20,7 +20,9 @@ import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
+import com.videonasocialmedia.transcoder.audio_mixer.AudioEffect;
 import com.videonasocialmedia.transcoder.audio_mixer.AudioMixer;
+import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.format.MediaFormatStrategy;
@@ -542,5 +544,50 @@ public class MediaTranscoder {
         futureReference.set(createdFuture);
         return createdFuture;
     }
+
+    public Future<Void> audioFadeInFadeOutToFile(final String inputFile, final int timeFadeIn,
+                                                 final int timeFadeOut, final String tempDirectory,
+                                                 final String outputFile, final OnAudioEffectListener listener) throws IOException {
+
+        Looper looper = Looper.myLooper();
+        if (looper == null) looper = Looper.getMainLooper();
+        final Handler handler = new Handler(looper);
+        final AtomicReference<Future<Void>> futureReference = new AtomicReference<>();
+        final Future<Void> createdFuture = mExecutor.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                Exception caughtException = null;
+
+                AudioEffect audioEffect = new AudioEffect(inputFile, timeFadeIn, timeFadeOut,
+                        tempDirectory, outputFile);
+               // audioEffect.setOnAudioEffectListener(listener);
+
+                audioEffect.transitionFadeInOut();
+
+                final Exception exception = caughtException;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (exception == null) {
+                            listener.onAudioEffectSuccess(outputFile);
+                        } else {
+                            Future<Void> future = futureReference.get();
+                            if (future != null && future.isCancelled()) {
+                                listener.onAudioEffectCanceled();
+                            } else {
+                                listener.onAudioEffectError(exception.getMessage());
+                            }
+                        }
+                    }
+                });
+
+                if (exception != null) throw exception;
+                return null;
+            }
+        });
+        futureReference.set(createdFuture);
+        return createdFuture;
+    }
+
 
 }

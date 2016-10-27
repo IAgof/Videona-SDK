@@ -18,6 +18,7 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.overlay.Filter;
@@ -30,7 +31,7 @@ import java.util.Date;
 import java.util.concurrent.Future;
 
 
-public class TranscoderActivity extends Activity implements OnAudioMixerListener {
+public class TranscoderActivity extends Activity implements OnAudioMixerListener, OnAudioEffectListener {
 
     private static final String TAG = "TranscoderActivity";
     private static final int REQUEST_CODE_PICK = 1;
@@ -43,6 +44,8 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
 
     Button btnMixAudio;
     TextView textViewInfoProgress;
+
+    String outputAudioFadeInOut = externalDir + File.separator + "AudioFadeInOut_" + System.currentTimeMillis() + ".m4a";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -176,11 +179,18 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
                     Image imageText = new Image(pathName,1280, 720, 0, 0);
 
 
-                    Filter imageFilter = new Filter(drawable,videonaFormat.getVideoWidth(),videonaFormat.getVideoHeight());
+                 /*   Filter imageFilter = new Filter(drawable,videonaFormat.getVideoWidth(),videonaFormat.getVideoHeight());
 
                     try {
                         MediaTranscoder.getInstance().transcodeTrimAndOverlayImageToVideo(inPath,
                                 file.getAbsolutePath(),videonaFormat, listener, imageText, 10000,20000);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }*/
+
+                    try {
+                        mFuture = MediaTranscoder.getInstance().audioFadeInFadeOutToFile(inPath,500, 500,
+                                tempDir,outputAudioFadeInOut,this);
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
@@ -251,6 +261,27 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
 
     @Override
     public void onAudioMixerCanceled() {
+
+    }
+
+    @Override
+    public void onAudioEffectSuccess(String outputFile) {
+        textViewInfoProgress.setText("Success " + outputFile);
+        textViewInfoProgress.setTextColor(Color.GREEN);
+    }
+
+    @Override
+    public void onAudioEffectProgress(String progress) {
+
+    }
+
+    @Override
+    public void onAudioEffectError(String error) {
+
+    }
+
+    @Override
+    public void onAudioEffectCanceled() {
 
     }
 }
