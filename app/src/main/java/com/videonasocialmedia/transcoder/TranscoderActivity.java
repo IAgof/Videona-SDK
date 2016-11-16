@@ -22,10 +22,10 @@ import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
-import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioEffectListener;
-import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioMixerListener;
-import com.videonasocialmedia.transcoder.format.VideonaFormat;
-import com.videonasocialmedia.transcoder.overlay.Filter;
+import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
+import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
+import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
+import com.videonasocialmedia.transcoder.video.overlay.Filter;
 
 import java.io.File;
 import java.io.IOException;

@@ -15,19 +15,17 @@
  */
 package com.videonasocialmedia.transcoder;
 
-import android.graphics.drawable.Drawable;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.Log;
 
-import com.videonasocialmedia.transcoder.audio_mixer.AudioEffect;
-import com.videonasocialmedia.transcoder.audio_mixer.AudioMixer;
-import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioEffectListener;
-import com.videonasocialmedia.transcoder.audio_mixer.listener.OnAudioMixerListener;
-import com.videonasocialmedia.transcoder.engine.MediaTranscoderEngine;
-import com.videonasocialmedia.transcoder.format.MediaFormatStrategy;
-import com.videonasocialmedia.transcoder.overlay.Image;
-import com.videonasocialmedia.transcoder.overlay.Overlay;
+import com.videonasocialmedia.transcoder.audio.AudioEffect;
+import com.videonasocialmedia.transcoder.audio.AudioMixer;
+import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
+import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
+import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
+import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
+import com.videonasocialmedia.transcoder.video.overlay.Overlay;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
