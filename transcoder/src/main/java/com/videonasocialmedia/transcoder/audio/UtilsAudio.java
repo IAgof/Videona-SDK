@@ -23,13 +23,6 @@ public class UtilsAudio {
     final public static String PATH_APP = Environment.getExternalStoragePublicDirectory(
             Environment.DIRECTORY_MOVIES) + File.separator + "AudioEngine";
 
-
-    public static String outputfilePathPCM = UtilsAudio.PATH_APP + File.separator + "audio_rock.pcm"; // "nero.pcm"; //
-
-    public static String mixfilePathInputPCM1 = UtilsAudio.PATH_APP + File.separator + "audio_uno.pcm";
-    public static String mixfilePathInputPCM2 = UtilsAudio.PATH_APP + File.separator + "audio_dos.pcm";
-
-
     // 16 bits
     public static final int RECORDER_BPP = 16;
     // 48KHz
