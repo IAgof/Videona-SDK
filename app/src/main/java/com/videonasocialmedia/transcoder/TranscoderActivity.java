@@ -151,7 +151,7 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
     if (!inputFile1.exists()) {
       try {
         textViewInfoProgress.setText("Copiando vídeo 1 a sdcard");
-        Utils.copyResourceToTemp(this, externalDir, "input_video_1", R.raw.video_uno, ".mp4");
+        Utils.copyResourceToTemp(this, externalDir, "input_video_1", R.raw.video_test_one, ".mp4");
       } catch (IOException e) {
         e.printStackTrace();
       }
@@ -161,7 +161,7 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
     if (!inputFile2.exists()) {
       try {
         textViewInfoProgress.setText("Copiando vídeo 2 a sdcard");
-        Utils.copyResourceToTemp(this, externalDir, "input_video_2", R.raw.video_dos, ".mp4");
+        Utils.copyResourceToTemp(this, externalDir, "input_video_2", R.raw.video_test_two, ".mp4");
       } catch (IOException e) {
         e.printStackTrace();
       }
