@@ -128,7 +128,7 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
 
   }
 
-  private void setFadeInFadeOut2(String tempFilePcm) throws IOException {
+  private void setFadeInFadeOutBigSizeFiles(String tempFilePcm) throws IOException {
 
     File inputFile1 = new File(tempFilePcm);
 
