@@ -287,7 +287,7 @@ public class TranscoderActivity extends Activity implements OnAudioMixerListener
     }
   }
 
-  
+
   /**
    * Get a file path from a Uri. This will get the the path for Storage Access
    * Framework Documents, as well as the _data field for the MediaStore and
