@@ -21,7 +21,6 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.util.Log;
 
-import com.videonasocialmedia.decoder.BuildConfig;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
 
 import java.io.File;
@@ -44,7 +43,7 @@ public class AudioEncoder implements Runnable {
 
     int minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE, CHANNELS_COUNT, AudioFormat.ENCODING_PCM_16BIT);
 
-    private boolean DEBUG = BuildConfig.DEBUG;
+    private boolean DEBUG = true;
     private String LOGTAG = "AudioEncoder";
 
     private MediaCodec mediaCodec;

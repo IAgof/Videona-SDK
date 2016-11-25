@@ -16,7 +16,7 @@ import android.util.AttributeSet;
 import android.util.Log;
 import android.widget.VideoView;
 
-import com.videonasocialmedia.decoder.R;
+import com.videonasocialmedia.sdk.R;
 
 
 public class AspectRatioVideoView extends VideoView {

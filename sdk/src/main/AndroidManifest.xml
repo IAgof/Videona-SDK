@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.videonasocialmedia.decoder">
+    package="com.videonasocialmedia.sdk">
 
     <application
         android:allowBackup="true"

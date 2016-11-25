@@ -24,11 +24,15 @@ import android.widget.TextView;
 import android.widget.Toast;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.MediaTranscoderListener;
-import com.videonasocialmedia.transcoder.R;
+
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Filter;
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
+import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffect;
+import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
+import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,7 +49,6 @@ import static com.videonasocialmedia.sample.MainActivity.externalDir;
 import static com.videonasocialmedia.sample.MainActivity.tempDir;
 
 /**
- * A fragment with a Google +1 button.
  * Activities that contain this fragment must implement the
  * {@link TranscoderFragment.OnFragmentInteractionListener} interface
  * to handle interaction events.
@@ -237,8 +240,8 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     if(resultCode == RESULT_OK) {
       final File file;
-      String externalDir = Environment.getExternalStoragePublicDirectory(
-          Environment.DIRECTORY_MOVIES) + File.separator;
+      String externalDir = String.valueOf(Environment.getExternalStoragePublicDirectory(
+          Environment.DIRECTORY_MOVIES));
       String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
       file = new File(externalDir, "transcode_test_" + timeStamp + ".mp4");
 
@@ -308,7 +311,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
            Drawable drawable = Drawable.createFromPath(pathName);
            Image imageText = new Image(pathName, 1280, 720, 0, 0);
            */
-          VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
+         /* VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
           Filter imageFilter = new Filter(getActivity().getDrawable(R.drawable.overlay_filter_bollywood),
               videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
 
@@ -317,7 +320,22 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
                 file.getAbsolutePath(), videonaFormat, listener, imageFilter);
           } catch (IOException e) {
             e.printStackTrace();
+          } */
+          TextToDrawable drawableGenerator = new TextToDrawable(getActivity());
+          MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+          TranscoderHelper transcoderHelper = new TranscoderHelper(drawableGenerator, mediaTranscoder);
+
+          Video video = new Video(inPath);
+          video.setTempPath(externalDir);
+          video.setClipText("Hola VideonaSDK");
+          video.setClipTextPosition(TextEffect.TextPosition.BOTTOM.name());
+          VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
+          try {
+            transcoderHelper.generateOutputVideoWithOverlayImage(video, videonaFormat, listener);
+          } catch (IOException e) {
+            e.printStackTrace();
           }
+
           break;
         }
 

@@ -27,7 +27,6 @@ import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
 import com.karumi.dexter.listener.PermissionRequest;
 import com.karumi.dexter.listener.multi.MultiplePermissionsListener;
-import com.videonasocialmedia.transcoder.R;
 
 import java.io.File;
 import java.util.List;

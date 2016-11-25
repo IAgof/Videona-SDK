@@ -2,7 +2,7 @@ package com.videonasocialmedia.transcoder.audio;
 
 import android.support.annotation.NonNull;
 
-import com.videonasocialmedia.decoder.BuildConfig;
+
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
@@ -16,7 +16,7 @@ import java.io.IOException;
  */
 public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener, OnAudioEncoderListener {
 
-    private boolean DEBUG = BuildConfig.DEBUG;
+    private boolean DEBUG = true;
 
     private String inputFile1;
     private String inputFile2;
