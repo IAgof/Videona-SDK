@@ -244,4 +244,41 @@ public class GlUtil {
 
         return textures[0];
     }
+
+    public static int createTextureFromDrawable(Drawable drawable, int alpha, int width, int height){
+        // Create an empty, mutable bitmap
+        Bitmap bitmap = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
+        // get a canvas to paint over the bitmap
+        Canvas canvas = new Canvas(bitmap);
+        canvas.drawARGB(0,0,255,0);
+
+        // get a background image from resources
+        // note the image format must match the bitmap format
+        Drawable background = drawable;
+        background.setBounds(0, 0, width, height);
+        background.draw(canvas); // draw the background to our bitmap
+        background.setAlpha(alpha);
+
+        int[] textures = new int[1];
+
+        //Generate one texture pointer...
+        GLES20.glGenTextures(1, textures, 0);
+        //...and bind it to our array
+        GLES20.glBindTexture(GLES20.GL_TEXTURE_2D, textures[0]);
+
+        //Create Nearest Filtered Texture
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MIN_FILTER, GLES20.GL_NEAREST);
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_MAG_FILTER, GLES20.GL_LINEAR);
+
+        //Different possible texture parameters, e.g. GLES20.GL_CLAMP_TO_EDGE
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_S, GLES20.GL_REPEAT);
+        GLES20.glTexParameterf(GLES20.GL_TEXTURE_2D, GLES20.GL_TEXTURE_WRAP_T, GLES20.GL_REPEAT);
+
+        //Use the Android GLUtils to specify a two-dimensional texture image from our bitmap
+        GLUtils.texImage2D(GLES20.GL_TEXTURE_2D, 0, bitmap, 0);
+        //Clean up
+        bitmap.recycle();
+
+        return textures[0];
+    }
 }

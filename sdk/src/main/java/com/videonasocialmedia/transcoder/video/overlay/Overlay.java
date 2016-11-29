@@ -55,8 +55,26 @@ public abstract class Overlay {
         overlayLayer = new FullFrameRect(program);
     }
 
+    /**
+     * Creates a texture and a shader program. It MUST be called on the GL thread
+     */
+    public final void initProgram(int alpha) {
+        textureId = GlUtil.createTextureFromDrawable(drawableImage, alpha, width, height);
+        Texture2dProgram program =
+            new Texture2dProgram(Texture2dProgram.ProgramType.TEXTURE_2D);
+        program.setTexSize(width, height);
+        overlayLayer = new FullFrameRect(program);
+    }
+
 
     public final void draw() {
+        setGlViewportSize();
+        setBlendMode();
+        overlayLayer.drawFrame(textureId, IDENTITY_MATRIX);
+    }
+
+    public final void draw(int alpha) {
+        textureId = GlUtil.createTextureFromDrawable(drawableImage, alpha, width, height);
         setGlViewportSize();
         setBlendMode();
         overlayLayer.drawFrame(textureId, IDENTITY_MATRIX);

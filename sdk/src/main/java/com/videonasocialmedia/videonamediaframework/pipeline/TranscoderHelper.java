@@ -30,31 +30,31 @@ public class TranscoderHelper {
         this.mediaTranscoder = mediaTranscoder;
   }
 
-  public void generateOutputVideoWithOverlayImageAndTrimming(Video videoToEdit,
+  public void generateOutputVideoWithOverlayImageAndTrimming(Drawable fadeTransition, Video videoToEdit,
                                                              VideonaFormat format,
                                                              MediaTranscoderListener listener)
           throws IOException {
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
             videoToEdit.getClipTextPosition());
 
-    mediaTranscoder.transcodeTrimAndOverlayImageToVideo(videoToEdit.getMediaPath(),
+    mediaTranscoder.transcodeTrimAndOverlayImageToVideo(fadeTransition, videoToEdit.getMediaPath(),
             videoToEdit.getTempPath(), format, listener, imageText, videoToEdit.getStartTime(),
             videoToEdit.getStopTime());
   }
 
-  public void generateOutputVideoWithOverlayImage(Video video, VideonaFormat format,
+  public void generateOutputVideoWithOverlayImage(Drawable fadeTransition, Video video, VideonaFormat format,
                                                   MediaTranscoderListener listener)
           throws IOException  {
     Image imageText = getImageFromTextAndPosition(video.getClipText(), video.getClipTextPosition());
 
-    mediaTranscoder.transcodeAndOverlayImageToVideo(video.getMediaPath(), video.getTempPath(),
+    mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition, video.getMediaPath(), video.getTempPath(),
             format, listener, imageText);
   }
 
-  public void generateOutputVideoWithTrimming(Video video, VideonaFormat format,
+  public void generateOutputVideoWithTrimming(Drawable fadeTransition, Video video, VideonaFormat format,
                                               MediaTranscoderListener listener)
           throws IOException {
-    mediaTranscoder.transcodeAndTrimVideo(video.getMediaPath(), video.getTempPath(), format,
+    mediaTranscoder.transcodeAndTrimVideo(fadeTransition, video.getMediaPath(), video.getTempPath(), format,
             listener, video.getStartTime(), video.getStopTime());
   }
 
