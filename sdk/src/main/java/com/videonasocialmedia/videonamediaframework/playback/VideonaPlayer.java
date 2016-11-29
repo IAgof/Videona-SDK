@@ -18,7 +18,7 @@ public interface VideonaPlayer {
 
   void onPause();
 
-  void setListener(VideonaPlayerExo.VideonaPlayerListener videonaPlayerListener);
+  void setListener(VideonaPlayerListener videonaPlayerListener);
 
   void initPreview(int instantTime);
 
