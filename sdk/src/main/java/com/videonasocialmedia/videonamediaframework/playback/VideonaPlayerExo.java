@@ -1,5 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.playback;
 
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
@@ -78,15 +79,18 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private static final int RENDERER_BUILDING_STATE_IDLE = 1;
   private static final int RENDERER_BUILDING_STATE_BUILDING = 2;
   private static final int RENDERER_BUILDING_STATE_BUILT = 3;
+  private static final int TIME_TRANSITION_FADE = 500;
   private final TextToDrawable drawableGenerator;
 
   AspectRatioVideoView videoPreview;
   SeekBar seekBar;
   ImageButton playButton;
+  ImageView imageTransitionFade;
   ImageView imageTextPreview;
   TextView textTimeCurrentSeekbar;
   TextView textTimeProjectSeekbar;
   LinearLayout seekBarLayout;
+  ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
 
   private final View videonaPlayerView;
   private VideonaPlayerListener videonaPlayerListener;
@@ -123,6 +127,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   };
   private float volumeMusic = 0.5f;
   private static final float DEFAULT_VOLUME = 0.5f;
+
+  private ValueAnimator outAnimator;
+  private ValueAnimator inAnimator;
+  private boolean isSetTransitionFadeActivated = false;
 
   /**
    * Default constructor.
@@ -188,6 +196,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       }
     });
     imageTextPreview = (ImageView) findViewById(R.id.image_text_preview);
+    imageTransitionFade = (ImageView) findViewById(R.id.image_transition_fade);
     textTimeCurrentSeekbar = (TextView) findViewById(R.id.video_view_time_current);
     textTimeProjectSeekbar = (TextView) findViewById(R.id.video_view_time_project);
     seekBarLayout = (LinearLayout) findViewById(R.id.video_view_seekbar_layout);
@@ -215,6 +224,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     initClipList();
     initSeekBar();
     clipTimesRanges = new ArrayList<>();
+    setupInAnimator();
+    setupOutAnimator();
   }
 
   private void initMusicPlayer() {
@@ -251,22 +262,54 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
           setSeekBarProgress(progress);
           currentTimePositionInList = progress;
           // detect end of trimming and play next clip or stop
-          if (isEndOfCurrentClip()) {
+
+          if(isSetTransitionFadeActivated) {
+            if (isPlaying() && isStartOfCurrentClip()) {
+              inAnimator.start();
+            }
+            if (isPlaying() && isEndOfCurrentClip()) {
+              outAnimator.start();
+            }
+          }
+
+          if(isCurrentClipEnded()){
             playNextClip();
           }
+
         }
       } catch (Exception exception) {
         Log.d(TAG, "updateSeekBarProgress: exception updating videonaplayer seekbar");
         Log.d(TAG, String.valueOf(exception));
       }
+
       if (isPlaying()) {
         seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
       }
     }
   }
 
-  private boolean isEndOfCurrentClip() {
+  private boolean isCurrentClipEnded() {
     return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper();
+  }
+
+  private boolean isEndOfCurrentClip() {
+    int seekBarProgress = seekBar.getProgress();
+    int timeEndClip = (int) clipTimesRanges.get(currentClipIndex()).getUpper();
+    //return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper() - TIME_TRANSITION_FADE;
+    return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE) );
+  }
+
+  private boolean isStartOfCurrentClip() {
+
+    int timeStartLastClip;
+    if(currentClipIndex() > 0){
+      timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
+    } else {
+      timeStartLastClip = 0;
+    }
+    int seekBarProgress = seekBar.getProgress();
+
+    return ((seekBarProgress > timeStartLastClip) && (seekBarProgress < (timeStartLastClip + TIME_TRANSITION_FADE)));
   }
 
   /***
@@ -501,6 +544,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   @Override
+  public void setTransitionFade(){
+    isSetTransitionFadeActivated = true;
+  }
+
+  @Override
   public int getCurrentPosition() {
     return currentTimePositionInList;
   }
@@ -545,6 +593,36 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
         text, textPosition, Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
     imageTextPreview.setImageDrawable(textDrawable);
+  }
+
+  private void setupInAnimator() {
+    inAnimator = ValueAnimator.ofFloat(1f, 0f);
+
+    inAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+      @Override
+      public void onAnimationUpdate(ValueAnimator animation) {
+        imageTransitionFade.setAlpha((Float) animation.getAnimatedValue());
+      }
+    });
+
+    inAnimator.setDuration(TIME_TRANSITION_FADE);
+    inAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    inAnimator.setRepeatCount(0);
+  }
+
+  private void setupOutAnimator() {
+    outAnimator = ValueAnimator.ofFloat(0f, 1f);
+
+    outAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+      @Override
+      public void onAnimationUpdate(ValueAnimator animation) {
+        imageTransitionFade.setAlpha((Float) animation.getAnimatedValue());
+      }
+    });
+
+    outAnimator.setDuration(TIME_TRANSITION_FADE);
+    outAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    outAnimator.setRepeatCount(0);
   }
 
   /***
@@ -613,6 +691,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     playButton.setVisibility(View.INVISIBLE);
   }
 
+
   @Override
   public void onStartTrackingTouch(SeekBar seekBar) {
 
@@ -637,6 +716,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     } else {
       pausePreview();
       seekToClip(0);
+      imageTransitionFade.setAlpha(0f);
     }
     notifyNewClipPlayed();
   }
