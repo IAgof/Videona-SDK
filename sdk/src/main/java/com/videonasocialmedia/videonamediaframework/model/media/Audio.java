@@ -28,6 +28,14 @@ public class Audio extends Media {
 
     /**
      * Constructor of minimum number of parameters. Default constructor.
+     */
+    public Audio(int identifier, String mediaPath, License license) {
+        // TODO(jliarte): 29/11/16 add a super constructor? query media duration?
+        super(identifier, null, mediaPath, 0, 0, license);
+    }
+
+    /**
+     * Constructor with icon path and media start time and duration.
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.Media
      */
