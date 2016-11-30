@@ -31,11 +31,10 @@ public class GetAudioFadeInFadeOutFromVideoUseCase implements OnAudioEffectListe
     this.listener = listener;
   }
 
-  public void getAudioFadeInFadeOutFromVideo(String videoToEditPath, int timeFadeInMs, int timeFadeOutMs)
-      throws IOException {
-
+  public void getAudioFadeInFadeOutFromVideo(String videoToEditPath, int timeFadeInMs,
+                                             int timeFadeOutMs) throws IOException {
     transcoderHelper.generateFileWithAudioFadeInFadeOut(videoToEditPath, timeFadeInMs,
-        timeFadeOutMs, tempDirectoryFilesAudio, tempFileAudio, (OnAudioEffectListener) this);
+        timeFadeOutMs, tempDirectoryFilesAudio, tempFileAudio, this);
   }
 
   @Override

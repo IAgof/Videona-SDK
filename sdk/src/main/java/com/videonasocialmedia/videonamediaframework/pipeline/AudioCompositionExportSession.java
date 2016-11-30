@@ -26,6 +26,7 @@ public class AudioCompositionExportSession {
   }
 
   public void exportAsyncronously(String outputPath, ExportSessionListener listener) {
+    // TODO(jliarte): 30/11/16 make this async
     ArrayList<String> audioPathList = getAudioPathListFromComposition(avComposition);
     try {
       Movie merge = appender.appendVideos(audioPathList, true);
