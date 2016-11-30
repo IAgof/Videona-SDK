@@ -8,20 +8,21 @@ import java.io.IOException;
  * Created by alvaro on 23/10/16.
  */
 
-public class ApplyAudioFadeInFadeOutToVideo implements ExportSwapAudioToVideoUseCase.OnExportEndedSwapAudioListener,
-        GetAudioFadeInFadeOutFromVideoUseCase.OnGetAudioFadeInFadeOutFromVideoListener {
-
-  private GetAudioFadeInFadeOutFromVideoUseCase getAudioFadeInFadeOutFromVideoUseCase;
-  private ExportSwapAudioToVideoUseCase exportSwapAudioToVideoUseCase;
+public class ApplyAudioFadeInFadeOutToVideo
+        implements VideoAudioSwappper.VideoAudioSwapperListener,
+        VideoAudioFadeGenerator.VideoAudioFadeListener {
+  private VideoAudioFadeGenerator videoAudioFadeGenerator;
+  private VideoAudioSwappper videoAudioSwappper;
   private Video videoToEdit;
   private OnApplyAudioFadeInFadeOutToVideoListener listener;
   private String tempPreviousPath;
   // TODO:(alvaro.martinez) 22/11/16 use project tmp directory
   private String intermediatesTempDirectory;
 
-  public ApplyAudioFadeInFadeOutToVideo(OnApplyAudioFadeInFadeOutToVideoListener listener, String intermediatesTempDirectory) {
-    getAudioFadeInFadeOutFromVideoUseCase = new GetAudioFadeInFadeOutFromVideoUseCase(this, intermediatesTempDirectory);
-    exportSwapAudioToVideoUseCase = new ExportSwapAudioToVideoUseCase(this);
+  public ApplyAudioFadeInFadeOutToVideo(OnApplyAudioFadeInFadeOutToVideoListener listener,
+                                        String intermediatesTempDirectory) {
+    videoAudioFadeGenerator = new VideoAudioFadeGenerator(this, intermediatesTempDirectory);
+    videoAudioSwappper = new VideoAudioSwappper(this);
     this.listener = listener;
     this.intermediatesTempDirectory = intermediatesTempDirectory;
   }
@@ -30,7 +31,7 @@ public class ApplyAudioFadeInFadeOutToVideo implements ExportSwapAudioToVideoUse
       throws IOException {
     this.videoToEdit = videoToEdit;
     tempPreviousPath = videoToEdit.getTempPath();
-    getAudioFadeInFadeOutFromVideoUseCase.getAudioFadeInFadeOutFromVideo(videoToEdit.getTempPath(),
+    videoAudioFadeGenerator.getAudioFadeInFadeOutFromVideo(videoToEdit.getTempPath(),
         timeFadeInMs, timeFadeOutMs);
   }
 
@@ -48,23 +49,20 @@ public class ApplyAudioFadeInFadeOutToVideo implements ExportSwapAudioToVideoUse
   public void onGetAudioFadeInFadeOutFromVideoSuccess(String audioFile) {
     // TODO:(alvaro.martinez) 22/11/16 use project tmp directory
     videoToEdit.setTempPath(intermediatesTempDirectory);
-    exportSwapAudioToVideoUseCase.export(tempPreviousPath, audioFile,
+    videoAudioSwappper.export(tempPreviousPath, audioFile,
         videoToEdit.getTempPath());
   }
 
   @Override
   public void onGetAudioFadeInFadeOutFromVideoError(String message) {
     listener.OnGetAudioFadeInFadeOutError(message, videoToEdit);
-
   }
 
   /**
    * Created by alvaro on 25/10/16.
    */
-  public static interface OnApplyAudioFadeInFadeOutToVideoListener {
-
+  public interface OnApplyAudioFadeInFadeOutToVideoListener {
     void OnGetAudioFadeInFadeOutError(String message, Video video);
-
     void OnGetAudioFadeInFadeOutSuccess(Video video);
   }
 }

@@ -17,14 +17,14 @@ import java.util.List;
  * Created by alvaro on 23/10/16.
  */
 
-public class ExportSwapAudioToVideoUseCase implements ExporterVideoSwapAudio {
+public class VideoAudioSwappper implements ExporterVideoSwapAudio {
 
-  private final OnExportEndedSwapAudioListener onExportEndedSwapAudioListener;
+  private final VideoAudioSwapperListener videoAudioSwapperListener;
   private String audioFilePath;
 
-  public ExportSwapAudioToVideoUseCase(OnExportEndedSwapAudioListener
-                                           onExportEndedSwapAudioListener) {
-    this.onExportEndedSwapAudioListener = onExportEndedSwapAudioListener;
+  public VideoAudioSwappper(VideoAudioSwapperListener
+                                    videoAudioSwapperListener) {
+    this.videoAudioSwapperListener = videoAudioSwapperListener;
   }
 
   @Override
@@ -44,14 +44,13 @@ public class ExportSwapAudioToVideoUseCase implements ExporterVideoSwapAudio {
     }
   }
 
-
   private Movie getFinalMovie(String videoFilePath, String newAudioFilePath) throws IOException {
     Movie result;
     Movie movie = MovieCreator.build(videoFilePath);
 
     File musicFile = new File(newAudioFilePath);
     if (musicFile == null) {
-      onExportEndedSwapAudioListener.onExportError("Music not found");
+      videoAudioSwapperListener.onExportError("Music not found");
     }
     ArrayList<String> audio = new ArrayList<>();
     audio.add(musicFile.getPath());
@@ -62,7 +61,6 @@ public class ExportSwapAudioToVideoUseCase implements ExporterVideoSwapAudio {
   }
 
   private Movie swapAudio(Movie movie, String audioPath, double movieDuration) throws IOException {
-
     Movie finalMovie = new Movie();
 
     List<Track> videoTrack = new LinkedList<>();
@@ -86,7 +84,6 @@ public class ExportSwapAudioToVideoUseCase implements ExporterVideoSwapAudio {
     finalMovie.addTrack(new AppendTrack(audioTracks.toArray(new Track[audioTracks.size()])));
 
     return finalMovie;
-
   }
 
   private double getMovieDuration(Movie movie) {
@@ -103,10 +100,10 @@ public class ExportSwapAudioToVideoUseCase implements ExporterVideoSwapAudio {
       com.videonasocialmedia.videonamediaframework.muxer.utils.Utils.createFile(result, outputFilePath);
       long spent = System.currentTimeMillis() - start;
       Log.d("WRITING VIDEO FILE", "time spent in millis: " + spent);
-      onExportEndedSwapAudioListener.onExportSuccess();
+      videoAudioSwapperListener.onExportSuccess();
       deleteAudioTempFile();
     } catch (IOException | NullPointerException e) {
-      onExportEndedSwapAudioListener.onExportError(String.valueOf(e));
+      videoAudioSwapperListener.onExportError(String.valueOf(e));
     }
   }
 
@@ -114,11 +111,10 @@ public class ExportSwapAudioToVideoUseCase implements ExporterVideoSwapAudio {
     new File(audioFilePath).deleteOnExit();
   }
 
-
   /**
    * Created by jca on 27/5/15.
    */
-  public static interface OnExportEndedSwapAudioListener {
+  public interface VideoAudioSwapperListener {
       void onExportError(String error);
       void onExportSuccess();
   }
