@@ -492,7 +492,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   public void setMusic(Music music) {
     this.music = music;
     initMusicPlayer();
-    musicPlayer.seekTo(currentTimePositionInList);
+    if (musicPlayer != null) {
+      musicPlayer.seekTo(currentTimePositionInList);
+    }
   }
 
   @Override

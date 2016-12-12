@@ -25,8 +25,17 @@ public class AudioCompositionExportSession {
     this.appender = new Appender();
   }
 
-  public void exportAsyncronously(String outputPath, ExportSessionListener listener) {
-    // TODO(jliarte): 30/11/16 make this async
+  public void exportAsyncronously(final String outputPath, final ExportSessionListener listener) {
+    // TODO(jliarte): 1/12/16 explore the use of RXJava here
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        makeExport(outputPath, listener);
+      }
+    }).start();
+  }
+
+  private void makeExport(String outputPath, ExportSessionListener listener) {
     ArrayList<String> audioPathList = getAudioPathListFromComposition(avComposition);
     try {
       Movie merge = appender.appendVideos(audioPathList, true);
