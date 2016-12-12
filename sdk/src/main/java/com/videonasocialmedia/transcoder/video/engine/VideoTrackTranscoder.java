@@ -15,6 +15,7 @@
  */
 package com.videonasocialmedia.transcoder.video.engine;
 
+import android.graphics.drawable.Drawable;
 import android.media.MediaCodec;
 import android.media.MediaExtractor;
 import android.media.MediaFormat;
@@ -33,12 +34,14 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private static final int DRAIN_STATE_NONE = 0;
     private static final int DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY = 1;
     private static final int DRAIN_STATE_CONSUMED = 2;
+    public static final int NUM_FRAMES_APPLY_FADE = 15;
 
     private final MediaExtractor mExtractor;
     private final int mTrackIndex;
     private final MediaFormat mOutputFormat;
     private final Muxer mMuxer;
     private final MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
+    private Drawable fadeTransition;
     private MediaCodec mDecoder;
     private MediaCodec mEncoder;
     private MediaCodecBufferCompatWrapper mDecoderInputBuffers;
@@ -53,15 +56,32 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private boolean mEncoderStarted;
     private long mWrittenPresentationTimeUs;
 
-    private int numFramesDecoded;
-
+    private int alpha = 255; // shoulde be initialize to gain. Value from 0 to 255
     private Overlay overlay;
     private int numDropFrames = 0;
     private long endVideoTimeUs;
+    private long startVideoTimeUs = 0;
+    private long startTransitionVideoTimeUs = 500000;
+    private long endTransitionVideoTimeUs = 500000;
     private boolean endOfVideoToEncode = false;
+    private long durationFileUs;
 
-    public VideoTrackTranscoder(MediaExtractor extractor, int trackIndex,
+
+  public VideoTrackTranscoder(Drawable fadeTransition, long durationFileUs, MediaExtractor extractor, int trackIndex,
+                                MediaFormat outputFormat, Muxer muxer) {
+
+        this.fadeTransition = fadeTransition;
+        this.durationFileUs = durationFileUs;
+        mExtractor = extractor;
+        mTrackIndex = trackIndex;
+        mOutputFormat = outputFormat;
+        mMuxer = muxer;
+    }
+
+    public VideoTrackTranscoder(Drawable fadeTransition, long durationFileUs, MediaExtractor extractor, int trackIndex,
                                 MediaFormat outputFormat, Muxer muxer, Overlay overlay) {
+        this.fadeTransition = fadeTransition;
+        this.durationFileUs = durationFileUs;
         mExtractor = extractor;
         mTrackIndex = trackIndex;
         mOutputFormat = outputFormat;
@@ -69,18 +89,11 @@ public class VideoTrackTranscoder implements TrackTranscoder {
         this.overlay = overlay;
     }
 
-    public VideoTrackTranscoder(MediaExtractor extractor, int trackIndex,
-                                MediaFormat outputFormat, Muxer muxer) {
-        mExtractor = extractor;
-        mTrackIndex = trackIndex;
-        mOutputFormat = outputFormat;
-        mMuxer = muxer;
-    }
-
 
     @Override
     public void setup() {
 
+        endTransitionVideoTimeUs = durationFileUs - endTransitionVideoTimeUs;
         mExtractor.selectTrack(mTrackIndex);
         try {
             mEncoder = MediaCodec.createEncoderByType(mOutputFormat.getString(MediaFormat.KEY_MIME));
@@ -105,9 +118,9 @@ public class VideoTrackTranscoder implements TrackTranscoder {
         int videoWidth = mOutputFormat.getInteger(MediaFormat.KEY_WIDTH);
         int videoHeight = mOutputFormat.getInteger(MediaFormat.KEY_HEIGHT);
         if(overlay == null) {
-            mDecoderOutputSurfaceWrapper = new OutputSurface(videoWidth, videoHeight);
+            mDecoderOutputSurfaceWrapper = new OutputSurface(fadeTransition, videoWidth, videoHeight);
         } else {
-            mDecoderOutputSurfaceWrapper = new OutputSurface(overlay, videoWidth, videoHeight);
+            mDecoderOutputSurfaceWrapper = new OutputSurface(fadeTransition, overlay, videoWidth, videoHeight);
         }
 
         try {
@@ -125,24 +138,26 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     @Override
     public void advanceStart(long startTime) {
 
-        long timeUs = startTime*1000;
+        startVideoTimeUs = startTime*1000;
+        startTransitionVideoTimeUs += startVideoTimeUs;
 
-        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        mExtractor.seekTo(startVideoTimeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime());
-        while(mExtractor.getSampleTime()<timeUs) {
+        while(mExtractor.getSampleTime()<startVideoTimeUs) {
             mExtractor.advance();
             Log.d(TAG, "seekTo Previous advance extractor " + mExtractor.getSampleTime());
             numDropFrames++;
             Log.d("MediaTranscoderEngine", "advanceVideo frame " + numDropFrames);
         }
 
-        mExtractor.seekTo(timeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
+        mExtractor.seekTo(startVideoTimeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
 
     }
 
     @Override
     public void endOfDecoder(long endTimeMs) {
         endVideoTimeUs = endTimeMs*1000;
+        endTransitionVideoTimeUs = endVideoTimeUs - (durationFileUs - endTransitionVideoTimeUs);
     }
 
     @Override
@@ -251,11 +266,24 @@ public class VideoTrackTranscoder implements TrackTranscoder {
         mDecoder.releaseOutputBuffer(result, doRender);
         if (doRender) {
 
+            long instantTime = mExtractor.getSampleTime();
             mDecoderOutputSurfaceWrapper.awaitNewImage();
-            mDecoderOutputSurfaceWrapper.drawImage();
 
-            if((numFramesDecoded > numDropFrames) ){
+            if (instantTime > startVideoTimeUs && instantTime < startTransitionVideoTimeUs) {
+              alpha = Math.max(0, alpha - (255/ NUM_FRAMES_APPLY_FADE));
+              mDecoderOutputSurfaceWrapper.drawImageFadeTransition(alpha);
+              Log.d(TAG, "alpha " + alpha);
+            } else {
+              if (instantTime > endTransitionVideoTimeUs) {
+                alpha = alpha + (255/ NUM_FRAMES_APPLY_FADE);
+                mDecoderOutputSurfaceWrapper.drawImageFadeTransition(Math.min(alpha,255));
+                Log.d(TAG, "alpha " + alpha);
+              } else {
+                mDecoderOutputSurfaceWrapper.drawImage();
+              }
+            }
 
+            if((instantTime > startVideoTimeUs) ){
                 mEncoderInputSurfaceWrapper.setPresentationTime(mBufferInfo.presentationTimeUs * 1000);
                 mEncoderInputSurfaceWrapper.swapBuffers();
 
@@ -263,10 +291,6 @@ public class VideoTrackTranscoder implements TrackTranscoder {
                     endOfVideoToEncode = true;
                 }
             }
-
-            numFramesDecoded++;
-           // Log.d(TAG, "numFramesDecoded " + numFramesDecoded);
-
         }
         return DRAIN_STATE_CONSUMED;
     }

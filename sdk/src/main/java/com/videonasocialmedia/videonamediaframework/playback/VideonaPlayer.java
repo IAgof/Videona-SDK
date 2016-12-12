@@ -42,6 +42,8 @@ public interface VideonaPlayer {
 
   void setVolumen(float volume);
 
+  void setTransitionFade();
+
   int getCurrentPosition();
 
   void setSeekBarProgress(int progress);

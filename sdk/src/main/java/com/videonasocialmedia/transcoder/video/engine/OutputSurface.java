@@ -30,12 +30,14 @@ import android.os.Trace;
 import android.util.Log;
 import android.view.Surface;
 
+import com.videonasocialmedia.sdk.R;
 import com.videonasocialmedia.transcoder.video.Filters;
 import com.videonasocialmedia.transcoder.video.FullFrameRect;
 import com.videonasocialmedia.transcoder.video.Texture2dProgram;
 import com.videonasocialmedia.transcoder.video.overlay.Filter;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
+import com.videonasocialmedia.transcoder.video.overlay.TransitionFade;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -80,6 +82,7 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
     private FullFrameRect mFullScreen;
     private int mTextureId;
     private List<Overlay> overlayList;
+    private List<Overlay> overlayFadeList;
     private Image image;
     private boolean mEncodedFirstFrame;
     private boolean mThumbnailRequested;
@@ -120,33 +123,33 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Creates an OutputSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    public OutputSurface(int width, int height) {
+    public OutputSurface(Drawable drawableFade, int width, int height) {
 
         this.videoWidth = width;
         this.videoHeight = height;
 
-        setup();
+        setup(drawableFade);
     }
 
     /**
      * Creates an OutputSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    public OutputSurface(Drawable drawable, int videoWidth, int videoHeight) {
+    public OutputSurface(Drawable drawableFade, Drawable drawableFilter, int videoWidth, int videoHeight) {
 
         this.videoWidth = videoWidth;
         this.videoHeight = videoHeight;
 
-        setup();
-        addOverlayFilter(drawable,videoWidth, videoHeight);
+        setup(drawableFade);
+        addOverlayFilter(drawableFilter,videoWidth, videoHeight);
     }
 
-    public OutputSurface(Overlay overlay, int videoWidth, int videoHeight) {
+    public OutputSurface(Drawable drawableFade, Overlay overlay, int videoWidth, int videoHeight) {
 
         this.videoWidth = videoWidth;
         this.videoHeight = videoHeight;
 
-        setup();
+        setup(drawableFade);
 
         if(overlay instanceof Filter) {
             addOverlayFilter(overlay.getDrawableImage(), videoWidth, videoHeight);
@@ -161,7 +164,9 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Creates instances of TextureRender and SurfaceTexture, and a Surface associated
      * with the SurfaceTexture.
      */
-    private void setup() {
+    private void setup(Drawable drawableFade) {
+
+        addOverlayFadeIn(drawableFade, videoWidth, videoHeight);
 
         synchronized (mSurfaceTextureFence) {
 
@@ -405,6 +410,62 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     }
 
+    public void drawImageFadeTransition(int alpha) {
+        mTextureRender.drawFrame(mSurfaceTexture);
+
+        mFrameNum++;
+
+        if (TRACE) Trace.endSection();
+        if (mCurrentFilter != mNewFilter) {
+            Filters.updateFilter(mFullScreen, mNewFilter);
+            mCurrentFilter = mNewFilter;
+            mIncomingSizeUpdated = true;
+        }
+
+        if (mIncomingSizeUpdated) {
+            mFullScreen.getProgram().setTexSize(videoWidth, videoHeight);
+            mIncomingSizeUpdated = false;
+        }
+
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
+
+        mSurfaceTexture.getTransformMatrix(mTransform);
+        if (TRACE) Trace.beginSection("drawVEncoderFrame");
+        GLES20.glViewport(0, 0,videoWidth, videoHeight);
+        mFullScreen.drawFrame(mTextureId, mTransform);
+
+        if (overlayFadeList != null && overlayFadeList.size() > 0) {
+            GLES20.glEnable(GLES20.GL_BLEND);
+            for (Overlay overlay : overlayFadeList) {
+                if (!overlay.isInitialized())
+                    overlay.initProgram(alpha);
+                overlay.draw(alpha);
+            }
+        }
+
+        if (image != null) {
+            if (!image.isInitialized())
+                image.initProgram();
+            image.draw();
+        }
+        if (TRACE) Trace.endSection();
+        if (!mEncodedFirstFrame) {
+            mEncodedFirstFrame = true;
+        }
+
+        if (mThumbnailRequestedOnFrame == mFrameNum) {
+            mThumbnailRequested = true;
+        }
+        if (mThumbnailRequested) {
+            saveFrameAsImage();
+            mThumbnailRequested = false;
+        }
+
+    }
+
+
+
     /**
      * Called from Renderer thread
      *
@@ -459,6 +520,17 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
         }
         overlayList.add(overlayToAdd);
     }
+
+    public void addOverlayFadeIn(Drawable transitionFade, int width, int height) {
+        Overlay overlayToAdd = new TransitionFade(transitionFade, width, height);
+        if (overlayFadeList == null) {
+            overlayFadeList = new ArrayList<>();
+            if (mTextureRender != null)
+                mTextureRender.setOverlayFadeList(overlayFadeList);
+        }
+        overlayFadeList.add(overlayToAdd);
+    }
+
 
 
     public void removeOverlayFilter(Overlay overlay) {

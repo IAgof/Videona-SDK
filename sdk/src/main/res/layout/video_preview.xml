@@ -51,6 +51,15 @@
                 android:visibility="gone"
                 />
 
+            <ImageView
+                android:id="@+id/image_transition_fade"
+                android:src="@drawable/alpha_transition_black"
+                android:scaleType="fitStart"
+                android:alpha="0"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_alignBottom="@+id/video_editor_preview"/>
+
     </RelativeLayout>
 
     <LinearLayout

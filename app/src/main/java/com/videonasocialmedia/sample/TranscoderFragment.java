@@ -6,6 +6,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -14,6 +15,7 @@ import android.os.SystemClock;
 import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
+import android.support.v4.content.ContextCompat;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -92,6 +94,8 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
   String outputAudioFadeInOut = externalDir + File.separator + "AudioFadeInOut_" +
       System.currentTimeMillis() + ".m4a";
 
+  Drawable fadeTransition;
+
   public TranscoderFragment() {
     // Required empty public constructor
   }
@@ -111,6 +115,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
     args.putString(ARG_PARAM1, param1);
     args.putString(ARG_PARAM2, param2);
     fragment.setArguments(args);
+
     return fragment;
   }
 
@@ -121,6 +126,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       mParam1 = getArguments().getString(ARG_PARAM1);
       mParam2 = getArguments().getString(ARG_PARAM2);
     }
+    fadeTransition = ContextCompat.getDrawable(this.getContext(), R.drawable.alpha_transition_black);
   }
 
   @Override
@@ -284,7 +290,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
         case REQUEST_CODE_TRIM_VIDEO:{
 
           try {
-            mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(inPath,
+            mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fadeTransition, inPath,
                 file.getAbsolutePath(), new VideonaFormat(), listener, 5000, 10000);
           } catch (IOException e) {
             e.printStackTrace();
@@ -295,7 +301,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
         case REQUEST_CODE_TRANSCODE_VIDEO: {
 
           try {
-            mFuture = MediaTranscoder.getInstance().transcodeOnlyVideo(inPath,
+            mFuture = MediaTranscoder.getInstance().transcodeOnlyVideo(fadeTransition, inPath,
                 file.getAbsolutePath(), new VideonaFormat(), listener);
           } catch (IOException e) {
             e.printStackTrace();
@@ -311,31 +317,16 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
            Drawable drawable = Drawable.createFromPath(pathName);
            Image imageText = new Image(pathName, 1280, 720, 0, 0);
            */
-         /* VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
+          VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
           Filter imageFilter = new Filter(getActivity().getDrawable(R.drawable.overlay_filter_bollywood),
               videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
 
           try {
-            MediaTranscoder.getInstance().transcodeAndOverlayImageToVideo(inPath,
+            MediaTranscoder.getInstance().transcodeAndOverlayImageToVideo(fadeTransition, inPath,
                 file.getAbsolutePath(), videonaFormat, listener, imageFilter);
           } catch (IOException e) {
             e.printStackTrace();
-          } */
-          TextToDrawable drawableGenerator = new TextToDrawable(getActivity());
-          MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
-          TranscoderHelper transcoderHelper = new TranscoderHelper(drawableGenerator, mediaTranscoder);
-
-          Video video = new Video(inPath);
-          video.setTempPath(externalDir);
-          video.setClipText("Hola VideonaSDK");
-          video.setClipTextPosition(TextEffect.TextPosition.BOTTOM.name());
-          VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
-          try {
-            transcoderHelper.generateOutputVideoWithOverlayImage(video, videonaFormat, listener);
-          } catch (IOException e) {
-            e.printStackTrace();
           }
-
           break;
         }
 
