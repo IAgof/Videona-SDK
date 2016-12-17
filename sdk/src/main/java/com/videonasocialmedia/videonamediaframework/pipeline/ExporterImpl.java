@@ -31,7 +31,6 @@ import java.util.List;
  * @author Verónica Lago Fominaya
  */
 public class ExporterImpl implements Exporter {
-
     private static final int MAX_SECONDS_WAITING_FOR_TEMP_FILES = 600;
     private final String tempFilesDirectory;
     private String tempVideoExportedPath;
@@ -130,8 +129,6 @@ public class ExporterImpl implements Exporter {
         Movie result;
         if (vMComposition.hasMusic()) {
             Movie merge = appendVideos(videoTranscoded, false);
-
-//            Music music = (Music) project.getAudioTracks().get(0).getItems().getFirst();
             Music music = vMComposition.getMusic();
             // TODO(alvaro) 060616 check if music is downloaded in a repository, not here.
 //            File musicFile = Utils.getMusicFileByName(music.getMusicTitle(),

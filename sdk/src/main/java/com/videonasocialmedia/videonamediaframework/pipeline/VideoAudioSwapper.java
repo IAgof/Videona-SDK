@@ -17,19 +17,17 @@ import java.util.List;
  * Created by alvaro on 23/10/16.
  */
 
-public class VideoAudioSwappper implements ExporterVideoSwapAudio {
-
+public class VideoAudioSwapper implements ExporterVideoSwapAudio {
   private final VideoAudioSwapperListener videoAudioSwapperListener;
   private String audioFilePath;
 
-  public VideoAudioSwappper(VideoAudioSwapperListener
+  public VideoAudioSwapper(VideoAudioSwapperListener
                                     videoAudioSwapperListener) {
     this.videoAudioSwapperListener = videoAudioSwapperListener;
   }
 
   @Override
   public void export(String videoFilePath, String newAudioFilePath, String outputFilePath) {
-
     this.audioFilePath = newAudioFilePath;
 
     Movie result = null;
@@ -93,7 +91,6 @@ public class VideoAudioSwappper implements ExporterVideoSwapAudio {
     return movieDuration;
   }
 
-
   private void saveFinalVideo(Movie result, String outputFilePath) {
     try {
       long start = System.currentTimeMillis();
@@ -109,13 +106,5 @@ public class VideoAudioSwappper implements ExporterVideoSwapAudio {
 
   private void deleteAudioTempFile() {
     new File(audioFilePath).deleteOnExit();
-  }
-
-  /**
-   * Created by jca on 27/5/15.
-   */
-  public interface VideoAudioSwapperListener {
-      void onExportError(String error);
-      void onExportSuccess();
   }
 }

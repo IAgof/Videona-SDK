@@ -9,10 +9,10 @@ import java.io.IOException;
  */
 
 public class ApplyAudioFadeInFadeOutToVideo
-        implements VideoAudioSwappper.VideoAudioSwapperListener,
+        implements VideoAudioSwapper.VideoAudioSwapperListener,
         VideoAudioFadeGenerator.VideoAudioFadeListener {
   private VideoAudioFadeGenerator videoAudioFadeGenerator;
-  private VideoAudioSwappper videoAudioSwappper;
+  private VideoAudioSwapper videoAudioSwapper;
   private Video videoToEdit;
   private OnApplyAudioFadeInFadeOutToVideoListener listener;
   private String tempPreviousPath;
@@ -22,7 +22,7 @@ public class ApplyAudioFadeInFadeOutToVideo
   public ApplyAudioFadeInFadeOutToVideo(OnApplyAudioFadeInFadeOutToVideoListener listener,
                                         String intermediatesTempDirectory) {
     videoAudioFadeGenerator = new VideoAudioFadeGenerator(this, intermediatesTempDirectory);
-    videoAudioSwappper = new VideoAudioSwappper(this);
+    videoAudioSwapper = new VideoAudioSwapper(this);
     this.listener = listener;
     this.intermediatesTempDirectory = intermediatesTempDirectory;
   }
@@ -49,7 +49,7 @@ public class ApplyAudioFadeInFadeOutToVideo
   public void onGetAudioFadeInFadeOutFromVideoSuccess(String audioFile) {
     // TODO:(alvaro.martinez) 22/11/16 use project tmp directory
     videoToEdit.setTempPath(intermediatesTempDirectory);
-    videoAudioSwappper.export(tempPreviousPath, audioFile,
+    videoAudioSwapper.export(tempPreviousPath, audioFile,
         videoToEdit.getTempPath());
   }
 
