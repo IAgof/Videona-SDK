@@ -1,5 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.googlecode.mp4parser.authoring.Movie;
@@ -12,7 +13,6 @@ import com.videonasocialmedia.videonamediaframework.muxer.VideoTrimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
-import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
@@ -30,30 +30,30 @@ import java.util.List;
  * @author Juan Javier Cabanas
  * @author Verónica Lago Fominaya
  */
-public class ExporterImpl implements Exporter {
+public class VMCompositionExportSessionImpl implements VMCompositionExportSession {
     private static final int MAX_SECONDS_WAITING_FOR_TEMP_FILES = 600;
+    private static final String TAG = "VMCompositionExportSession implementation";
     private final String tempFilesDirectory;
     private String tempVideoExportedPath;
     private String tempTranscodePath;
-    private static final String TAG = "Exporter implementation";
 
     private OnExportEndedListener onExportEndedListener;
     private final VMComposition vMComposition;
     private boolean trimCorrect = true;
-    private boolean transcodeCorrect = true;
-    private ArrayList<String> videoTranscoded;
-    private int numFilesToTranscoder = 1;
-    private int numFilesTranscoded = 0;
     private Profile profile;
+    protected Trimmer audioTrimmer;
+    protected Appender appender;
 
-    public ExporterImpl(String tempFilesDirectory, VMComposition vmComposition, Profile profile,
-                        OnExportEndedListener onExportEndedListener) {
+    public VMCompositionExportSessionImpl(String tempFilesDirectory, VMComposition vmComposition, Profile profile,
+                                          OnExportEndedListener onExportEndedListener) {
         this.onExportEndedListener = onExportEndedListener;
         this.vMComposition = vmComposition;
         this.profile = profile;
         this.tempFilesDirectory = tempFilesDirectory;
         tempTranscodePath = tempFilesDirectory  + File.separator + "transcode";
         tempVideoExportedPath = tempFilesDirectory + File.separator + "export";
+        audioTrimmer = new AudioTrimmer();
+        appender = new Appender();
     }
 
     @Override
@@ -63,18 +63,19 @@ public class ExporterImpl implements Exporter {
         LinkedList<Media> medias = getMediasFromComposition();
         ArrayList<String> videoTrimmedPaths = createVideoPathList(medias);
 
-        Movie result = appendFiles(videoTrimmedPaths);
+        Movie result = createMovieFromComposition(videoTrimmedPaths);
         if (result != null) {
-            saveFinalVideo(result);
+            saveFinalVideo(result, tempFilesDirectory + File.separator + "V_EDIT_"
+                    + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".mp4");
             FileUtils.cleanDirectory(new File(tempVideoExportedPath));
         }
     }
 
     private ArrayList<String> createVideoPathList(LinkedList<Media> medias) {
         ArrayList <String> result = new ArrayList<>();
-        for (Media media:medias) {
-            Video video= (Video) media;
-            if (video.isEdited()){
+        for (Media media : medias) {
+            Video video = (Video) media;
+            if (video.isEdited()) {
                 result.add(video.getTempPath());
             } else {
                 result.add(video.getMediaPath());
@@ -125,52 +126,49 @@ public class ExporterImpl implements Exporter {
         return videoTrimmedPaths;
     }
 
-    private Movie appendFiles(ArrayList<String> videoTranscoded) {
-        Movie result;
-        if (vMComposition.hasMusic()) {
-            Movie merge = appendVideos(videoTranscoded, false);
-            Music music = vMComposition.getMusic();
-            // TODO(alvaro) 060616 check if music is downloaded in a repository, not here.
-//            File musicFile = Utils.getMusicFileByName(music.getMusicTitle(),
-//                    music.getMusicResourceId());
-            File musicFile = new File(music.getMediaPath());
-            if (musicFile == null) {
-                onExportEndedListener.onExportError("Music not found");
-            }
-            ArrayList<String> audio = new ArrayList<>();
-            audio.add(musicFile.getPath());
+    protected Movie createMovieFromComposition(ArrayList<String> videoTranscoded) {
+        Movie merge = appendVideos(videoTranscoded, true);
+        if (vMComposition.hasMusic() && checkMusicPath()) {
             double movieDuration = getMovieDuration(merge);
-            result = addAudio(merge, audio, movieDuration);
-        } else {
-            result = appendVideos(videoTranscoded, true);
+            try {
+                merge = addAudio(merge, vMComposition.getMusic().getMediaPath(), movieDuration);
+            } catch (IOException e) {
+                e.printStackTrace();
+                onExportEndedListener.onExportError(String.valueOf(e));
+            }
         }
-        return result;
+        return merge;
     }
 
-    private void saveFinalVideo(Movie result) {
+    @NonNull
+    private boolean checkMusicPath() {
+        File musicFile = new File(vMComposition.getMusic().getMediaPath());
+        if (musicFile == null) {
+            onExportEndedListener.onExportError("Music not found");
+            return false;
+        }
+        return true;
+    }
+
+    private void saveFinalVideo(Movie result, String outputFilePath) {
         try {
             long start = System.currentTimeMillis();
-            String pathVideoEdited = tempFilesDirectory + File.separator + "V_EDIT_"
-                    + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".mp4";
-            Utils.createFile(result, pathVideoEdited);
+            Utils.createFile(result, outputFilePath);
             long spent = System.currentTimeMillis() - start;
             Log.d("WRITING VIDEO FILE", "time spent in millis: " + spent);
-            onExportEndedListener.onExportSuccess(new Video(pathVideoEdited));
+            onExportEndedListener.onExportSuccess(new Video(outputFilePath));
         } catch (IOException | NullPointerException e) {
             onExportEndedListener.onExportError(String.valueOf(e));
         }
     }
 
-    private Movie appendVideos(ArrayList<String> videoTranscodedPaths, boolean addOriginalAudio) {
-        Appender appender = new Appender();
-        Movie merge;
+    protected Movie appendVideos(ArrayList<String> videoTranscodedPaths, boolean addOriginalAudio) {
         try {
-            merge = appender.appendVideos(videoTranscodedPaths, addOriginalAudio);
+            return appender.appendVideos(videoTranscodedPaths, addOriginalAudio);
         } catch (Exception e) {
-            merge = null;
             onExportEndedListener.onExportError(String.valueOf(e));
+            return null;
         }
-        return merge;
     }
 
     private double getMovieDuration(Movie mergedVideoWithoutAudio) {
@@ -180,15 +178,15 @@ public class ExporterImpl implements Exporter {
         return movieDuration;
     }
 
-    private Movie addAudio(Movie movie, ArrayList<String> audioPaths, double movieDuration) {
+    // TODO(jliarte): 19/12/16 what happens when there is more than a path? is that really needed now?
+    protected Movie addAudioList(Movie movie, ArrayList<String> audioPaths, double movieDuration) {
         ArrayList<Movie> audioList = new ArrayList<>();
         List<Track> audioTracks = new LinkedList<>();
-        Trimmer trimmer = new AudioTrimmer();
 
         // TODO change this for do while
         for (String audio : audioPaths) {
             try {
-                audioList.add(trimmer.trim(audio, 0, movieDuration));
+                audioList.add(audioTrimmer.trim(audio, 0, movieDuration));
             } catch (IOException | NullPointerException e) {
                 onExportEndedListener.onExportError(String.valueOf(e));
             }
@@ -212,6 +210,27 @@ public class ExporterImpl implements Exporter {
         }
 
         return movie;
+    }
+
+    protected Movie addAudio(Movie movie, String audioPath, double movieDuration) throws IOException {
+        Movie audioMovie = audioTrimmer.trim(audioPath, 0, movieDuration);
+        List<Track> audioTracks = extractAudioTracks(audioMovie);
+        if (audioTracks.size() > 0) {
+            movie.addTrack(new AppendTrack(audioTracks.toArray(new Track[audioTracks.size()])));
+        }
+        return movie;
+    }
+
+    // TODO(jliarte): 20/12/16 similar methods on VideoAudioSwapper
+    @NonNull
+    private List<Track> extractAudioTracks(Movie audioMovie) {
+        List<Track> audioTracks = new LinkedList<>();
+        for (Track t : audioMovie.getTracks()) {
+            if (t.getHandler().equals("soun")) {
+                audioTracks.add(t);
+            }
+        }
+        return audioTracks;
     }
 
     private void waitForOutputFilesFinished() {

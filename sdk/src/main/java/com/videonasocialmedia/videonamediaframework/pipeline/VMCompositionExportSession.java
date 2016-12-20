@@ -5,7 +5,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.Video;
 /**
  * Created by jca on 27/5/15.
  */
-public interface Exporter {
+public interface VMCompositionExportSession {
     void export();
 
     /**
@@ -13,7 +13,6 @@ public interface Exporter {
      */
     interface OnExportEndedListener {
         void onExportError(String error);
-
         void onExportSuccess(Video video);
     }
 }

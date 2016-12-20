@@ -86,7 +86,6 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
   @NonNull
   private List<Track> extractTracks(Movie movie, String trackType) {
     List<Track> videoTrack = new LinkedList<>();
-
     for (Track t : movie.getTracks()) {
       if (t.getHandler().equals(trackType)) {
         videoTrack.add(t);

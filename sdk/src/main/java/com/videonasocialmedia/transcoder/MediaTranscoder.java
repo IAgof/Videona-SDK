@@ -512,7 +512,7 @@ public class MediaTranscoder {
             @Override
             public Void call() throws Exception {
                 Exception caughtException = null;
-
+                    // TODO(jliarte): 20/12/16 we don't set audioMixer listener, do we need to do it?
                     AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
                             outputFile);
 
