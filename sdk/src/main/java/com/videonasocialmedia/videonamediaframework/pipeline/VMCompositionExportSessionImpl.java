@@ -127,8 +127,9 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     protected Movie createMovieFromComposition(ArrayList<String> videoTranscoded) {
-        Movie merge = appendVideos(videoTranscoded, true);
+        Movie merge;
         if (vMComposition.hasMusic() && checkMusicPath()) {
+            merge = appendVideos(videoTranscoded, false);
             double movieDuration = getMovieDuration(merge);
             try {
                 merge = addAudio(merge, vMComposition.getMusic().getMediaPath(), movieDuration);
@@ -136,6 +137,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 e.printStackTrace();
                 onExportEndedListener.onExportError(String.valueOf(e));
             }
+        } else {
+            merge = appendVideos(videoTranscoded, true);
         }
         return merge;
     }
