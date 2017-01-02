@@ -121,7 +121,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       }
     }
   };
-  private float volumeMusic = 0.5f;
+  private float musicVolume = 0.5f;
   private static final float DEFAULT_VOLUME = 0.5f;
 
   /**
@@ -221,7 +221,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     if (musicPlayer == null && videoHasMusic()) {
       musicPlayer = MediaPlayer.create(getContext(), Uri.parse(music.getMediaPath()));
       if (musicPlayer != null) {
-        musicPlayer.setVolume(volumeMusic, volumeMusic);
+        musicPlayer.setVolume(musicVolume, musicVolume);
       }
     }
 
@@ -238,7 +238,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     if (musicPlayer != null) {
       musicPlayer.setVolume(volume, volume);
     }
-    volumeMusic = volume;
+    musicVolume = volume;
   }
 
   private void updateSeekBarProgress() {
@@ -494,12 +494,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     initMusicPlayer();
     if (musicPlayer != null) {
       musicPlayer.seekTo(currentTimePositionInList);
+      musicVolume = music.getVolume();
+      setVolume(music.getVolume());
     }
-  }
-
-  @Override
-  public void setVolumen(float volume) {
-    setVolume(volume);
   }
 
   @Override
@@ -722,9 +719,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private void playMusicSyncWithVideo() {
     // releaseMusicPlayer();
     initMusicPlayer();
-    musicPlayer.seekTo(currentTimePositionInList);
-    if (!musicPlayer.isPlaying()) {
-      musicPlayer.start();
+    if (musicPlayer != null) {
+      musicPlayer.seekTo(currentTimePositionInList);
+      if (!musicPlayer.isPlaying()) {
+        musicPlayer.start();
+      }
     }
   }
 
@@ -737,11 +736,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
        /* // TODO(jliarte): 1/09/16 test mute
         if (player != null)
             if (shouldMute) {
-                volumeMusic = 0f;
+                musicVolume = 0f;
                 player.sendMessage(rendererBuilder.getAudioRenderer(),
-                                   MediaCodecAudioTrackRenderer.MSG_SET_VOLUME,volumeMusic);
+                                   MediaCodecAudioTrackRenderer.MSG_SET_VOLUME,musicVolume);
             } else {
-                volumeMusic = DEFAULT_VOLUME;
+                musicVolume = DEFAULT_VOLUME;
                 player.sendMessage(rendererBuilder.getAudioRenderer(),
                                    MediaCodecAudioTrackRenderer.MSG_SET_VOLUME,DEFAULT_VOLUME);
             }
@@ -784,7 +783,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     pushSurface(false);
     player.prepare(renderers);
     player.seekTo(getClipPositionFromTimeLineTime());
-    setVolume(volumeMusic);
+    setVolume(musicVolume);
     rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
   }
 

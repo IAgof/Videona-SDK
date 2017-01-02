@@ -11,4 +11,5 @@ public class Constants {
   public static final int DEFAULT_CANVAS_WIDTH = 1280;
   public static final int DEFAULT_CANVAS_HEIGHT = 720;
   public static final String DIRECTORY_NAME_TEMP_AUDIO_FILES = ".tempAudio";
+  public static final String MIXED_AUDIO_FILE_NAME = "AudioMixed" + ".m4a";
 }

@@ -12,7 +12,8 @@ public interface VMCompositionExportSession {
      * Created by jca on 27/5/15.
      */
     interface OnExportEndedListener {
-        void onExportError(String error);
         void onExportSuccess(Video video);
+        void onExportProgress(String progressMsg);
+        void onExportError(String error);
     }
 }

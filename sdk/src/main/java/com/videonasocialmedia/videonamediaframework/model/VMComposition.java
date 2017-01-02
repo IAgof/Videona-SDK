@@ -79,4 +79,5 @@ public class VMComposition {
   public boolean hasMusic() {
     return (getMusic() != null);
   }
+
 }

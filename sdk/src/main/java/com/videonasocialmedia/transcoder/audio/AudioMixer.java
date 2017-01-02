@@ -7,6 +7,7 @@ import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
+import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -85,7 +86,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     private void cleanTempDirectory() {
-        UtilsAudio.cleanDirectory(new File(tempDirectory));
+        FileUtils.cleanDirectory(new File(tempDirectory));
     }
 
     @Override

@@ -20,17 +20,17 @@ import java.util.List;
  */
 
 public class VideoAudioSwapper implements ExporterVideoSwapAudio {
-  private final VideoAudioSwapperListener videoAudioSwapperListener;
+  private VideoAudioSwapperListener videoAudioSwapperListener;
   private String audioFilePath;
 
-  public VideoAudioSwapper(VideoAudioSwapperListener
-                                    videoAudioSwapperListener) {
-    this.videoAudioSwapperListener = videoAudioSwapperListener;
+  public VideoAudioSwapper() {
   }
 
   @Override
-  public void export(String videoFilePath, String newAudioFilePath, String outputFilePath) {
+  public void export(String videoFilePath, String newAudioFilePath, String outputFilePath,
+                     VideoAudioSwapperListener videoAudioSwapperListener) {
     this.audioFilePath = newAudioFilePath;
+    this.videoAudioSwapperListener = videoAudioSwapperListener;
 
     Movie result = null;
     try {

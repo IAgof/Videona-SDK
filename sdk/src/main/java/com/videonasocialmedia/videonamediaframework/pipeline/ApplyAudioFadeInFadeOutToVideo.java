@@ -22,7 +22,7 @@ public class ApplyAudioFadeInFadeOutToVideo
   public ApplyAudioFadeInFadeOutToVideo(OnApplyAudioFadeInFadeOutToVideoListener listener,
                                         String intermediatesTempDirectory) {
     videoAudioFadeGenerator = new VideoAudioFadeGenerator(this, intermediatesTempDirectory);
-    videoAudioSwapper = new VideoAudioSwapper(this);
+    videoAudioSwapper = new VideoAudioSwapper();
     this.listener = listener;
     this.intermediatesTempDirectory = intermediatesTempDirectory;
   }
@@ -50,7 +50,7 @@ public class ApplyAudioFadeInFadeOutToVideo
     // TODO:(alvaro.martinez) 22/11/16 use project tmp directory
     videoToEdit.setTempPath(intermediatesTempDirectory);
     videoAudioSwapper.export(tempPreviousPath, audioFile,
-        videoToEdit.getTempPath());
+        videoToEdit.getTempPath(), this);
   }
 
   @Override

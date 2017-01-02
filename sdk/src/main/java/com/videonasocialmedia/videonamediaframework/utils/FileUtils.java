@@ -31,4 +31,9 @@ public class FileUtils {
       }
     }
   }
+
+  public static boolean createDirectory(String directoryPath) {
+    File dir = new File(directoryPath);
+    return !dir.exists() && dir.mkdirs();
+  }
 }
