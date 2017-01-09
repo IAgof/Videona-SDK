@@ -44,21 +44,19 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     private OnExportEndedListener onExportEndedListener;
     private final VMComposition vmComposition;
     private boolean trimCorrect = true;
-    private Profile profile;
     protected Trimmer audioTrimmer;
     protected Appender appender;
     private AudioMixer audioMixer;
 
-    public VMCompositionExportSessionImpl(VMComposition vmComposition, Profile profile, String outputFilesDirectory,
+    public VMCompositionExportSessionImpl(VMComposition vmComposition, String outputFilesDirectory,
                                           String tempFilesDirectory, OnExportEndedListener onExportEndedListener) {
         this.onExportEndedListener = onExportEndedListener;
         this.vmComposition = vmComposition;
-        this.profile = profile;
         this.outputFilesDirectory = outputFilesDirectory;
         // (jliarte): 2/01/17 originally was PATH_APP/.temporal/intermediate_files/.temAudio
-        tempAudioPath = tempFilesDirectory + File.separator + ".tempMixedAudio";
+        tempAudioPath = tempFilesDirectory;
         FileUtils.createDirectory(tempAudioPath);
-        outputAudioMixedFile = outputFilesDirectory + File.separator + Constants.MIXED_AUDIO_FILE_NAME;
+        outputAudioMixedFile = tempFilesDirectory + File.separator + Constants.MIXED_AUDIO_FILE_NAME;
         tempVideoExportedPath = outputFilesDirectory + File.separator + "export";
         audioTrimmer = new AudioTrimmer();
         appender = new Appender();

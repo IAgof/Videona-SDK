@@ -24,9 +24,8 @@ public class VideoAudioFadeGenerator implements OnAudioEffectListener {
 
   public VideoAudioFadeGenerator(VideoAudioFadeListener listener,
                                  String tempDirectory) {
-    this.tempDirectoryFilesAudio = tempDirectory + File.separator
-        + Constants.DIRECTORY_NAME_TEMP_AUDIO_FILES;
-    this.tempFileAudio = tempDirectoryFilesAudio + File.separator + "AudioFadeInOut_"
+    this.tempDirectoryFilesAudio = tempDirectory;
+    this.tempFileAudio = tempDirectory + File.separator + "AudioFadeInOut_"
         + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".m4a";
     this.listener = listener;
   }

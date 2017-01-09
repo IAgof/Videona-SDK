@@ -2,7 +2,6 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
-import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
@@ -20,12 +19,11 @@ import java.util.concurrent.Future;
  */
 public class AudioMixer implements OnAudioMixerListener {
     private OnMixAudioListener listener;
-    private String tempAudioPath;
     private String outputFilePath;
 
     public AudioMixer(String outputFilePath) {
         this.outputFilePath = outputFilePath;
-        cleanOutputFile();
+       // cleanOutputFile();
     }
 
     private void cleanOutputFile() {
@@ -38,7 +36,6 @@ public class AudioMixer implements OnAudioMixerListener {
     public void mixAudio(String inputFileOne, String inputFileTwo, float volume,
                          String tempAudioPath, OnMixAudioListener listener) {
         this.listener = listener;
-        this.tempAudioPath = tempAudioPath;
         try {
             Future<Void> mFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputFileOne,
                     inputFileTwo, volume, tempAudioPath, outputFilePath, this);
@@ -52,7 +49,7 @@ public class AudioMixer implements OnAudioMixerListener {
         this.outputFilePath = outputFileMixed;
         // TODO(jliarte): 17/12/16 new implementation call onMixAudioSuccess to finally update
         //                video in ShareActivity
-        FileUtils.cleanDirectory(new File(tempAudioPath));
+       // FileUtils.cleanDirectory(new File(tempAudioPath));
         listener.onMixAudioSuccess(outputFilePath);
     }
 
