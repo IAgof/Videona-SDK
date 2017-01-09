@@ -71,6 +71,15 @@ public class Profile {
         this.videoFrameRate = new VideoFrameRate(frameRate);
     }
 
+    public Profile(Profile profile){
+        this.resolution = profile.getResolution();
+        this.videoResolution = new VideoResolution(resolution);
+        this.quality = profile.getQuality();
+        this.videoQuality = new VideoQuality(quality);
+        this.frameRate = profile.getFrameRate();
+        this.videoFrameRate = new VideoFrameRate(frameRate);
+    }
+
     /**
      * Profile factory.
      *

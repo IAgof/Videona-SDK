@@ -231,7 +231,7 @@ public class VMCompositionExportSessionImplTest {
 
   @NonNull
   private VMCompositionExportSessionImpl getVmCompositionExportSession(VMComposition vmComposition) {
-    return new VMCompositionExportSessionImpl(vmComposition, profile, "result/path",
+    return new VMCompositionExportSessionImpl(vmComposition, "result/path",
             "temp/path", mockedExportEndedListener);
   }
 

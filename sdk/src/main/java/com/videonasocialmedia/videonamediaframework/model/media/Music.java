@@ -55,7 +55,17 @@ public class Music extends Audio {
         this.volume = volume;
     }
 
-    public float getVolume() {
+  public Music(Music item) {
+    super(item.getMusicResourceId(), item.getIconPath(), item.getSelectedIconPath(),
+        item.getMusicTitle(), item.getMediaPath(), item.getStartTime(), item.getStopTime(),
+        null, null, null, null);
+    this.colorResourceId = item.getColorResourceId();
+    this.iconResourceId = item.getIconResourceId();
+    this.author = item.getAuthor();
+    this.musicDuration = item.getMusicDuration();
+  }
+
+  public float getVolume() {
         return volume;
     }
 

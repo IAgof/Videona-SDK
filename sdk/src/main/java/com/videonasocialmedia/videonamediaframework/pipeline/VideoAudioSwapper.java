@@ -108,7 +108,7 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
       long spent = System.currentTimeMillis() - start;
       Log.d("WRITING VIDEO FILE", "time spent in millis: " + spent);
       videoAudioSwapperListener.onExportSuccess();
-      deleteAudioTempFile();
+     // deleteAudioTempFile();
     } catch (IOException | NullPointerException e) {
       videoAudioSwapperListener.onExportError(String.valueOf(e));
     }
