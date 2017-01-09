@@ -90,6 +90,9 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         } catch (IOException e) {
             onExportEndedListener.onExportError(String.valueOf(e));
             e.printStackTrace();
+        } catch (NullPointerException npe) {
+            onExportEndedListener.onExportError(String.valueOf(npe));
+            npe.printStackTrace();
         }
     }
 
