@@ -11,6 +11,7 @@
  */
 package com.videonasocialmedia.videonamediaframework.model.media.track;
 
+import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.effects.Effect;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalOrphanTransitionOnTrack;
@@ -51,7 +52,20 @@ public class AudioTrack extends Track {
         this.checkItems();
     }
 
-    /**
+  /**
+   * Copy constructor.
+   *
+   * @param audioTrack the AudioTrack to copy from.
+   */
+  public AudioTrack(AudioTrack audioTrack) throws IllegalItemOnTrack {
+    super();
+    for (Media item : audioTrack.getItems()) {
+      // TODO:(alvaro.martinez) 3/01/17 review modelling and this copy constructor as we assume here we only have Music items
+      this.insertItem(new Music((Music) item));
+    }
+  }
+
+  /**
      * Ensure there are only Audio items on items list.
      */
     private void checkItems() {

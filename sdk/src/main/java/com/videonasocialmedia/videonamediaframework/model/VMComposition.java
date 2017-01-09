@@ -2,10 +2,13 @@ package com.videonasocialmedia.videonamediaframework.model;
 
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
+import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.MediaTrack;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Videona Media Composition class for representing a media composition with audio and video
@@ -50,6 +53,14 @@ public class VMComposition {
     audioTracks.add(new AudioTrack());
   }
 
+  public VMComposition(VMComposition vmComposition) throws IllegalItemOnTrack {
+    this.mediaTrack = new MediaTrack(vmComposition.getMediaTrack());
+    this.audioTracks = new ArrayList<>();
+    for (AudioTrack audioTrack : vmComposition.getAudioTracks()) {
+      audioTracks.add(new AudioTrack(audioTrack));
+    }
+  }
+
   public int getDuration() {
     updateCompositionDuration();
     return this.duration;
@@ -79,4 +90,9 @@ public class VMComposition {
   public boolean hasMusic() {
     return (getMusic() != null);
   }
+
+  public boolean hasVideos() {
+    return getMediaTrack().getItems().size() >0;
+  }
+
 }

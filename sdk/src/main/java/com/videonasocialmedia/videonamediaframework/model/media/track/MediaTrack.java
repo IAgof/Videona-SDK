@@ -11,6 +11,7 @@
  */
 package com.videonasocialmedia.videonamediaframework.model.media.track;
 
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.effects.Effect;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalOrphanTransitionOnTrack;
@@ -50,6 +51,23 @@ public class MediaTrack extends Track {
                       HashMap<String, Transition> transitions) {
         super(items, effects, transitions);
         this.checkItems();
+    }
+
+  /**
+   * Copy constructor.
+   *
+   * @param mediaTrack mediaTrack object to copy from
+   */
+  public MediaTrack(MediaTrack mediaTrack) throws IllegalItemOnTrack {
+        super();
+      for (Media media : mediaTrack.getItems()) {
+          if (media instanceof Video) {
+              this.insertItem(new Video((Video) media));
+          } else {
+              // TODO:(alvaro.martinez) 3/01/17 review model of tracks, as we don't currently use any other type than Video in this MediaTrack
+              throw new IllegalItemOnTrack("Unused media subtype");
+          }
+      }
     }
 
     /**

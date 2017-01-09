@@ -545,14 +545,14 @@ public class MediaTranscoder {
         final Future<Void> createdFuture = mExecutor.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                Exception caughtException = null;
+                AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
+                        outputFile);
+                mixer.setOnAudioMixerListener(listener);
+                mixer.export();
 
-                    AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
-                            outputFile);
-
-                    mixer.export();
-
-                final Exception exception = caughtException;
+                // TODO(jliarte): 2/01/17 why do we do this post with if? as exception is final and
+                //                null, it will never change!
+                final Exception exception = null;
                 handler.post(new Runnable() {
                     @Override
                     public void run() {

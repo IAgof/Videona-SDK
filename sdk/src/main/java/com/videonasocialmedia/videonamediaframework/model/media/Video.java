@@ -104,7 +104,6 @@ public class Video extends Media {
     }
 
     private int getFileDuration(String path) {
-//        MediaMetadataRetriever retriever = new MediaMetadataRetriever();
         retriever.setDataSource(path);
         return Integer.parseInt(retriever.extractMetadata(
                 MediaMetadataRetriever.METADATA_KEY_DURATION));
@@ -153,7 +152,7 @@ public class Video extends Media {
 
     // TODO(jliarte): 24/10/16 review this design as it gives problem with persistence
     public boolean isEdited() {
-        return tempPath!=null;
+        return tempPath != null;
     }
 
     public void setDuration(int duration) {
