@@ -123,33 +123,35 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Creates an OutputSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    public OutputSurface(Drawable drawableFade, int width, int height) {
+    public OutputSurface(Drawable drawableFade, boolean isFadeActivated, int width, int height) {
 
         this.videoWidth = width;
         this.videoHeight = height;
 
-        setup(drawableFade);
+        setup(drawableFade, isFadeActivated);
     }
 
     /**
      * Creates an OutputSurface using the current EGL context (rather than establishing a
      * new one).  Creates a Surface that can be passed to MediaCodec.configure().
      */
-    public OutputSurface(Drawable drawableFade, Drawable drawableFilter, int videoWidth, int videoHeight) {
+    public OutputSurface(Drawable drawableFade, boolean isFadeActivated, Drawable drawableFilter,
+                         int videoWidth, int videoHeight) {
 
         this.videoWidth = videoWidth;
         this.videoHeight = videoHeight;
 
-        setup(drawableFade);
+        setup(drawableFade, isFadeActivated);
         addOverlayFilter(drawableFilter,videoWidth, videoHeight);
     }
 
-    public OutputSurface(Drawable drawableFade, Overlay overlay, int videoWidth, int videoHeight) {
+    public OutputSurface(Drawable drawableFade, boolean isFadeActivated, Overlay overlay,
+                         int videoWidth, int videoHeight) {
 
         this.videoWidth = videoWidth;
         this.videoHeight = videoHeight;
 
-        setup(drawableFade);
+        setup(drawableFade, isFadeActivated);
 
         if(overlay instanceof Filter) {
             addOverlayFilter(overlay.getDrawableImage(), videoWidth, videoHeight);
@@ -164,9 +166,10 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
      * Creates instances of TextureRender and SurfaceTexture, and a Surface associated
      * with the SurfaceTexture.
      */
-    private void setup(Drawable drawableFade) {
+    private void setup(Drawable drawableFade, boolean isFadeActivated) {
 
-        addOverlayFadeIn(drawableFade, videoWidth, videoHeight);
+        if(isFadeActivated)
+            addOverlayFadeIn(drawableFade, videoWidth, videoHeight);
 
         synchronized (mSurfaceTextureFence) {
 

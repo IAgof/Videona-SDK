@@ -30,32 +30,38 @@ public class TranscoderHelper {
         this.mediaTranscoder = mediaTranscoder;
   }
 
-  public void generateOutputVideoWithOverlayImageAndTrimming(Drawable fadeTransition, Video videoToEdit,
+  public void generateOutputVideoWithOverlayImageAndTrimming(Drawable fadeTransition,
+                                                             boolean isFadeActivated,
+                                                             Video videoToEdit,
                                                              VideonaFormat format,
                                                              MediaTranscoderListener listener)
           throws IOException {
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
             videoToEdit.getClipTextPosition());
 
-    mediaTranscoder.transcodeTrimAndOverlayImageToVideo(fadeTransition, videoToEdit.getMediaPath(),
-            videoToEdit.getTempPath(), format, listener, imageText, videoToEdit.getStartTime(),
-            videoToEdit.getStopTime());
+    mediaTranscoder.transcodeTrimAndOverlayImageToVideo(fadeTransition, isFadeActivated,
+        videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, listener, imageText,
+        videoToEdit.getStartTime(), videoToEdit.getStopTime());
   }
 
-  public void generateOutputVideoWithOverlayImage(Drawable fadeTransition, Video video, VideonaFormat format,
+  public void generateOutputVideoWithOverlayImage(Drawable fadeTransition,
+                                                  boolean isFadeActivated,
+                                                  Video video, VideonaFormat format,
                                                   MediaTranscoderListener listener)
           throws IOException  {
     Image imageText = getImageFromTextAndPosition(video.getClipText(), video.getClipTextPosition());
 
-    mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition, video.getMediaPath(), video.getTempPath(),
-            format, listener, imageText);
+    mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition, isFadeActivated,
+        video.getMediaPath(), video.getTempPath(), format, listener, imageText);
   }
 
-  public void generateOutputVideoWithTrimming(Drawable fadeTransition, Video video, VideonaFormat format,
+  public void generateOutputVideoWithTrimming(Drawable fadeTransition,
+                                              boolean isFadeActivated,
+                                              Video video, VideonaFormat format,
                                               MediaTranscoderListener listener)
           throws IOException {
-    mediaTranscoder.transcodeAndTrimVideo(fadeTransition, video.getMediaPath(), video.getTempPath(), format,
-            listener, video.getStartTime(), video.getStopTime());
+    mediaTranscoder.transcodeAndTrimVideo(fadeTransition, isFadeActivated, video.getMediaPath(),
+        video.getTempPath(), format, listener, video.getStartTime(), video.getStopTime());
   }
 
   @NonNull

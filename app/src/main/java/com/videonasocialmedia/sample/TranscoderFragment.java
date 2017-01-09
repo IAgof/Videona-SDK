@@ -95,6 +95,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       System.currentTimeMillis() + ".m4a";
 
   Drawable fadeTransition;
+  boolean isFadeActivated;
 
   public TranscoderFragment() {
     // Required empty public constructor
@@ -127,7 +128,9 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       mParam2 = getArguments().getString(ARG_PARAM2);
     }
     fadeTransition = ContextCompat.getDrawable(this.getContext(), R.drawable.alpha_transition_black);
+    isFadeActivated = getFadeTransitionActivatedFromPreferences();
   }
+
 
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container,
@@ -201,6 +204,11 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
   public void onClickMixAudio(){
     textViewInfoProgress.setText("Mezclando audio ...");
     mixAudio();
+  }
+
+  private boolean getFadeTransitionActivatedFromPreferences() {
+
+    return true;
   }
 
   private void mixAudio() {
@@ -290,8 +298,9 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
         case REQUEST_CODE_TRIM_VIDEO:{
 
           try {
-            mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fadeTransition, inPath,
-                file.getAbsolutePath(), new VideonaFormat(), listener, 5000, 10000);
+            mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fadeTransition,
+                isFadeActivated, inPath, file.getAbsolutePath(), new VideonaFormat(), listener,
+                5000, 10000);
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -301,8 +310,8 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
         case REQUEST_CODE_TRANSCODE_VIDEO: {
 
           try {
-            mFuture = MediaTranscoder.getInstance().transcodeOnlyVideo(fadeTransition, inPath,
-                file.getAbsolutePath(), new VideonaFormat(), listener);
+            mFuture = MediaTranscoder.getInstance().transcodeOnlyVideo(fadeTransition,
+                isFadeActivated, inPath, file.getAbsolutePath(), new VideonaFormat(), listener);
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -322,8 +331,9 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
               videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
 
           try {
-            MediaTranscoder.getInstance().transcodeAndOverlayImageToVideo(fadeTransition, inPath,
-                file.getAbsolutePath(), videonaFormat, listener, imageFilter);
+            MediaTranscoder.getInstance().transcodeAndOverlayImageToVideo(fadeTransition,
+                isFadeActivated, inPath, file.getAbsolutePath(), videonaFormat, listener,
+                imageFilter);
           } catch (IOException e) {
             e.printStackTrace();
           }

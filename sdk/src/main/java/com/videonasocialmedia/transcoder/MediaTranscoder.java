@@ -79,6 +79,7 @@ public class MediaTranscoder {
      * @param listener          Listener instance for callback.
      */
     public Future<Void> transcodeOnlyVideo(final Drawable drawableTransition,
+                                           final boolean isFadeActivated,
                                            final String inPath,
                                            final String outPath,
                                            final MediaFormatStrategy outFormatStrategy,
@@ -100,12 +101,13 @@ public class MediaTranscoder {
             throw e;
         }
 
-        return transcodeOnlyVideo(drawableTransition,fileInputStream, inFileDescriptor, outPath, outFormatStrategy,
-                listener);
+        return transcodeOnlyVideo(drawableTransition, isFadeActivated, fileInputStream,
+            inFileDescriptor, outPath, outFormatStrategy, listener);
 
     }
 
     public Future<Void> transcodeOnlyVideo(final Drawable drawableTransition,
+                                           final boolean isFadeActivated,
                                            final FileInputStream fileInputStream,
                                            final FileDescriptor inFileDescriptor,
                                            final String outPath,
@@ -134,7 +136,8 @@ public class MediaTranscoder {
                         }
                     });
                     engine.setDataSource(inFileDescriptor);
-                    engine.transcodeOnlyVideo(drawableTransition,outPath, outFormatStrategy);
+                    engine.transcodeOnlyVideo(drawableTransition, isFadeActivated, outPath,
+                        outFormatStrategy);
                 } catch (IOException e) {
                     Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
                             + " or could not open output file ('" + outPath + "') .", e);
@@ -187,6 +190,7 @@ public class MediaTranscoder {
      * @param listener          Listener instance for callback.
      */
     public Future<Void> transcodeAndTrimVideo(final Drawable drawableTransition,
+                                              final boolean isFadeActivated,
                                               final String inPath,
                                               final String outPath,
                                               final MediaFormatStrategy outFormatStrategy,
@@ -210,13 +214,14 @@ public class MediaTranscoder {
             throw e;
         }
 
-        return transcodeAndTrimVideo(drawableTransition,fileInputStream, inFileDescriptor,outPath,outFormatStrategy,
-                listener,startTimeUs, endTimeUs);
+        return transcodeAndTrimVideo(drawableTransition, isFadeActivated, fileInputStream,
+            inFileDescriptor,outPath,outFormatStrategy, listener,startTimeUs, endTimeUs);
 
 
     }
 
     public Future<Void> transcodeAndTrimVideo(final Drawable drawableTransition,
+                                              final boolean isFadeActivated,
                                               final FileInputStream fileInputStream,
                                               final FileDescriptor inFileDescriptor,
                                               final String outPath,
@@ -246,7 +251,8 @@ public class MediaTranscoder {
                         }
                     });
                     engine.setDataSource(inFileDescriptor);
-                    engine.transcodeAndTrimVideo(drawableTransition, outPath, outFormatStrategy, startTimeUs, endTimeUs);
+                    engine.transcodeAndTrimVideo(drawableTransition, isFadeActivated, outPath,
+                        outFormatStrategy, startTimeUs, endTimeUs);
                 } catch (IOException e) {
                     Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
                             + " or could not open output file ('" + outPath + "') .", e);
@@ -298,6 +304,7 @@ public class MediaTranscoder {
      * @param overlay
      */
     public Future<Void> transcodeAndOverlayImageToVideo(final Drawable drawableTransition,
+                                                        final boolean isFadeActivated,
                                                         final String inPath,
                                                         final String outPath,
                                                         final MediaFormatStrategy outFormatStrategy,
@@ -321,13 +328,14 @@ public class MediaTranscoder {
                 throw e;
             }
 
-        return transcodeAndOverlayImageToVideo(drawableTransition, fileInputStream, inFileDescriptor, outPath, outFormatStrategy,
-                listener, overlay);
+        return transcodeAndOverlayImageToVideo(drawableTransition, isFadeActivated, fileInputStream,
+            inFileDescriptor, outPath, outFormatStrategy, listener, overlay);
 
     }
 
 
     public Future<Void> transcodeAndOverlayImageToVideo(final Drawable drawableTransition,
+                                                        final boolean isFadeActivated,
                                                         final FileInputStream fileInputStream,
                                                         final FileDescriptor inFileDescriptor,
                                                         final String outPath,
@@ -357,7 +365,8 @@ public class MediaTranscoder {
                         }
                     });
                     engine.setDataSource(inFileDescriptor);
-                    engine.transcodeAndOverlayImageVideo(drawableTransition,outPath, outFormatStrategy, overlay);
+                    engine.transcodeAndOverlayImageVideo(drawableTransition, isFadeActivated,
+                        outPath, outFormatStrategy, overlay);
                 } catch (IOException e) {
                     Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
                             + " or could not open output file ('" + outPath + "') .", e);
@@ -412,6 +421,7 @@ public class MediaTranscoder {
      * @param endTimeUs
      */
     public Future<Void> transcodeTrimAndOverlayImageToVideo(final Drawable drawableTransition,
+                                                            final boolean isFadeActivated,
                                                             final String inPath,
                                                             final String outPath,
                                                             final MediaFormatStrategy outFormatStrategy,
@@ -435,13 +445,15 @@ public class MediaTranscoder {
         }
 
 
-        return transcodeTrimAndOverlayImageToVideo(drawableTransition,fileInputStream,inFileDescriptor, outPath, outFormatStrategy,
-                listener, overlay, startTimeUs, endTimeUs);
+        return transcodeTrimAndOverlayImageToVideo(drawableTransition, isFadeActivated,
+            fileInputStream,inFileDescriptor, outPath, outFormatStrategy, listener, overlay,
+            startTimeUs, endTimeUs);
 
 
     }
 
     public Future<Void> transcodeTrimAndOverlayImageToVideo(final Drawable drawableTransition,
+                                                            final boolean isFadeTransition,
                                                             final FileInputStream fileInputStream,
                                                             final FileDescriptor inFileDescriptor,
                                                             final String outPath,
@@ -471,8 +483,8 @@ public class MediaTranscoder {
                         }
                     });
                     engine.setDataSource(inFileDescriptor);
-                    engine.transcodeTrimAndOverlayImageVideo(drawableTransition,outPath, outFormatStrategy, overlay,
-                            startTimeUs, endTimeUs);
+                    engine.transcodeTrimAndOverlayImageVideo(drawableTransition, isFadeTransition,
+                        outPath, outFormatStrategy, overlay, startTimeUs, endTimeUs);
                 } catch (IOException e) {
                     Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
                             + " or could not open output file ('" + outPath + "') .", e);

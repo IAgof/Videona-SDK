@@ -90,7 +90,8 @@ public class MediaTranscoderEngine {
      * @throws InvalidOutputFormatException when output format is not supported.
      * @throws InterruptedException         when cancel to transcode.
      */
-    public void transcodeOnlyVideo(Drawable fadeTransition, String outputPath, MediaFormatStrategy formatStrategy)
+    public void transcodeOnlyVideo(Drawable fadeTransition, boolean isFadeActivated,
+                                   String outputPath, MediaFormatStrategy formatStrategy)
             throws IOException, InterruptedException {
 
 
@@ -108,7 +109,7 @@ public class MediaTranscoderEngine {
             setupMetadata();
             setupOutputFormat(formatStrategy);
             setupAudioTranscoder();
-            setupVideoTranscoder(fadeTransition);
+            setupVideoTranscoder(fadeTransition, isFadeActivated);
             //setupTrackTranscoders(formatStrategy);
             runPipelines();
             mMuxer.stop();
@@ -153,7 +154,8 @@ public class MediaTranscoderEngine {
      * @throws InvalidOutputFormatException when output format is not supported.
      * @throws InterruptedException         when cancel to transcode.
      */
-    public void transcodeAndOverlayImageVideo(Drawable fadeTransition, String outputPath,
+    public void transcodeAndOverlayImageVideo(Drawable fadeTransition,  boolean isFadeActivated,
+                                              String outputPath,
                                               MediaFormatStrategy formatStrategy,
                                               Overlay overlay)
             throws IOException, InterruptedException {
@@ -173,7 +175,7 @@ public class MediaTranscoderEngine {
             setupMetadata();
             setupOutputFormat(formatStrategy);
             setupAudioTranscoder();
-            setupVideoTranscoder(fadeTransition, overlay);
+            setupVideoTranscoder(fadeTransition, isFadeActivated, overlay);
             //setupTrackTranscoders(formatStrategy, overlay);
             runPipelines();
             mMuxer.stop();
@@ -218,7 +220,8 @@ public class MediaTranscoderEngine {
      * @throws InvalidOutputFormatException when output format is not supported.
      * @throws InterruptedException         when cancel to transcode.
      */
-    public void transcodeAndTrimVideo(Drawable fadeTransition,String outputPath, MediaFormatStrategy formatStrategy,
+    public void transcodeAndTrimVideo(Drawable fadeTransition, boolean isFadeActivated,
+                                      String outputPath, MediaFormatStrategy formatStrategy,
                                       int startTimeMs, int endTimeMs)
         throws IOException, InterruptedException {
 
@@ -237,7 +240,7 @@ public class MediaTranscoderEngine {
             setupMetadata();
             setupOutputFormat(formatStrategy);
             setupAudioTranscoder();
-            setupVideoTranscoder(fadeTransition);
+            setupVideoTranscoder(fadeTransition, isFadeActivated);
             setupRangeTimeVideoTranscoder(startTimeMs, endTimeMs);
             //setupTrackTranscoders(formatStrategy, startTimeMs, endTimeMs);
             runPipelines();
@@ -272,7 +275,10 @@ public class MediaTranscoderEngine {
         }
     }
 
-    public void transcodeTrimAndOverlayImageVideo(Drawable fadeTransition, String outputPath, MediaFormatStrategy formatStrategy, Overlay overlay,
+    public void transcodeTrimAndOverlayImageVideo(Drawable fadeTransition, boolean isFadeTransition,
+                                                  String outputPath,
+                                                  MediaFormatStrategy formatStrategy,
+                                                  Overlay overlay,
                                                   int startTimeMs, int endTimeMs)
         throws IOException, InterruptedException {
 
@@ -291,7 +297,7 @@ public class MediaTranscoderEngine {
             setupMetadata();
             setupOutputFormat(formatStrategy);
             setupAudioTranscoder();
-            setupVideoTranscoder(fadeTransition, overlay);
+            setupVideoTranscoder(fadeTransition, isFadeTransition, overlay);
             setupRangeTimeVideoTranscoder(startTimeMs, endTimeMs);
             //setupTrackTranscoders(formatStrategy,overlay,startTimeMs, endTimeMs);
             runPipelines();
@@ -358,25 +364,27 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mAudioTrackIndex);
     }
 
-    private void setupVideoTranscoder(Drawable fadeTransition, Overlay overlay){
+    private void setupVideoTranscoder(Drawable fadeTransition, boolean isFadeActivated,
+                                      Overlay overlay){
         if (videoOutputFormat == null) {
             mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
         } else {
-            mVideoTrackTranscoder = new VideoTrackTranscoder(fadeTransition, mDurationUs, mExtractor,
-                trackResult.mVideoTrackIndex,videoOutputFormat, muxer, overlay);
+            mVideoTrackTranscoder = new VideoTrackTranscoder(fadeTransition, isFadeActivated,
+                mDurationUs, mExtractor, trackResult.mVideoTrackIndex,videoOutputFormat, muxer,
+                overlay);
         }
         mVideoTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
 
-    private void setupVideoTranscoder(Drawable fadeTransition){
+    private void setupVideoTranscoder(Drawable fadeTransition, boolean isFadeActivated){
         if (videoOutputFormat == null) {
             mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
         } else {
-            mVideoTrackTranscoder = new VideoTrackTranscoder(fadeTransition, mDurationUs, mExtractor,
-                trackResult.mVideoTrackIndex,videoOutputFormat, muxer);
+            mVideoTrackTranscoder = new VideoTrackTranscoder(fadeTransition, isFadeActivated,
+                mDurationUs, mExtractor, trackResult.mVideoTrackIndex,videoOutputFormat, muxer);
         }
         mVideoTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
