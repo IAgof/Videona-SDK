@@ -38,8 +38,8 @@ public class AudioEncoder implements Runnable {
     public static final int SAMPLING_RATE = 48000; //44100;
     public static final int CODEC_TIMEOUT_IN_MS = 1000; //5000;
     public static final int BUFFER_SIZE = 96000; // 88200; 2*SAMPLE_RATE
-    public static final int NUM_CHANNELS = 1; // 2;
-    public static final int CHANNELS_COUNT = AudioFormat.CHANNEL_IN_MONO;//AudioFormat.CHANNEL_IN_STEREO; //
+    public static final int NUM_CHANNELS = 2; // 2;
+    public static final int CHANNELS_COUNT = AudioFormat.CHANNEL_IN_STEREO; // AudioFormat.CHANNEL_IN_MONO;//AudioFormat.CHANNEL_IN_STEREO; //
 
     int minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE, CHANNELS_COUNT, AudioFormat.ENCODING_PCM_16BIT);
 
