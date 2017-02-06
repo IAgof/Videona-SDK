@@ -390,6 +390,13 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
 
+    private void setupVideoTranscoder(){
+        mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
+                trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
+        mVideoTrackTranscoder.setup();
+        mExtractor.selectTrack(trackResult.mVideoTrackIndex);
+    }
+
     private void setupRangeTimeVideoTranscoder(int startTimeMs, int endTimeMs){
 
         if(startTimeMs*1000 > mDurationUs) {
@@ -458,6 +465,57 @@ public class MediaTranscoderEngine {
                 } catch (InterruptedException e) {
                     // nothing to do
                 }
+            }
+        }
+    }
+
+    public void adaptVideo(String outputPath, MediaFormatStrategy formatStrategy)
+        throws IOException, InterruptedException {
+
+        if (outputPath == null) {
+            throw new NullPointerException("Output path cannot be null.");
+        }
+        if (mInputFileDescriptor == null) {
+            throw new IllegalStateException("Data source is not set.");
+        }
+        try {
+            // NOTE: use single extractor to keep from running out audio track fast.
+            mExtractor = new MediaExtractor();
+            mExtractor.setDataSource(mInputFileDescriptor);
+            mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            setupMetadata();
+            setupOutputFormat(formatStrategy);
+            setupAudioTranscoder();
+            setupVideoTranscoder();
+            //setupTrackTranscoders(formatStrategy);
+            runPipelines();
+            mMuxer.stop();
+        } finally {
+            try {
+                if (mVideoTrackTranscoder != null) {
+                    mVideoTrackTranscoder.release();
+                    mVideoTrackTranscoder = null;
+                }
+                if (mAudioTrackTranscoder != null) {
+                    mAudioTrackTranscoder.release();
+                    mAudioTrackTranscoder = null;
+                }
+                if (mExtractor != null) {
+                    mExtractor.release();
+                    mExtractor = null;
+                }
+            } catch (RuntimeException e) {
+                // Too fatal to make alive the app, because it may leak native resources.
+                //noinspection ThrowFromFinallyBlock
+                throw new Error("Could not shutdown extractor, codecs and muxer pipeline.", e);
+            }
+            try {
+                if (mMuxer != null) {
+                    mMuxer.release();
+                    mMuxer = null;
+                }
+            } catch (RuntimeException e) {
+                Log.e(TAG, "Failed to release muxer.", e);
             }
         }
     }

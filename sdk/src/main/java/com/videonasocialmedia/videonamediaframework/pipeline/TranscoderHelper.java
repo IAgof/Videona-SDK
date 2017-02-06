@@ -6,7 +6,7 @@ import android.support.annotation.NonNull;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
-import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
+import com.videonasocialmedia.transcoder.video.format.VideoTranscoderFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -33,7 +33,7 @@ public class TranscoderHelper {
   public void generateOutputVideoWithOverlayImageAndTrimming(Drawable fadeTransition,
                                                              boolean isFadeActivated,
                                                              Video videoToEdit,
-                                                             VideonaFormat format,
+                                                             VideoTranscoderFormat format,
                                                              MediaTranscoderListener listener)
           throws IOException {
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
@@ -46,7 +46,7 @@ public class TranscoderHelper {
 
   public void generateOutputVideoWithOverlayImage(Drawable fadeTransition,
                                                   boolean isFadeActivated,
-                                                  Video video, VideonaFormat format,
+                                                  Video video, VideoTranscoderFormat format,
                                                   MediaTranscoderListener listener)
           throws IOException  {
     Image imageText = getImageFromTextAndPosition(video.getClipText(), video.getClipTextPosition());
@@ -57,11 +57,27 @@ public class TranscoderHelper {
 
   public void generateOutputVideoWithTrimming(Drawable fadeTransition,
                                               boolean isFadeActivated,
-                                              Video video, VideonaFormat format,
+                                              Video video, VideoTranscoderFormat format,
                                               MediaTranscoderListener listener)
           throws IOException {
     mediaTranscoder.transcodeAndTrimVideo(fadeTransition, isFadeActivated, video.getMediaPath(),
         video.getTempPath(), format, listener, video.getStartTime(), video.getStopTime());
+  }
+
+  public void generateOutputVideoImport(Drawable fadeTransition,
+                                              boolean isFadeActivated,
+                                              Video video, VideoTranscoderFormat format,
+                                              MediaTranscoderListener listener)
+      throws IOException {
+    mediaTranscoder.transcodeOnlyVideo(fadeTransition, isFadeActivated, video.getMediaPath(),
+        video.getTempPath(), format, listener);
+  }
+
+  public void adaptVideoToTranscoder(String origVideoPath, VideoTranscoderFormat format,
+                                     MediaTranscoderListener listener, String destVideoPath)
+                                     throws IOException {
+
+    mediaTranscoder.adaptVideo(origVideoPath, format, listener, destVideoPath);
   }
 
   @NonNull

@@ -15,7 +15,7 @@ import android.media.MediaFormat;
 
 import com.videonasocialmedia.transcoder.video.exceptions.OutputFormatUnavailableException;
 
-public class VideonaFormat implements MediaFormatStrategy {
+public class VideoTranscoderFormat implements MediaFormatStrategy {
 
     public static final int VIDEO_BITRATE_AS_IS = -1;
     public static final int VIDEO_WIDTH_AS_IS = -1;
@@ -25,7 +25,7 @@ public class VideonaFormat implements MediaFormatStrategy {
     public static final int AUDIO_CHANNELS_AS_IS = -1;
 
 
-    private static final String TAG = "VideonaFormat";
+    private static final String TAG = "VideoTranscoderFormat";
 
     private final int DEFAULT_FRAME_RATE = 30;
     private final int DEFAULT_KEY_I_FRAME = 1;
@@ -36,18 +36,18 @@ public class VideonaFormat implements MediaFormatStrategy {
     private int audioBitrate = 192 * 1000;
     private int audioChannels = 1;
 
-    public VideonaFormat(){
+    public VideoTranscoderFormat(){
     }
 
-    public VideonaFormat(int videoBitrate,int videoWidth, int videoHeight){
+    public VideoTranscoderFormat(int videoBitrate, int videoWidth, int videoHeight){
         this(videoBitrate, videoWidth, videoHeight, AUDIO_BITRATE_AS_IS, AUDIO_CHANNELS_AS_IS);
     }
 
-    public VideonaFormat(int audioBitrate, int audioChannels){
+    public VideoTranscoderFormat(int audioBitrate, int audioChannels){
      this(VIDEO_BITRATE_AS_IS, VIDEO_WIDTH_AS_IS, VIDEO_HEIGHT_AS_IS, audioBitrate, audioChannels);
     }
 
-    public VideonaFormat(int videoBitrate, int width, int height, int audioBitrate, int audioChannels){
+    public VideoTranscoderFormat(int videoBitrate, int width, int height, int audioBitrate, int audioChannels){
 
         this.videoBitrate = videoBitrate;
         this.videoWidth = width;

@@ -26,6 +26,7 @@ import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
+import com.videonasocialmedia.transcoder.video.format.VideoTranscoderFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
 
 import java.io.FileDescriptor;
@@ -621,4 +622,99 @@ public class MediaTranscoder {
         return createdFuture;
     }
 
+    public Future<Void> adaptVideo(final String origVideoPath,
+                                   final MediaFormatStrategy outFormatStrategy,
+                                   final MediaTranscoderListener listener,
+                                   final String destVideoPath) throws IOException {
+
+        FileInputStream fileInputStream = null;
+        FileDescriptor inFileDescriptor;
+        try {
+            fileInputStream = new FileInputStream(origVideoPath);
+            inFileDescriptor = fileInputStream.getFD();
+        } catch (IOException e) {
+            if (fileInputStream != null) {
+                try {
+                    fileInputStream.close();
+                } catch (IOException eClose) {
+                    Log.e(TAG, "Can't close input stream: ", eClose);
+                }
+            }
+            throw e;
+        }
+
+        return adaptVideo(fileInputStream, inFileDescriptor, destVideoPath, outFormatStrategy,
+            listener);
+
+    }
+
+    public Future<Void> adaptVideo(final FileInputStream fileInputStream,
+                                   final FileDescriptor inFileDescriptor,
+                                   final String outPath,
+                                   final MediaFormatStrategy outFormatStrategy,
+                                   final MediaTranscoderListener listener) throws IOException {
+
+        Looper looper = Looper.myLooper();
+        if (looper == null) looper = Looper.getMainLooper();
+        final Handler handler = new Handler(looper);
+        final AtomicReference<Future<Void>> futureReference = new AtomicReference<>();
+        final Future<Void> createdFuture = mExecutor.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                Exception caughtException = null;
+                try {
+                    MediaTranscoderEngine engine = new MediaTranscoderEngine();
+                    engine.setProgressCallback(new MediaTranscoderEngine.ProgressCallback() {
+                        @Override
+                        public void onProgress(final double progress) {
+                            handler.post(new Runnable() { // TODO: reuse instance
+                                @Override
+                                public void run() {
+                                    listener.onTranscodeProgress(progress);
+                                }
+                            });
+                        }
+                    });
+                    engine.setDataSource(inFileDescriptor);
+                    engine.adaptVideo(outPath,
+                        outFormatStrategy);
+                } catch (IOException e) {
+                    Log.w(TAG, "Transcode failed: input file (fd: " + inFileDescriptor.toString() + ") not found"
+                        + " or could not open output file ('" + outPath + "') .", e);
+                    caughtException = e;
+                } catch (InterruptedException e) {
+                    Log.i(TAG, "Cancel transcode video file.", e);
+                    caughtException = e;
+                } catch (RuntimeException e) {
+                    Log.e(TAG, "Fatal error while transcoding, this might be invalid format or bug in engine or Android.", e);
+                    caughtException = e;
+                }
+
+                final Exception exception = caughtException;
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        if (exception == null) {
+                            closeStream(fileInputStream);
+                            listener.onTranscodeCompleted();
+                        } else {
+                            Future<Void> future = futureReference.get();
+                            if (future != null && future.isCancelled()) {
+                                closeStream(fileInputStream);
+                                listener.onTranscodeCanceled();
+                            } else {
+                                closeStream(fileInputStream);
+                                listener.onTranscodeFailed(exception);
+                            }
+                        }
+                    }
+                });
+
+                if (exception != null) throw exception;
+                return null;
+            }
+        });
+        futureReference.set(createdFuture);
+        return createdFuture;
+    }
 }
