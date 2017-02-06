@@ -5,8 +5,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.media.AudioManager;
-import android.media.MediaCodec;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
@@ -28,20 +26,12 @@ import com.google.android.exoplayer.DummyTrackRenderer;
 import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
-import com.google.android.exoplayer.MediaCodecSelector;
 import com.google.android.exoplayer.MediaCodecTrackRenderer;
 import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
 import com.google.android.exoplayer.TrackRenderer;
-import com.google.android.exoplayer.audio.AudioCapabilities;
-import com.google.android.exoplayer.audio.AudioTrack;
 import com.google.android.exoplayer.chunk.Format;
-import com.google.android.exoplayer.extractor.ExtractorSampleSource;
-import com.google.android.exoplayer.upstream.Allocator;
 import com.google.android.exoplayer.upstream.BandwidthMeter;
-import com.google.android.exoplayer.upstream.DataSource;
-import com.google.android.exoplayer.upstream.DefaultAllocator;
 import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 import com.google.android.exoplayer.util.Util;
 
 
@@ -54,7 +44,6 @@ import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 import com.videonasocialmedia.videonamediaframework.utils.TimeUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -64,10 +53,11 @@ import java.util.List;
  * Created by jliarte on 25/08/16.
  */
 public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
-    SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener, ExtractorSampleSource.EventListener,
-    MediaCodecAudioTrackRenderer.EventListener, MediaCodecVideoTrackRenderer.EventListener {
+    SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener,
+//        ExtractorSampleSource.EventListener,
+//    MediaCodecAudioTrackRenderer.EventListener, MediaCodecVideoTrackRenderer.EventListener,
+        RendererBuilder.RendererBuilderListener {
   private static final String TAG = "VideonaPlayerExo";
-  private static final int RENDERER_COUNT = 3;
   private static final int BUFFER_LENGTH_MIN = 50;
   private static final int REBUFFER_LENGTH_MIN = 100;
   public static final int TYPE_VIDEO = 0;
@@ -90,7 +80,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   TextView textTimeCurrentSeekbar;
   TextView textTimeProjectSeekbar;
   LinearLayout seekBarLayout;
-  ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
+  // TODO(jliarte): 31/01/17 not used field
+//  ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
 
   private final View videonaPlayerView;
   private VideonaPlayerListener videonaPlayerListener;
@@ -130,7 +121,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   private ValueAnimator outAnimator;
   private ValueAnimator inAnimator;
-  private boolean isSetTransitionFadeActivated = false;
+  private boolean transitionFadeActivated = false;
+  private String userAgent;
+  private TrackRenderer[] nextClipRenderers;
 
   /**
    * Default constructor.
@@ -178,7 +171,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   private void initLayoutsComponents() {
-
     videoPreview = (AspectRatioVideoView) findViewById(R.id.video_editor_preview);
     videoPreview.setOnTouchListener(new OnTouchListener() {
       @Override
@@ -200,7 +192,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     textTimeCurrentSeekbar = (TextView) findViewById(R.id.video_view_time_current);
     textTimeProjectSeekbar = (TextView) findViewById(R.id.video_view_time_project);
     seekBarLayout = (LinearLayout) findViewById(R.id.video_view_seekbar_layout);
-
   }
 
   /**
@@ -209,12 +200,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    */
   private void initVideonaPlayerComponents(Context context) {
     mainHandler = new Handler();
-    player = ExoPlayer.Factory.newInstance(RENDERER_COUNT, BUFFER_LENGTH_MIN, REBUFFER_LENGTH_MIN);
+    player = ExoPlayer.Factory.newInstance(RendererBuilder.RENDERER_COUNT, BUFFER_LENGTH_MIN, REBUFFER_LENGTH_MIN);
     player.addListener(this);
     player.setSelectedTrack(TYPE_TEXT, DISABLED_TRACK);
     surface = videoPreview.getHolder().getSurface();
     rendererBuildingState = RENDERER_BUILDING_STATE_IDLE;
-    String userAgent = Util.getUserAgent(context, "ExoPlayerDemo");
+    userAgent = Util.getUserAgent(context, "VideonaExoPlayer");
     rendererBuilder = new RendererBuilder(context, userAgent);
 
     // TODO(jliarte): 1/09/16 instantiate field when need to adjust volume
@@ -235,7 +226,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         musicPlayer.setVolume(musicVolume, musicVolume);
       }
     }
-
   }
 
   /**
@@ -263,7 +253,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
           currentTimePositionInList = progress;
           // detect end of trimming and play next clip or stop
 
-          if(isSetTransitionFadeActivated) {
+          if(transitionFadeActivated) {
             if (isPlaying() && isStartOfCurrentClip()) {
               inAnimator.start();
             }
@@ -272,13 +262,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
             }
           }
 
-          if(isCurrentClipEnded()){
+          if (isCurrentClipEnded()) {
             playNextClip();
           }
 
         }
       } catch (Exception exception) {
-        Log.d(TAG, "updateSeekBarProgress: exception updating videonaplayer seekbar");
+        Log.d(TAG, "updateSeekBarProgress: exception updating videonaPlayer seekbar");
         Log.d(TAG, String.valueOf(exception));
       }
 
@@ -296,11 +286,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     int seekBarProgress = seekBar.getProgress();
     int timeEndClip = (int) clipTimesRanges.get(currentClipIndex()).getUpper();
     //return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper() - TIME_TRANSITION_FADE;
-    return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE) );
+    return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE));
   }
 
   private boolean isStartOfCurrentClip() {
-
     int timeStartLastClip;
     if(currentClipIndex() > 0){
       timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
@@ -389,9 +378,14 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     rendererBuilder.cancel();
     videoFormat = null;
     videoRenderer = null;
-    rendererBuildingState = RENDERER_BUILDING_STATE_BUILDING;
-    maybeReportPlayerState();
-    rendererBuilder.buildRenderers(this, Uri.fromFile(new File(clipToPlay.getMediaPath())));
+    if (nextClipRenderers == null) {
+      rendererBuildingState = RENDERER_BUILDING_STATE_BUILDING;
+      maybeReportPlayerState();
+      rendererBuilder.buildRenderers(this, Uri.fromFile(new File(clipToPlay.getMediaPath())),
+              this.getMainHandler());
+    } else {
+      onRenderers(nextClipRenderers, (DefaultBandwidthMeter) bandwidthMeter);
+    }
   }
 
   public void clearImageText() {
@@ -544,7 +538,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   @Override
   public void setTransitionFade(){
-    isSetTransitionFadeActivated = true;
+    transitionFadeActivated = true;
   }
 
   @Override
@@ -644,7 +638,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    * @param event received @{@link MotionEvent}
    * @return true if event has beeen processed
    */
-
   public boolean onTouchPreview(MotionEvent event) {
     boolean eventProcessed = false;
     if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -690,16 +683,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     playButton.setVisibility(View.INVISIBLE);
   }
 
-
   @Override
   public void onStartTrackingTouch(SeekBar seekBar) {
-
   }
 
   @Override
   public void onStopTrackingTouch(SeekBar seekBar) {
     showPlayButton();
-
   }
 
   /***
@@ -833,21 +823,20 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   @Override
   public void onPlayWhenReadyCommitted() {
-
   }
 
   @Override
   public void onPlayerError(ExoPlaybackException error) {
-
   }
-
 
   public Handler getMainHandler() {
     return mainHandler;
   }
 
-  private void onRenderers(TrackRenderer[] renderers, DefaultBandwidthMeter bandwidthMeter) {
-    for (int i = 0; i < RENDERER_COUNT; i++) {
+  @Override
+  public void onRenderers(TrackRenderer[] renderers, DefaultBandwidthMeter bandwidthMeter) {
+    prebufferNextClip();
+    for (int i = 0; i < RendererBuilder.RENDERER_COUNT; i++) {
       if (renderers[i] == null) {
         // Convert a null renderer to a dummy renderer.
         renderers[i] = new DummyTrackRenderer();
@@ -865,6 +854,23 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     player.seekTo(getClipPositionFromTimeLineTime());
     setVolume(musicVolume);
     rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
+  }
+
+  private void prebufferNextClip() {
+    if (currentClipIndex < videoList.size() - 1) {
+      nextClipRenderers = null;
+      RendererBuilder nextClipRendererBuilder = new RendererBuilder(getContext(), userAgent);
+      Video nextClipToPlay = videoList.get(currentClipIndex + 1);
+      nextClipRendererBuilder
+              .buildRenderers(new RendererBuilder.RendererBuilderListener() {
+                @Override
+                public void onRenderers(TrackRenderer[] renderers,
+                                        DefaultBandwidthMeter bandwidthMeter) {
+                  nextClipRenderers = renderers;
+                }
+              },
+              Uri.fromFile(new File(nextClipToPlay.getMediaPath())), this.getMainHandler());
+    }
   }
 
   protected int getClipPositionFromTimeLineTime() {
@@ -891,138 +897,78 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     }
   }
 
-  /***
-   * Renderer Event Listener.
-   ***/
-
-  @Override
-  public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
-                                 float pixelWidthHeightRatio) {
-  }
-
-  /** end of Renderer Event Listener. **/
-
-  /***
-   * MediaCodecVideoTrackRenderer EventListener.
-   ***/
-
-  @Override
-  public void onDrawnToSurface(Surface surface) {
-
-  }
-
-  @Override
-  public void onLoadError(int sourceId, IOException exception) {
-
-  }
-
-  @Override
-  public void onDroppedFrames(int count, long elapsed) {
-
-  }
-  /** End of MediaCodecVideoTrackRenderer EventListener. **/
-
-  /***
-   * MediaCodecAudioTrackRenderer.EventListener.
-   ***/
-  @Override
-  public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
-
-  }
-
-  @Override
-  public void onAudioTrackInitializationError(AudioTrack.InitializationException exception) {
-
-  }
-
-  @Override
-  public void onAudioTrackWriteError(AudioTrack.WriteException exception) {
-
-  }
-
-  @Override
-  public void onDecoderInitializationError(
-      MediaCodecTrackRenderer.DecoderInitializationException exception) {
-
-  }
-
-  @Override
-  public void onCryptoError(MediaCodec.CryptoException exception) {
-
-  }
-
-  @Override
-  public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs,
-                                   long initializationDurationMs) {
-
-  }
+//  /***
+//   * Renderer Event Listener.
+//   ***/
+//
+//  @Override
+//  public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
+//                                 float pixelWidthHeightRatio) {
+//  }
+//
+//  /** end of Renderer Event Listener. **/
+//
+//  /***
+//   * MediaCodecVideoTrackRenderer EventListener.
+//   ***/
+//
+//  @Override
+//  public void onDrawnToSurface(Surface surface) {
+//
+//  }
+//
+//  @Override
+//  public void onLoadError(int sourceId, IOException exception) {
+//
+//  }
+//
+//  @Override
+//  public void onDroppedFrames(int count, long elapsed) {
+//
+//  }
+//  /** End of MediaCodecVideoTrackRenderer EventListener. **/
+//
+//  /***
+//   * MediaCodecAudioTrackRenderer.EventListener.
+//   ***/
+//  @Override
+//  public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
+//
+//  }
+//
+//  @Override
+//  public void onAudioTrackInitializationError(AudioTrack.InitializationException exception) {
+//
+//  }
+//
+//  @Override
+//  public void onAudioTrackWriteError(AudioTrack.WriteException exception) {
+//
+//  }
+//
+//  @Override
+//  public void onDecoderInitializationError(
+//      MediaCodecTrackRenderer.DecoderInitializationException exception) {
+//
+//  }
+//
+//  @Override
+//  public void onCryptoError(MediaCodec.CryptoException exception) {
+//
+//  }
+//
+//  @Override
+//  public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs,
+//                                   long initializationDurationMs) {
+//
+//  }
+//  /**
+//   * End of MediaCodecAudioTrackRenderer.EventListener
+//   **/
 
   // TODO(jliarte): 31/08/16 move to interface?
   public void releaseView() {
 
-  }
-
-  /**
-   * End of MediaCodecAudioTrackRenderer.EventListener
-   **/
-
-  public class RendererBuilder {
-    private static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
-    private static final int BUFFER_SEGMENT_COUNT = 256;
-
-    private final Context context;
-    private final String userAgent;
-    private MediaCodecAudioTrackRenderer audioRenderer;
-
-    public MediaCodecAudioTrackRenderer getAudioRenderer() {
-      return audioRenderer;
-    }
-
-
-    public RendererBuilder(Context context, String userAgent) {
-      this.context = context;
-      this.userAgent = userAgent;
-    }
-
-    protected void buildRenderers(VideonaPlayerExo player, Uri videoUri) {
-      final long startTime = System.currentTimeMillis();
-
-      Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
-      Handler mainHandler = player.getMainHandler();
-
-      // Build the video and audio renderers.
-      DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, null);
-      DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
-      ExtractorSampleSource sampleSource = new ExtractorSampleSource(videoUri, dataSource,
-          allocator, BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, mainHandler, player, 0);
-      MediaCodecVideoTrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(context,
-          sampleSource, MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT,
-          5000, mainHandler, player, 50);
-      audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
-          MediaCodecSelector.DEFAULT, null, true, mainHandler, player,
-          AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
-      // (jliarte): 1/09/16 maybe it's easier with the traditional method using audio manager,
-      //      as here we would to advance the audio track to the current position in timeline
-      //      on each clip played
-      //            if (musicTrack != null) {
-      //                MediaCodecAudioTrackRenderer musicTrackRenderer =
-      //                    new MediaCodecAudioTrackRenderer(musicSource,
-      //                        MediaCodecSelector.DEFAULT, null)
-      //            }
-
-      // Invoke the callback.
-      TrackRenderer[] renderers = new TrackRenderer[VideonaPlayerExo.RENDERER_COUNT];
-      renderers[VideonaPlayerExo.TYPE_VIDEO] = videoRenderer;
-      renderers[VideonaPlayerExo.TYPE_AUDIO] = audioRenderer;
-      player.onRenderers(renderers, bandwidthMeter);
-      long stopTime = System.currentTimeMillis();
-      long elapsedTime = stopTime - startTime;
-      Log.d(TAG, "----------- time spent building renderers: " + elapsedTime);
-    }
-
-    public void cancel() {
-      // Do nothing.
-    }
   }
 
 }
