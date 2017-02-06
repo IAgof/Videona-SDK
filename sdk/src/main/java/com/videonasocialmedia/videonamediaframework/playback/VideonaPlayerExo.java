@@ -1,5 +1,8 @@
 package com.videonasocialmedia.videonamediaframework.playback;
 
+import android.animation.Animator;
+import android.animation.ArgbEvaluator;
+import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
@@ -10,12 +13,19 @@ import android.media.MediaCodec;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
+import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Range;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.AlphaAnimation;
+import android.view.animation.Animation;
+import android.view.animation.AnimationSet;
+import android.view.animation.DecelerateInterpolator;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -63,7 +73,8 @@ import java.util.List;
 /**
  * Created by jliarte on 25/08/16.
  */
-public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
+public class
+VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener, ExtractorSampleSource.EventListener,
     MediaCodecAudioTrackRenderer.EventListener, MediaCodecVideoTrackRenderer.EventListener {
   private static final String TAG = "VideonaPlayerExo";
@@ -79,7 +90,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private static final int RENDERER_BUILDING_STATE_IDLE = 1;
   private static final int RENDERER_BUILDING_STATE_BUILDING = 2;
   private static final int RENDERER_BUILDING_STATE_BUILT = 3;
-  private static final int TIME_TRANSITION_FADE = 500;
+  private static final int TIME_TRANSITION_FADE = 500; // 500ms
   private final TextToDrawable drawableGenerator;
 
   AspectRatioVideoView videoPreview;
@@ -130,7 +141,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   private ValueAnimator outAnimator;
   private ValueAnimator inAnimator;
-  private boolean isSetTransitionFadeActivated = false;
+  private boolean isSetVideoTransitionFadeActivated = false;
+  private boolean isSetAudioTransitionFadeActivated = false;
+  private boolean isInAnimatorLaunched;
+  private boolean isOutAnimatorLaunched;
 
   /**
    * Default constructor.
@@ -263,12 +277,20 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
           currentTimePositionInList = progress;
           // detect end of trimming and play next clip or stop
 
-          if(isSetTransitionFadeActivated) {
-            if (isPlaying() && isStartOfCurrentClip()) {
-              inAnimator.start();
+          if(isSetVideoTransitionFadeActivated || isSetAudioTransitionFadeActivated) {
+            if (isPlaying() && isStartOfCurrentClip(progress)) {
+              if(!isInAnimatorLaunched) {
+                Log.d(TAG, "updateSeekBarProgress inAnimator start ");
+                isInAnimatorLaunched = true;
+                inAnimator.start();
+              }
             }
-            if (isPlaying() && isEndOfCurrentClip()) {
-              outAnimator.start();
+            if (isPlaying() && isEndOfCurrentClip(progress)) {
+              if(!isOutAnimatorLaunched) {
+                Log.d(TAG, "updateSeekBarProgress outAnimator start ");
+                isOutAnimatorLaunched = true;
+                outAnimator.start();
+              }
             }
           }
 
@@ -292,23 +314,18 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper();
   }
 
-  private boolean isEndOfCurrentClip() {
-    int seekBarProgress = seekBar.getProgress();
+  private boolean isEndOfCurrentClip(int seekBarProgress) {
     int timeEndClip = (int) clipTimesRanges.get(currentClipIndex()).getUpper();
-    //return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper() - TIME_TRANSITION_FADE;
     return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE) );
   }
 
-  private boolean isStartOfCurrentClip() {
-
+  private boolean isStartOfCurrentClip(int seekBarProgress) {
     int timeStartLastClip;
     if(currentClipIndex() > 0){
       timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
     } else {
       timeStartLastClip = 0;
     }
-    int seekBarProgress = seekBar.getProgress();
-
     return ((seekBarProgress > timeStartLastClip) && (seekBarProgress < (timeStartLastClip + TIME_TRANSITION_FADE)));
   }
 
@@ -543,8 +560,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   @Override
-  public void setTransitionFade(){
-    isSetTransitionFadeActivated = true;
+  public void setVideoTransitionFade() {
+    isSetVideoTransitionFadeActivated = true;
+  }
+
+  @Override
+  public void setAudioTransitionFade() {
+    isSetAudioTransitionFadeActivated = true;
   }
 
   @Override
@@ -595,32 +617,87 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   private void setupInAnimator() {
-    inAnimator = ValueAnimator.ofFloat(1f, 0f);
 
+    inAnimator = ValueAnimator.ofFloat(1f, 0f);
     inAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
       @Override
       public void onAnimationUpdate(ValueAnimator animation) {
-        imageTransitionFade.setAlpha((Float) animation.getAnimatedValue());
+        float value = (Float) animation.getAnimatedValue();
+        Log.d(TAG, "setupInAnimator value " + value);
+        if(isSetVideoTransitionFadeActivated)
+          imageTransitionFade.setAlpha(value);
+        if(isSetAudioTransitionFadeActivated)
+          setVolume(value);
+      }
+    });
+    inAnimator.addListener(new Animator.AnimatorListener() {
+      @Override
+      public void onAnimationStart(Animator animation) {
+         if(imageTransitionFade.getVisibility() == INVISIBLE){
+            imageTransitionFade.setVisibility(VISIBLE);
+          }
+      }
+
+      @Override
+      public void onAnimationEnd(Animator animation) {
+          isInAnimatorLaunched = false;
+        Log.d(TAG, "AnimatorListener onAnimationEnd ");
+      }
+
+      @Override
+      public void onAnimationCancel(Animator animation) {
+
+      }
+
+      @Override
+      public void onAnimationRepeat(Animator animation) {
+
       }
     });
 
     inAnimator.setDuration(TIME_TRANSITION_FADE);
-    inAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    inAnimator.setInterpolator(new LinearInterpolator());
     inAnimator.setRepeatCount(0);
   }
 
   private void setupOutAnimator() {
     outAnimator = ValueAnimator.ofFloat(0f, 1f);
-
     outAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
       @Override
       public void onAnimationUpdate(ValueAnimator animation) {
-        imageTransitionFade.setAlpha((Float) animation.getAnimatedValue());
+        float value = (Float) animation.getAnimatedValue();
+        Log.d(TAG, "setupOutAnimator value " + value);
+        if(isSetVideoTransitionFadeActivated)
+          imageTransitionFade.setAlpha(value);
+        if(isSetAudioTransitionFadeActivated)
+          setVolume(value);
+      }
+    });
+    outAnimator.addListener(new Animator.AnimatorListener() {
+      @Override
+      public void onAnimationStart(Animator animation) {
+
+      }
+
+      @Override
+      public void onAnimationEnd(Animator animation) {
+        isOutAnimatorLaunched = false;
+        Log.d(TAG, "AnimatorListener onAnimationEnd ");
+      }
+
+      @Override
+      public void onAnimationCancel(Animator animation) {
+
+      }
+
+      @Override
+      public void onAnimationRepeat(Animator animation) {
+
       }
     });
 
     outAnimator.setDuration(TIME_TRANSITION_FADE);
-    outAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    outAnimator.setInterpolator(new LinearInterpolator());
     outAnimator.setRepeatCount(0);
   }
 
@@ -715,7 +792,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     } else {
       pausePreview();
       seekToClip(0);
-      imageTransitionFade.setAlpha(0f);
+      // avoid black frame, imageTransitionFade over player
+      imageTransitionFade.setVisibility(INVISIBLE);
     }
     notifyNewClipPlayed();
   }
