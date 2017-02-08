@@ -1,8 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.playback;
 
 import android.animation.Animator;
-import android.animation.ArgbEvaluator;
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
@@ -11,18 +9,12 @@ import android.graphics.drawable.Drawable;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
-import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Range;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
-import android.view.animation.AccelerateInterpolator;
-import android.view.animation.AlphaAnimation;
-import android.view.animation.Animation;
-import android.view.animation.AnimationSet;
-import android.view.animation.DecelerateInterpolator;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -90,8 +82,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   TextView textTimeCurrentSeekbar;
   TextView textTimeProjectSeekbar;
   LinearLayout seekBarLayout;
-  // TODO(jliarte): 31/01/17 not used field
-//  ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
 
   private final View videonaPlayerView;
   private VideonaPlayerListener videonaPlayerListener;
@@ -131,7 +121,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   private ValueAnimator outAnimator;
   private ValueAnimator inAnimator;
-  private boolean transitionFadeActivated = false;
   private String userAgent;
   private TrackRenderer[] nextClipRenderers;
   private boolean isSetVideoTransitionFadeActivated = false;
