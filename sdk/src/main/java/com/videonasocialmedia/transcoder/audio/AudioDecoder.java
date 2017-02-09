@@ -20,13 +20,14 @@ public class AudioDecoder {
 
     private final static String LOG_TAG = "AudioDecoder";
 
-    private String inputFile;
 
+    private String inputFile;
     public String getOutputFile() {
         return outputFile;
     }
-
     private String outputFile;
+
+    private long durationFile = 0;
 
     MediaCodec decoder;
     MediaFormat format;
@@ -42,11 +43,17 @@ public class AudioDecoder {
     private OnAudioDecoderListener listener;
 
     public AudioDecoder(String inputFile, String outputFile, OnAudioDecoderListener listener){
-
         this.inputFile = inputFile;
         this.outputFile = outputFile;
         this.listener = listener;
+    }
 
+    public AudioDecoder(String inputFile, String outputFile, long durationFile,
+                        OnAudioDecoderListener listener){
+        this.inputFile = inputFile;
+        this.outputFile = outputFile;
+        this.listener = listener;
+        this.durationFile = durationFile;
     }
 
     private boolean setDecoder(MediaExtractor extractor) {
@@ -220,6 +227,11 @@ public class AudioDecoder {
                 decoder.releaseOutputBuffer(outputBufIndex, false /* render */);
                 if ((BufInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     Log.i(LOG_TAG, "saw output EOS.");
+                    sawOutputEOS = true;
+                }
+
+                if(durationFile > 0 && extractor.getSampleTime() > durationFile){
+                    Log.i(LOG_TAG, "file duration, end of decoder ");
                     sawOutputEOS = true;
                 }
             } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {

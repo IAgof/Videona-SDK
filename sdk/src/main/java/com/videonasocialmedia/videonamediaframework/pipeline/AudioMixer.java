@@ -34,11 +34,11 @@ public class AudioMixer implements OnAudioMixerListener {
     }
 
     public void mixAudio(String inputFileOne, String inputFileTwo, float volume,
-                         String tempAudioPath, OnMixAudioListener listener) {
+                         String tempAudioPath, long durationAudioFile, OnMixAudioListener listener) {
         this.listener = listener;
         try {
             Future<Void> mFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputFileOne,
-                    inputFileTwo, volume, tempAudioPath, outputFilePath, this);
+                    inputFileTwo, volume, tempAudioPath, outputFilePath, durationAudioFile, this);
         } catch (IOException e) {
             e.printStackTrace();
         }

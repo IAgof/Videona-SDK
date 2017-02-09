@@ -8,7 +8,7 @@
 package com.videonasocialmedia.videonamediaframework.model.media;
 
 public class Music extends Audio {
-    public static final float DEFAULT_MUSIC_VOLUME = 1f;
+    public static final float DEFAULT_MUSIC_VOLUME = 0.5f;
     //TODO en el futuro no será un recurso sino que se obtendrá
     private int musicResourceId;
     private int colorResourceId;
