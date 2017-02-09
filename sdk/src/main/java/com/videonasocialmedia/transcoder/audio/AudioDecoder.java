@@ -231,7 +231,7 @@ public class AudioDecoder {
                 }
 
                 if(durationFile > 0 && extractor.getSampleTime() > durationFile){
-                    Log.i(LOG_TAG, "file duration, end of decoder ");
+                    Log.i(LOG_TAG, "file duration, end of decoder " + extractor.getSampleTime());
                     sawOutputEOS = true;
                 }
             } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {

@@ -50,6 +50,6 @@ public class FileUtils {
     retriever.setDataSource(filePath);
     duration = Integer.parseInt(retriever.extractMetadata(
         MediaMetadataRetriever.METADATA_KEY_DURATION));
-    return duration;
+    return duration*1000;
   }
 }
