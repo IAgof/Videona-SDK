@@ -771,6 +771,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       initClipPreview(video);
     } else {
       pausePreview();
+      nextClipRenderers = null;
       seekToClip(0);
       // avoid black frame, imageTransitionFade over player
       imageTransitionFade.setVisibility(INVISIBLE);
@@ -797,9 +798,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     Log.d(TAG, "Playwhenready: " + playWhenReady + " state: " + playbackState);
     clearImageText();
     switch (playbackState) {
-      case ExoPlayer.STATE_BUFFERING:
+      case ExoPlayer.STATE_BUFFERING: // state 3
         break;
-      case ExoPlayer.STATE_ENDED:
+      case ExoPlayer.STATE_ENDED: // state 5
+        nextClipRenderers = null;
         if (playWhenReady) {
           // (jliarte): 14/10/16 as playNextClip() was called from both here and
           // updateSeekbarProgress thread, sometimes it's called twice in a clip end, causing
