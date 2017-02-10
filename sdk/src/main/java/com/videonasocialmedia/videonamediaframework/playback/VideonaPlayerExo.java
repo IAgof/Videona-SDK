@@ -501,11 +501,16 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       setSeekBarProgress(currentTimePositionInList);
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
       if (currentClipIndex() != clipIndex) {
+        clearNextBufferedClip();
         seekToClip(clipIndex);
       } else {
         player.seekTo(getClipPositionFromTimeLineTime());
       }
     }
+  }
+
+  private void clearNextBufferedClip() {
+    nextClipRenderers = null;
   }
 
   @Override
@@ -771,7 +776,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       initClipPreview(video);
     } else {
       pausePreview();
-      nextClipRenderers = null;
+      clearNextBufferedClip();
       seekToClip(0);
       // avoid black frame, imageTransitionFade over player
       imageTransitionFade.setVisibility(INVISIBLE);
@@ -801,7 +806,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       case ExoPlayer.STATE_BUFFERING: // state 3
         break;
       case ExoPlayer.STATE_ENDED: // state 5
-        nextClipRenderers = null;
+        clearNextBufferedClip();
         if (playWhenReady) {
           // (jliarte): 14/10/16 as playNextClip() was called from both here and
           // updateSeekbarProgress thread, sometimes it's called twice in a clip end, causing
@@ -928,7 +933,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   private void prebufferNextClip() {
     if (currentClipIndex < videoList.size() - 1) {
-      nextClipRenderers = null;
+      clearNextBufferedClip();
       RendererBuilder nextClipRendererBuilder = new RendererBuilder(getContext(), userAgent);
       Video nextClipToPlay = videoList.get(currentClipIndex + 1);
       nextClipRendererBuilder
