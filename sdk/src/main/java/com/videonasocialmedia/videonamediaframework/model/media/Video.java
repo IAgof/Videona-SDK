@@ -13,6 +13,8 @@ package com.videonasocialmedia.videonamediaframework.model.media;
 
 import android.media.MediaMetadataRetriever;
 
+import com.google.common.util.concurrent.ListenableFuture;
+
 import java.io.File;
 import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -50,6 +52,7 @@ public class Video extends Media {
 
     private int numTriesToExportVideo = 0;
     private String uuid = UUID.randomUUID().toString();
+    private ListenableFuture<String> functionFuture;
 
 
     /**
@@ -209,5 +212,13 @@ public class Video extends Media {
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public void setListentableFuture(ListenableFuture<String> functionFuture) {
+        this.functionFuture = functionFuture;
+    }
+
+    public ListenableFuture<String> getListenableFuture() {
+        return functionFuture;
     }
 }

@@ -1,12 +1,12 @@
 apply plugin: 'com.android.library'
 
 android {
-    compileSdkVersion 23
+    compileSdkVersion 24
     buildToolsVersion "23.0.2"
 
     defaultConfig {
         minSdkVersion 21 // Fix Clip range in VideoPlayerExo and use api 18
-        targetSdkVersion 23
+        targetSdkVersion 24
         versionCode 1
         versionName "0.0.2"
     }
@@ -43,4 +43,6 @@ dependencies {
 
     compile 'com.google.android.exoplayer:exoplayer:r1.5.10'
     compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
+
+    compile 'com.google.guava:guava:19.0'
 }

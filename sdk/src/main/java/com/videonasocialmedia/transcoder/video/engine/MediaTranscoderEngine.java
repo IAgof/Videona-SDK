@@ -436,6 +436,7 @@ public class MediaTranscoderEngine {
             mProgress = progress;
             if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
         }
+        // TODO:(alvaro.martinez) 14/02/17 check how to stop the transcoding job from here
         while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
 
             if(mVideoTrackTranscoder.isEncodedFinished()){
