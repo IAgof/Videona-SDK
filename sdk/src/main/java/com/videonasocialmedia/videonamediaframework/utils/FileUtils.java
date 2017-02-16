@@ -36,4 +36,9 @@ public class FileUtils {
     File dir = new File(directoryPath);
     return !dir.exists() && dir.mkdirs();
   }
+
+  public static void removeFile(String filePath){
+    File f = new File(filePath);
+    f.delete();
+  }
 }

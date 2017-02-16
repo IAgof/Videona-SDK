@@ -1,5 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 
@@ -36,12 +37,9 @@ public class AudioMixer implements OnAudioMixerListener {
     public void mixAudio(String inputFileOne, String inputFileTwo, float volume,
                          String tempAudioPath, OnMixAudioListener listener) {
         this.listener = listener;
-        try {
-            Future<Void> mFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputFileOne,
-                    inputFileTwo, volume, tempAudioPath, outputFilePath, this);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+            ListenableFuture<Void> listenableFuture =
+                MediaTranscoder.getInstance().mixAudioTwoFiles(inputFileOne, inputFileTwo, volume,
+                    tempAudioPath, outputFilePath, this);
     }
 
     @Override

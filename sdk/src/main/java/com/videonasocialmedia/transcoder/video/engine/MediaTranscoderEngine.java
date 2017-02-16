@@ -46,14 +46,14 @@ public class MediaTranscoderEngine {
     private TrackTranscoder mAudioTrackTranscoder;
     private MediaExtractor mExtractor;
     private MediaMuxer mMuxer;
-    private volatile double mProgress;
-    private ProgressCallback mProgressCallback;
     private long mDurationUs;
 
     private MediaExtractorUtils.TrackResult trackResult;
     private MediaFormat videoOutputFormat;
     private MediaFormat audioOutputFormat;
     private Muxer muxer;
+
+    private boolean interruptTranscoding = false;
 
     /**
      * Do not use this constructor unless you know what you are doing.
@@ -63,21 +63,6 @@ public class MediaTranscoderEngine {
 
     public void setDataSource(FileDescriptor fileDescriptor) {
         mInputFileDescriptor = fileDescriptor;
-    }
-
-    public ProgressCallback getProgressCallback() {
-        return mProgressCallback;
-    }
-
-    public void setProgressCallback(ProgressCallback progressCallback) {
-        mProgressCallback = progressCallback;
-    }
-
-    /**
-     * NOTE: This method is thread safe.
-     */
-    public double getProgress() {
-        return mProgress;
     }
 
 
@@ -433,10 +418,14 @@ public class MediaTranscoderEngine {
         long loopCount = 0;
         if (mDurationUs <= 0) {
             double progress = PROGRESS_UNKNOWN;
-            mProgress = progress;
-            if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
         }
         while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
+
+            if(interruptTranscoding){
+                Log.d(TAG, "interrupt transcoding exit runPipeLines");
+                mVideoTrackTranscoder.setTrackFinished();
+                return;
+            }
 
             if(mVideoTrackTranscoder.isEncodedFinished()){
                 return;
@@ -449,8 +438,6 @@ public class MediaTranscoderEngine {
                 double videoProgress = mVideoTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mVideoTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
                 double audioProgress = mAudioTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mAudioTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
                 double progress = (videoProgress + audioProgress) / 2.0;
-                mProgress = progress;
-                if (mProgressCallback != null) mProgressCallback.onProgress(progress);
             }
             if (!stepped) {
                 try {
@@ -462,13 +449,8 @@ public class MediaTranscoderEngine {
         }
     }
 
-
-    public interface ProgressCallback {
-        /**
-         * Called to notify progress. Same thread which initiated transcode is used.
-         *
-         * @param progress Progress in [0.0, 1.0] range, or negative value if progress is unknown.
-         */
-        void onProgress(double progress);
+    public void setInterruptTranscoding() {
+        interruptTranscoding = true;
     }
+
 }

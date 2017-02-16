@@ -43,4 +43,6 @@ dependencies {
 
     compile 'com.google.android.exoplayer:exoplayer:r1.5.10'
     compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
+
+    compile 'com.google.guava:guava:19.0'
 }

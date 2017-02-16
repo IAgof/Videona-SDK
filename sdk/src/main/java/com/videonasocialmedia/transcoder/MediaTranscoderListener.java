@@ -1,39 +1,12 @@
 package com.videonasocialmedia.transcoder;
-/*
- * Copyright (C) 2015 Videona Socialmedia SL
- * http://www.videona.com
- * info@videona.com
- * All rights reserved
- *
- * Authors:
- * Álvaro Martínez Marco
- *
+
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
+
+/**
+ * Created by alvaro on 15/02/17.
  */
 
 public interface MediaTranscoderListener {
-
-    /**
-     * Called to notify progress.
-     *
-     * @param progress Progress in [0.0, 1.0] range, or negative value if progress is unknown.
-     */
-    void onTranscodeProgress(double progress);
-
-    /**
-     * Called when transcode completed.
-     */
-    void onTranscodeCompleted();
-
-    /**
-     * Called when transcode canceled.
-     */
-    void onTranscodeCanceled();
-
-    /**
-     * Called when transcode failed.
-     *
-     * @param exception Exception thrown from {@link MediaTranscoderEngine#transcodeVideo(String, MediaFormatStrategy)}.
-     *                  Note that it IS NOT {@link java.lang.Throwable}. This means {@link java.lang.Error} won't be caught.
-     */
-    void onTranscodeFailed(Exception exception);
+  void onSuccessTranscoding(Video video);
+  void onErrorTranscoding(Video video, String message);
 }
