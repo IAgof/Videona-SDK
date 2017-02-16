@@ -2,7 +2,6 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
-import com.videonasocialmedia.videonamediaframework.model.Constants;
 
 import java.io.File;
 import java.io.IOException;
@@ -14,7 +13,6 @@ import java.util.Date;
  */
 
 public class VideoAudioFadeGenerator implements OnAudioEffectListener {
-
   private MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
   protected TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
   private VideoAudioFadeListener listener;
@@ -25,6 +23,7 @@ public class VideoAudioFadeGenerator implements OnAudioEffectListener {
   public VideoAudioFadeGenerator(VideoAudioFadeListener listener,
                                  String tempDirectory) {
     this.tempDirectoryFilesAudio = tempDirectory;
+    // TODO(jliarte): 14/02/17  Extract AudioFadeInOut_ to a constant to unify name in all three classes that use it
     this.tempFileAudio = tempDirectory + File.separator + "AudioFadeInOut_"
         + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".m4a";
     this.listener = listener;
@@ -43,7 +42,6 @@ public class VideoAudioFadeGenerator implements OnAudioEffectListener {
 
   @Override
   public void onAudioEffectProgress(String progress) {
-
   }
 
   @Override
@@ -54,7 +52,6 @@ public class VideoAudioFadeGenerator implements OnAudioEffectListener {
   @Override
   public void onAudioEffectCanceled() {
     listener.onGetAudioFadeInFadeOutFromVideoError("canceled");
-
   }
 
   /**

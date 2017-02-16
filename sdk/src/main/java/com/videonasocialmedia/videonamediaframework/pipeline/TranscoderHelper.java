@@ -65,7 +65,7 @@ public class TranscoderHelper {
 
 
     if(!videoToEdit.outputVideoIsFinished()) {
-      ListenableFuture<String> listenableFuture = videoToEdit.getListenableFuture();
+      ListenableFuture<String> listenableFuture = videoToEdit.getTranscodingTask();
       if(listenableFuture!=null){
         Log.d(TAG, "Cancel future " + listenableFuture.toString());
         // TODO:(alvaro.martinez) 14/02/17 delete temporal file
@@ -90,7 +90,7 @@ public class TranscoderHelper {
           updateVideoRepository(videoToEdit), MoreExecutors.sameThreadExecutor());
       Log.d(TAG, "not audioFadeActivated future " + future.toString());
     }
-    videoToEdit.setListentableFuture(future);
+    videoToEdit.setTranscodingTask(future);
     Log.d(TAG, "Set future " + future.toString() + " to video");
 
   }

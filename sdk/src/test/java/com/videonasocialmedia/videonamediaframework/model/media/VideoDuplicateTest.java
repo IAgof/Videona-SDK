@@ -56,7 +56,6 @@ public class VideoDuplicateTest {
     }
 
     public void shouldSaveStateIfVideoIsDuplicatedAfterText(){
-
         Video fakeVideo = getFakeVideoTextAdded();
 
         Video copyVideo = new Video(fakeVideo);
@@ -68,9 +67,7 @@ public class VideoDuplicateTest {
         assertThat("copy save is tempPath, video edited", copyVideo.isEdited(), CoreMatchers.is(fakeVideo.isEdited()));
     }
 
-
     private Video getFakeVideoTrimmed() {
-
         Video video = new Video("somePath");
         // simulate operation, trimm video
         video.setTempPath("newTempPath");
@@ -79,22 +76,17 @@ public class VideoDuplicateTest {
         video.setDuration(10);
         video.setTrimmedVideo(true);
         video.setTempPathFinished(true);
-
         return video;
-
     }
 
     private Video getFakeVideoTextAdded() {
-
         Video video = new Video("somePath");
         // simulate operation, add text to video
         video.setTempPath("newTempPath");
         video.setClipText("blablabla");
         video.setClipTextPosition("CENTER");
-        video.setTextToVideoAdded(true);
+//        video.setTextToVideoAdded(true);
         video.setTempPathFinished(true);
-
         return video;
-
     }
 }

@@ -31,8 +31,6 @@ public class Video extends Media {
 
     private static final AtomicInteger count = new AtomicInteger(0);
 
-    public static String VIDEO_FOLDER_PATH;
-
     /**
      * The total duration of the file media resource
      */
@@ -42,7 +40,7 @@ public class Video extends Media {
     private String clipText;
     private String clipTextPosition;
     private boolean isTempPathFinished = false;
-    private boolean isTextToVideoAdded = false;
+//    private boolean isTextToVideoAdded = false;
     private boolean isTrimmedVideo = false;
 
     // TODO(jliarte): 14/06/16 this entity should not depend on MediaMetadataRetriever as it is part of android
@@ -52,8 +50,7 @@ public class Video extends Media {
 
     private int numTriesToExportVideo = 0;
     private String uuid = UUID.randomUUID().toString();
-    private ListenableFuture<String> functionFuture;
-
+    private ListenableFuture<String> transcodingTask;
 
     /**
      * protected default empty constructor, trying to get injectMocks working
@@ -92,7 +89,7 @@ public class Video extends Media {
                 video.getDuration(), null);
         fileDuration = video.getFileDuration();
         stopTime = video.getStopTime();
-        isTextToVideoAdded = video.hasText();
+//        isTextToVideoAdded = video.hasText();
         clipText = video.getClipText();
         clipTextPosition = video.getClipTextPosition();
         if(video.isEdited()) {
@@ -179,12 +176,13 @@ public class Video extends Media {
     }
 
     public boolean hasText() {
-        return isTextToVideoAdded;
+//        return isTextToVideoAdded;
+        return (clipText != null) && (! clipText.isEmpty());
     }
 
-    public void setTextToVideoAdded(boolean textToVideoAdded) {
-        isTextToVideoAdded = textToVideoAdded;
-    }
+//    public void setTextToVideoAdded(boolean textToVideoAdded) {
+//        isTextToVideoAdded = textToVideoAdded;
+//    }
 
     public boolean isTrimmedVideo() {
         return isTrimmedVideo;
@@ -202,10 +200,6 @@ public class Video extends Media {
         numTriesToExportVideo++;
     }
 
-    public boolean isTextToVideoAdded() {
-        return isTextToVideoAdded;
-    }
-
     public String getUuid() {
         return uuid;
     }
@@ -214,11 +208,11 @@ public class Video extends Media {
         this.uuid = uuid;
     }
 
-    public void setListentableFuture(ListenableFuture<String> functionFuture) {
-        this.functionFuture = functionFuture;
+    public void setTranscodingTask(ListenableFuture<String> functionFuture) {
+        this.transcodingTask = functionFuture;
     }
 
-    public ListenableFuture<String> getListenableFuture() {
-        return functionFuture;
+    public ListenableFuture<String> getTranscodingTask() {
+        return transcodingTask;
     }
 }
