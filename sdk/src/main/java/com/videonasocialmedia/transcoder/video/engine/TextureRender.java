@@ -63,6 +63,7 @@ class TextureRender {
     private int screenHeight;
 
     private List<Overlay> overlayList;
+    private List<Overlay> overlayFadeList;
     private Image image;
 
     public TextureRender(OutputSurface outputSurface) {
@@ -120,7 +121,7 @@ class TextureRender {
             mOutputSurface.getSurfaceTexture().getTransformMatrix(mSTMatrix);
             GLES20.glViewport(0, 0, screenWidth, screenHeight);
             mFullScreenOutput.drawFrame(mInputTextureId, mSTMatrix);
-
+            drawOverlayFadeList();
             drawOverlayList();
             if (image != null) {
                 if (!image.isInitialized())
@@ -189,6 +190,25 @@ class TextureRender {
 
     public void setOverlayList(List<Overlay> overlayList) {
         this.overlayList = overlayList;
+    }
+
+    private void drawOverlayFadeList() {
+        if (overlayFadeList != null && overlayFadeList.size() > 0) {
+            GLES20.glEnable(GLES20.GL_BLEND);
+            for (Overlay overlay : overlayFadeList) {
+                if (!overlay.isInitialized())
+                    overlay.initProgram();
+                overlay.draw();
+            }
+        }
+    }
+
+    public void setOverlayFadeList(List<Overlay> overlayFadeList) {
+        this.overlayFadeList = overlayFadeList;
+    }
+
+    public void clearOverlayFadeList(){
+        overlayFadeList.clear();
     }
 
     public void setImage(Image image) {

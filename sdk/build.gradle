@@ -1,4 +1,27 @@
 apply plugin: 'com.android.library'
+apply plugin: 'checkstyle'
+
+checkstyle {
+    toolVersion = '7.1.1'
+}
+
+task checkstyle(type: Checkstyle) {
+    // Cleaning the old log because of the creation of the new ones (not sure if totaly needed)
+    delete fileTree(dir: "${project.rootDir}/app/build/reports/checkstyle")
+    configFile file("${project.rootDir}/checkstyle.xml")
+    source 'src'
+    include '**/*.java'
+    exclude '**/gen/**'
+
+    reports {
+        xml.enabled = true
+        xml {
+            destination "${project.rootDir}/app/build/reports/checkstyle/checkstyle-result.xml"
+        }
+    }
+
+    classpath = files()
+}
 
 android {
     compileSdkVersion 23
@@ -16,14 +39,21 @@ android {
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
+
+    testOptions {
+        unitTests.all {
+            systemProperty 'robolectric.offline', 'true'
+            systemProperty 'robolectric.dependency.dir', "$System.env.ROBOLECTRIC_LIB_PATH"
+        }
+    }
 }
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
-        exclude group: 'com.android.support', module: 'support-annotations'
-    })
-    compile 'com.android.support:appcompat-v7:24.2.1'
+//    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
+//        exclude group: 'com.android.support', module: 'support-annotations'
+//    })
+    compile 'com.android.support:appcompat-v7:23.2.1'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
     testCompile 'org.hamcrest:hamcrest-core:1.3'
     testCompile('junit:junit:4.12') {
