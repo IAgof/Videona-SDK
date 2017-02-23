@@ -9,7 +9,6 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
-import com.videonasocialmedia.transcoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
@@ -47,7 +46,7 @@ public class TranscoderHelper {
                                                   final Video videoToEdit,
                                                   final VideonaFormat format,
                                                   final String intermediatesTempAudioFadeDirectory,
-                                                  final MediaTranscoderListener listener) {
+                                                  final TranscoderHelperListener listener) {
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -88,7 +87,7 @@ public class TranscoderHelper {
                                                 final boolean isAudioFadeActivated,
                                                 final Video videoToEdit, final VideonaFormat format,
                                                 final String intermediatesTempAudioFadeDirectory,
-                                                final MediaTranscoderListener listener) {
+                                                final TranscoderHelperListener listener) {
 
     new Thread(new Runnable() {
       @Override
@@ -128,7 +127,7 @@ public class TranscoderHelper {
                                               final boolean isAudioFadeActivated,
                                               final Video videoToEdit, final VideonaFormat format,
                                               final String intermediatesTempAudioFadeDirectory,
-                                              final MediaTranscoderListener listener) {
+                                              final TranscoderHelperListener listener) {
 
     new Thread(new Runnable() {
       @Override
@@ -187,7 +186,7 @@ public class TranscoderHelper {
 
   private Function<? super Void, ? extends Void> updateVideo(
                                                           final Video videoToEdit,
-                                                          final MediaTranscoderListener listener) {
+                                                          final TranscoderHelperListener listener) {
     return new Function<Void, Void>() {
       @Override
       public Void apply(Void input) {
@@ -200,7 +199,7 @@ public class TranscoderHelper {
   private Function<? super Void, ? extends Void> applyAudioFadeInOut(
                                                    final Video videoToEdit,
                                                    final String intermediatesTempAudioFadeDirectory,
-                                                   final MediaTranscoderListener listener) {
+                                                   final TranscoderHelperListener listener) {
     return new Function<Void, Void>() {
 
       @Override
@@ -232,7 +231,8 @@ public class TranscoderHelper {
     };
   }
 
-  private void successVideoTranscoded(Video videoToEdit, MediaTranscoderListener listener) {
+  private void successVideoTranscoded(Video videoToEdit, TranscoderHelperListener listener) {
+    Log.d(TAG, "successVideoTranscoded");
     videoToEdit.setTempPathFinished(true);
     listener.onSuccessTranscoding(videoToEdit);
   }
@@ -246,4 +246,5 @@ public class TranscoderHelper {
       }
     }
   }
+
 }

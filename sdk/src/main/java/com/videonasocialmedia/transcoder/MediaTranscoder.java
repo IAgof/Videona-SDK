@@ -367,10 +367,13 @@ public class MediaTranscoder {
             @Override
             public void onFailure(Throwable t) {
                 Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task", t.getCause());
+                Log.e(TAG, "Exception in task ", t.getCause());
                 closeStream(fileInputStream);
-                engine.setInterruptTranscoding();
-                FileUtils.removeFile(outPath);
+                if(t.getMessage().compareTo("cancelled") == 0) {
+                    engine.setInterruptTranscoding();
+                    FileUtils.removeFile(outPath);
+                    Log.d(TAG, "clean, remove temp file ");
+                }
             }
         });
 

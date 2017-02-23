@@ -1,12 +1,12 @@
-package com.videonasocialmedia.transcoder;
+package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
 /**
- * Created by alvaro on 15/02/17.
+ * Created by alvaro on 23/02/17.
  */
 
-public interface MediaTranscoderListener {
+public interface TranscoderHelperListener {
   void onSuccessTranscoding(Video video);
   void onErrorTranscoding(Video video, String message);
 }
