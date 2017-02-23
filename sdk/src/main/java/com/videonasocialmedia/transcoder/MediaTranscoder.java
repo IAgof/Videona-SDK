@@ -30,7 +30,6 @@ import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
-import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import java.io.FileDescriptor;
@@ -38,10 +37,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.ThreadFactory;
-import java.util.concurrent.ThreadPoolExecutor;
-import java.util.concurrent.TimeUnit;
 
 public class MediaTranscoder {
     private static final String TAG = "MediaTranscoder";
@@ -121,14 +116,16 @@ public class MediaTranscoder {
         Futures.addCallback(future, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode " + result);
+                Log.d(TAG, "Transcode success " + result);
                 closeStream(fileInputStream);
             }
             @Override
             public void onFailure(Throwable t) {
+                Log.d(TAG, "onFailure " + t.getMessage());
                 Log.e(TAG, "Exception in task", t.getCause());
                 closeStream(fileInputStream);
                 engine.setInterruptTranscoding();
+                FileUtils.removeFile(outPath);
             }
         });
 
@@ -199,15 +196,17 @@ public class MediaTranscoder {
         Futures.addCallback(createdFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode " + result);
+                Log.d(TAG, "Transcode success " + result);
                 closeStream(fileInputStream);
             }
 
             @Override
             public void onFailure(Throwable t) {
+                Log.d(TAG, "onFailure " + t.getMessage());
                 Log.e(TAG, "Exception in task", t.getCause());
                 closeStream(fileInputStream);
                 engine.setInterruptTranscoding();
+                FileUtils.removeFile(outPath);
             }
         });
 
@@ -275,15 +274,17 @@ public class MediaTranscoder {
         Futures.addCallback(createdFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode " + result);
+                Log.d(TAG, "Transcode success " + result);
                 closeStream(fileInputStream);
             }
 
             @Override
             public void onFailure(Throwable t) {
+                Log.d(TAG, "onFailure " + t.getMessage());
                 Log.e(TAG, "Exception in task", t.getCause());
                 closeStream(fileInputStream);
                 engine.setInterruptTranscoding();
+                FileUtils.removeFile(outPath);
             }
         });
 
@@ -359,15 +360,17 @@ public class MediaTranscoder {
         Futures.addCallback(createdFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode " + result);
+                Log.d(TAG, "Transcode success " + result);
                 closeStream(fileInputStream);
             }
 
             @Override
             public void onFailure(Throwable t) {
+                Log.d(TAG, "onFailure " + t.getMessage());
                 Log.e(TAG, "Exception in task", t.getCause());
                 closeStream(fileInputStream);
                 engine.setInterruptTranscoding();
+                FileUtils.removeFile(outPath);
             }
         });
 
@@ -406,12 +409,13 @@ public class MediaTranscoder {
         Futures.addCallback(createdFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode " + result);
+                Log.d(TAG, "Transcode success " + result);
                 listener.onAudioMixerSuccess(outputFile);
             }
 
             @Override
             public void onFailure(Throwable t) {
+                Log.d(TAG, "onFailure " + t.getMessage());
                 Log.e(TAG, "Exception in task", t.getCause());
                 if (createdFuture != null && createdFuture.isCancelled()) {
                     listener.onAudioMixerCanceled();
@@ -447,12 +451,13 @@ public class MediaTranscoder {
         Futures.addCallback(createdFuture, new FutureCallback<Void>() {
             @Override
             public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode " + result);
+                Log.d(TAG, "Transcode success " + result);
                 listener.onAudioEffectSuccess(outputFile);
             }
 
             @Override
             public void onFailure(Throwable t) {
+                Log.d(TAG, "onFailure " + t.getMessage());
                 Log.e(TAG, "Exception in task", t.getCause());
                 if (createdFuture != null && createdFuture.isCancelled()) {
                     listener.onAudioEffectCanceled();
