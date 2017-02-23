@@ -30,8 +30,6 @@ public class TranscoderHelper {
   public static final int TIME_FADE_IN_MS = 500;
   public static final int TIME_FADE_OUT_MS = 500;
 
-  private static final int MAX_NUM_TRIES_TO_EXPORT_VIDEO = 4;
-
   public TranscoderHelper(TextToDrawable drawableGenerator, MediaTranscoder mediaTranscoder) {
     this.drawableGenerator = drawableGenerator;
     this.mediaTranscoder = mediaTranscoder;
