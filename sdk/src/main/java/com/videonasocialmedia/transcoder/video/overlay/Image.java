@@ -16,6 +16,10 @@ public class Image extends Overlay{
         super(overlayImagePath, width, height, positionX, positionY);
     }
 
+    public Image(String overlayImagePath, int width, int height) {
+        super(overlayImagePath, width, height, 0, 0);
+    }
+
     public Image(Drawable overlayImage, int width, int height) {
         super(overlayImage, width, height, 0, 0);
     }

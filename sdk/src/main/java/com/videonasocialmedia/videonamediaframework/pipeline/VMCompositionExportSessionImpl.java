@@ -6,8 +6,11 @@ import android.util.Log;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+import com.videonasocialmedia.transcoder.MediaTranscoder;
+import com.videonasocialmedia.transcoder.MediaTranscoderListener;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
@@ -16,7 +19,6 @@ import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
-import com.videonasocialmedia.videonamediaframework.model.media.Profile;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 
@@ -80,7 +82,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
                     mixAudio();
                 } else {
-                    onExportEndedListener.onExportSuccess(new Video(exportedVideoFilePath));
+                    Video videoExported = new Video(exportedVideoFilePath);
+                    if(vmComposition.hasWatermark()){
+                        // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
+                        addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
+                    } else {
+                        onExportEndedListener.onExportSuccess(videoExported);
+                    }
                 }
                 // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
 //                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
@@ -291,8 +299,12 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                                 public void onExportSuccess() {
                                     // TODO(jliarte): 23/12/16 too many callbacks??
                                     // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
-                                    onExportEndedListener.onExportSuccess(
+                                    if(vmComposition.hasWatermark()){
+                                     addWatermark(vmComposition.getWatermark(),videoExportedWithVoiceOverPath );
+                                    }else {
+                                        onExportEndedListener.onExportSuccess(
                                             new Video(videoExportedWithVoiceOverPath));
+                                    }
                                 }
                             });
                 }
@@ -302,5 +314,45 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     onExportEndedListener.onExportError("Error mixing audio");
                 }
             });
+    }
+
+    private void addWatermark(Watermark watermark, final String inFilePath) {
+        MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+        TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
+        final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
+        MediaTranscoderListener mediaTranscoderListener = new MediaTranscoderListener() {
+            @Override
+            public void onTranscodeProgress(double progress) {
+
+            }
+
+            @Override
+            public void onTranscodeCompleted() {
+                File f = new File(inFilePath);
+                f.delete();
+                onExportEndedListener.onExportSuccess(
+                    new Video(outputFilePath));
+            }
+
+            @Override
+            public void onTranscodeCanceled() {
+                onExportEndedListener.onExportError("Error adding watermark canceled");
+            }
+
+            @Override
+            public void onTranscodeFailed(Exception exception) {
+                onExportEndedListener.onExportError("Error adding watermark failed");
+            }
+        };
+
+        try {
+            transcoderHelper.generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
+                vmComposition.getVideonaFormat(),
+                watermark.getResourceWatermarkFilePath(),
+                mediaTranscoderListener);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+
     }
 }

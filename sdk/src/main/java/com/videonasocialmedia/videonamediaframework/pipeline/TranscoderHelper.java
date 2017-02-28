@@ -55,6 +55,21 @@ public class TranscoderHelper {
         video.getMediaPath(), video.getTempPath(), format, listener, imageText);
   }
 
+  public void generateOutputVideoWithWatermarkImage(String inFilePath, String outFilePath,
+                                                    VideonaFormat format,
+                                                    String watermarkPath,
+                                                    MediaTranscoderListener listener)
+      throws IOException  {
+
+    Image watermark = new Image(watermarkPath, Constants.DEFAULT_CANVAS_WIDTH,
+        Constants.DEFAULT_CANVAS_HEIGHT);
+
+    Drawable fakeDrawable = Drawable.createFromPath(watermarkPath);
+
+    mediaTranscoder.transcodeAndOverlayImageToVideo(fakeDrawable, false, inFilePath, outFilePath, format,
+        listener, watermark);
+  }
+
   public void generateOutputVideoWithTrimming(Drawable fadeTransition,
                                               boolean isFadeActivated,
                                               Video video, VideonaFormat format,
