@@ -15,16 +15,16 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
-
 -keep class com.videonasocialmedia.videonamediaframework.model.VMComposition { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.model.Constants { public *;}
 
 -keep class com.videonasocialmedia.videonamediaframework.model.media.Music { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.model.media.Audio { public <methods>;}
+-keep class com.videonasocialmedia.videonamediaframework.model.licensing.License { public *;}
+-keep class com.videonasocialmedia.videonamediaframework.model.media.transitions.Transition { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.model.media.Video { public  *; }
 -keep class com.videonasocialmedia.videonamediaframework.model.media.Media { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.model.media.Profile { public <methods>;}
--keep class com.videonasocialmedia.videonamediaframework.model.media.Effects { public <methods>;}
 
 -keep class com.videonasocialmedia.videonamediaframework.model.media.effects.Effect { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffect$** { public *;}
@@ -53,6 +53,7 @@
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioCompositionExportSession { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioCompositionExportSession$* { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer { public <methods>;}
+-keep interface com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer$OnMixAudioListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSessionImpl { public <methods>;}
 -keep interface com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSession { *; }
@@ -61,6 +62,10 @@
 -keep class com.videonasocialmedia.videonamediaframework.muxer.Appender { public <methods>;}
 
 -keep class com.videonasocialmedia.transcoder.MediaTranscoder { public <methods>;}
+-keep interface com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy { public <methods>; }
+-keep class com.videonasocialmedia.transcoder.video.overlay.Overlay { public <methods>; }
+-keep interface com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener { public <methods>; }
+-keep interface com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener { public <methods>; }
 -keep interface com.videonasocialmedia.transcoder.MediaTranscoderListener { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.video.format.VideonaFormat { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.video.overlay.Image { public <methods>;}
