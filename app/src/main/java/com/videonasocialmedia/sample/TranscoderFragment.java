@@ -31,10 +31,6 @@ import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Filter;
-import com.videonasocialmedia.videonamediaframework.model.media.Video;
-import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffect;
-import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
-import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.File;
 import java.io.IOException;
