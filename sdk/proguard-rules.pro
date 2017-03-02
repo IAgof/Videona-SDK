@@ -69,7 +69,9 @@
 -keep interface com.videonasocialmedia.transcoder.MediaTranscoderListener { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.video.format.VideonaFormat { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.video.overlay.Image { public <methods>;}
+
 -keep class com.videonasocialmedia.transcoder.video.overlay.Filter { public <methods>;}
+-keep class com.videonasocialmedia.transcoder.audio.listener.** { public <methods>;}
 
 
 -keepattributes Exceptions, InnerClasses
