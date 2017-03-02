@@ -55,6 +55,7 @@
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer { public <methods>;}
 -keep interface com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer$OnMixAudioListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper { public <methods>;}
+-keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSessionImpl { public <methods>;}
 -keep interface com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSession { *; }
 -keep interface com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSession$* { *; }
@@ -69,5 +70,8 @@
 -keep interface com.videonasocialmedia.transcoder.MediaTranscoderListener { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.video.format.VideonaFormat { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.video.overlay.Image { public <methods>;}
+-keep class com.videonasocialmedia.transcoder.video.overlay.Filter { public <methods>;}
+-keep class com.videonasocialmedia.transcoder.audio.listener.** { public <methods>;}
+
 
 -keepattributes Exceptions, InnerClasses
