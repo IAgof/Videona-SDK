@@ -86,11 +86,14 @@ public class Music extends Audio {
     }
 
     public String getMusicTitle() {
+        if(musicTitle == null)
+          return getTitle();
         return musicTitle;
     }
 
     public void setMusicTitle(String name) {
         this.musicTitle = name;
+        setTitle(name);
     }
 
     public int getIconResourceId() {
