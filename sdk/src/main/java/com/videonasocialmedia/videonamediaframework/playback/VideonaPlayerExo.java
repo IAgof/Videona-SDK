@@ -337,6 +337,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       currentTimePositionInList = getCurrentPosition();
       player.release();
       player = null;
+      clearNextBufferedClip();
     }
   }
 
