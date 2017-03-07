@@ -56,8 +56,6 @@ import java.util.List;
  */
 public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener,
-//        ExtractorSampleSource.EventListener,
-//    MediaCodecAudioTrackRenderer.EventListener, MediaCodecVideoTrackRenderer.EventListener,
         RendererBuilder.RendererBuilderListener {
   private static final String TAG = "VideonaPlayerExo";
   private static final int BUFFER_LENGTH_MIN = 50;
@@ -971,80 +969,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       player.sendMessage(
           videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
     }
-  }
-
-//  /***
-//   * Renderer Event Listener.
-//   ***/
-//
-//  @Override
-//  public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
-//                                 float pixelWidthHeightRatio) {
-//  }
-//
-//  /** end of Renderer Event Listener. **/
-//
-//  /***
-//   * MediaCodecVideoTrackRenderer EventListener.
-//   ***/
-//
-//  @Override
-//  public void onDrawnToSurface(Surface surface) {
-//
-//  }
-//
-//  @Override
-//  public void onLoadError(int sourceId, IOException exception) {
-//
-//  }
-//
-//  @Override
-//  public void onDroppedFrames(int count, long elapsed) {
-//
-//  }
-//  /** End of MediaCodecVideoTrackRenderer EventListener. **/
-//
-//  /***
-//   * MediaCodecAudioTrackRenderer.EventListener.
-//   ***/
-//  @Override
-//  public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
-//
-//  }
-//
-//  @Override
-//  public void onAudioTrackInitializationError(AudioTrack.InitializationException exception) {
-//
-//  }
-//
-//  @Override
-//  public void onAudioTrackWriteError(AudioTrack.WriteException exception) {
-//
-//  }
-//
-//  @Override
-//  public void onDecoderInitializationError(
-//      MediaCodecTrackRenderer.DecoderInitializationException exception) {
-//
-//  }
-//
-//  @Override
-//  public void onCryptoError(MediaCodec.CryptoException exception) {
-//
-//  }
-//
-//  @Override
-//  public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs,
-//                                   long initializationDurationMs) {
-//
-//  }
-//  /**
-//   * End of MediaCodecAudioTrackRenderer.EventListener
-//   **/
-
-  // TODO(jliarte): 31/08/16 move to interface?
-  public void releaseView() {
-
   }
 
 }
