@@ -26,7 +26,8 @@ public interface VideonaPlayer {
   void seekToClip(int position);
   void setMusic(Music music);
   void setVolume(float volume);
-  void setTransitionFade();
+  void setVideoTransitionFade();
+  void setAudioTransitionFade();
   int getCurrentPosition();
   void setSeekBarProgress(int progress);
   void setSeekBarLayoutEnabled(boolean seekBarEnabled);
