@@ -252,29 +252,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
               - videoList.get(currentClipIndex()).getStartTime();
           setSeekBarProgress(progress);
           currentTimePositionInList = progress;
+          previewAVTransitions(progress);
+
           // detect end of trimming and play next clip or stop
-
-          if(isSetVideoTransitionFadeActivated || isSetAudioTransitionFadeActivated) {
-            if (isPlaying() && isStartOfCurrentClip(progress)) {
-              if(!isInAnimatorLaunched) {
-                Log.d(TAG, "updateSeekBarProgress inAnimator start ");
-                isInAnimatorLaunched = true;
-                inAnimator.start();
-              }
-            }
-            if (isPlaying() && isEndOfCurrentClip(progress)) {
-              if(!isOutAnimatorLaunched) {
-                Log.d(TAG, "updateSeekBarProgress outAnimator start ");
-                isOutAnimatorLaunched = true;
-                outAnimator.start();
-              }
-            }
-          }
-
           if (isCurrentClipEnded()) {
             playNextClip();
           }
-
         }
       } catch (Exception exception) {
         Log.d(TAG, "updateSeekBarProgress: exception updating videonaPlayer seekbar");
@@ -287,16 +270,35 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     }
   }
 
+  private void previewAVTransitions(int progress) {
+    if (isSetVideoTransitionFadeActivated || isSetAudioTransitionFadeActivated) {
+      if (isPlaying() && shouldLaunchStartTransition(progress)) {
+        if (!isInAnimatorLaunched) {
+          Log.d(TAG, "updateSeekBarProgress inAnimator start ");
+          isInAnimatorLaunched = true;
+          inAnimator.start();
+        }
+      }
+      if (isPlaying() && shouldLaunchEndTransition(progress)) {
+        if (!isOutAnimatorLaunched) {
+          Log.d(TAG, "updateSeekBarProgress outAnimator start ");
+          isOutAnimatorLaunched = true;
+          outAnimator.start();
+        }
+      }
+    }
+  }
+
   private boolean isCurrentClipEnded() {
     return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper();
   }
 
-  private boolean isEndOfCurrentClip(int seekBarProgress) {
+  private boolean shouldLaunchEndTransition(int seekBarProgress) {
     int timeEndClip = (int) clipTimesRanges.get(currentClipIndex()).getUpper();
     return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE) );
   }
 
-  private boolean isStartOfCurrentClip(int seekBarProgress) {
+  private boolean shouldLaunchStartTransition(int seekBarProgress) {
     int timeStartLastClip;
     if(currentClipIndex() > 0){
       timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
