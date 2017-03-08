@@ -1,0 +1,3 @@
+v0.2.1
+- Update preview player with audio and video fade transitions.
+- Improved player added prebuffering of next clip to a faster switching.
