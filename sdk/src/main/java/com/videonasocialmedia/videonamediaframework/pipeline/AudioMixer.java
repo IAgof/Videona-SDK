@@ -2,9 +2,11 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Future;
 
 /**
@@ -33,12 +35,12 @@ public class AudioMixer implements OnAudioMixerListener {
         }
     }
 
-    public void mixAudio(String inputFileOne, String inputFileTwo, float volume,
-                         String tempAudioPath, long durationAudioFile, OnMixAudioListener listener) {
+    public void mixAudio(List<Media> mediaList, String tempAudioPath,
+                         long durationAudioFile, OnMixAudioListener listener) {
         this.listener = listener;
         try {
-            Future<Void> mFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputFileOne,
-                    inputFileTwo, volume, tempAudioPath, outputFilePath, durationAudioFile, this);
+            Future<Void> mFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
+                tempAudioPath, outputFilePath, durationAudioFile, this);
         } catch (IOException e) {
             e.printStackTrace();
         }

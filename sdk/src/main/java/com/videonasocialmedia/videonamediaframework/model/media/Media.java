@@ -42,6 +42,8 @@ public abstract class Media extends MediaElement {
      */
     protected String mediaPath;
 
+    protected float volume;
+
     // TODO(jliarte): 14/06/16 seems to not being used. If so, maybe initialize in getter?
 //    protected File source;
 
@@ -93,10 +95,11 @@ public abstract class Media extends MediaElement {
      * @param duration      - Media item duration in milliseconds within the file referenced
      * @param license       - Legal stuff.
      */
-    protected Media(int identifier, String iconPath, String mediaPath, int startTime,
+    protected Media(int identifier, String iconPath, String mediaPath, float volume, int startTime,
                    int duration , License license) {
         super(identifier, iconPath);
         this.mediaPath = mediaPath;
+        this.volume = volume;
 //        this.source = new File(this.mediaPath);
         this.startTime = startTime;
         this.stopTime = duration;
@@ -120,11 +123,12 @@ public abstract class Media extends MediaElement {
      * @param license          - Legal stuff.
      */
     protected Media(int identifier, String iconPath, String selectedIconPath, String title,
-                    String mediaPath, int startTime, int duration, Transition opening,
+                    String mediaPath, float volume, int startTime, int duration, Transition opening,
                     Transition ending, MediaMetadata metadata, License license) {
         super(identifier, iconPath, selectedIconPath);
         this.title = title;
         this.mediaPath = mediaPath;
+        this.volume = volume;
 //        this.source = new File(this.mediaPath);
         this.startTime = startTime;
         this.stopTime = duration;
@@ -132,6 +136,12 @@ public abstract class Media extends MediaElement {
         this.ending = ending;
         this.metadata = metadata;
         this.license = license;
+    }
+
+    protected Media(String mediaPath, float volume){
+        super(-1, null);
+        this.mediaPath = mediaPath;
+        this.volume = volume;
     }
 
     /**
@@ -253,5 +263,9 @@ public abstract class Media extends MediaElement {
 
     public void setPosition(int position) {
         this.position = position;
+    }
+
+    public float getVolume() {
+        return volume;
     }
 }

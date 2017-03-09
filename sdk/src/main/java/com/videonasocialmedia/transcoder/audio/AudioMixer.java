@@ -1,16 +1,16 @@
 package com.videonasocialmedia.transcoder.audio;
 
-import android.support.annotation.NonNull;
-
-
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -21,43 +21,21 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     private boolean DEBUG = true;
 
-    private String inputFile1;
-    private String inputFile2;
-    private float volume;
     private String tempDirectory;
     private String outputFile;
 
-    private AudioDecoder audioDecoder1;
-    private AudioDecoder audioDecoder2;
-
-    private boolean isInputFile1Decoded = false;
-    private boolean isInputFile2Decoded = false;
-
     private OnAudioMixerListener listener;
-
-    private String tempFileTwo;
-    private String tempFileOne;
 
     private long durationOutputFile;
 
-    private List<AudioToExport> mediaList;
+    private List<Media> mediaList;
 
-    public AudioMixer(String inputFile1, String inputFile2, float volume,
-                      String tempDirectory, String outputFile, long durationOutputFile) {
-        this.inputFile1 = inputFile1;
-        this.inputFile2 = inputFile2;
-        this.volume = volume;
-        this.tempDirectory = tempDirectory;
-        tempFileOne  = tempDirectory + File.separator + "tempFile1.pcm";
-        tempFileTwo = tempDirectory + File.separator + "tempFile2.pcm";
-        this.outputFile = outputFile;
-        this.durationOutputFile = durationOutputFile;
-        cleanTempDirectory();
-    }
+    private List<Media> mediaListDecoded;
 
-    public AudioMixer(List<AudioToExport> mediaList, String tempDirectory, String outputFile,
+    public AudioMixer(List<Media> mediaList, String tempDirectory, String outputFile,
                       long durationOutputFile){
         this.mediaList = mediaList;
+        mediaListDecoded = new ArrayList<>(mediaList.size());
         this.tempDirectory = tempDirectory;
         this.outputFile = outputFile;
         this.durationOutputFile = durationOutputFile;
@@ -69,33 +47,16 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     public void export() {
-        /*audioDecoder1 = new AudioDecoder(inputFile1, tempFileOne, this);
-        audioDecoder2 = new AudioDecoder(inputFile2, tempFileTwo, durationOutputFile, this);
-        audioDecoder1.decode();
-        audioDecoder2.decode();*/
-        for(AudioToExport media: mediaList){
+
+        for(Media media: mediaList){
             AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile, this);
             decoder.decode();
         }
 
-        for(AudioToExport media: mediaList) {
-            while (!media.isMediaAudioDecoded()) {
-                try {
-                    int countWaiting = 0;
-                    if (countWaiting > 100) {
-                        break;
-                    }
-                    countWaiting++;
-                    Thread.sleep(1000);
-                } catch (InterruptedException exception) {
-                    exception.printStackTrace();
-                }
-            }
-        }
-        mixAudio(mediaList);
+        mixAudio(mediaListDecoded);
     }
 
-    private void mixAudio(List<AudioToExport> mediaList) {
+    private void mixAudio(List<Media> mediaList) {
         MixSound mixSound = new MixSound(this);
         String outputTempMixAudioPath = tempDirectory + File.separator + "mixAudio.pcm";
 
@@ -104,32 +65,6 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
         } catch (IOException e) {
             e.printStackTrace();
         }
-      /*  try {
-            mixSound.mixAudioTwoFiles(mediaList.get(0).getMediaDecodeAudioPath(),
-                mediaList.get(1).getMediaDecodeAudioPath(), mediaList.get(1).getMediaVolume(),
-                outputTempMixAudioPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }*/
-    }
-
-    @NonNull
-    private String mixTwoSounds() {
-        MixSound mixSound = new MixSound(this);
-        String tempMixAudio = tempDirectory + File.separator + "mixAudio.pcm";
-
-        try {
-            mixSound.mixAudioTwoFiles(audioDecoder1.getOutputFile(), audioDecoder2.getOutputFile(),
-                    volume, tempMixAudio);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        if (DEBUG) {
-            String tempMixAudioWav = tempDirectory + File.separator + "mixAudio.wav";
-            UtilsAudio.copyWaveFile(tempMixAudio, tempMixAudioWav);
-        }
-        return tempMixAudio;
     }
 
     private void encodeAudio(String inputFileRaw) {
@@ -147,8 +82,12 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     @Override
-    public void onFileDecodedMediaSuccess(AudioToExport media, String outputFile) {
-        media.setMediaDecodeAudioPath(outputFile);
+    public void onFileDecodedMediaSuccess(Media media, String outputFile) {
+        mediaListDecoded.add(new Video(outputFile, media.getVolume()));
+        if (DEBUG) {
+            String fileDecoded = tempDirectory + File.separator + new File(outputFile).getName() + ".wav";
+            UtilsAudio.copyWaveFile(outputFile, fileDecoded);
+        }
     }
 
     @Override
@@ -158,6 +97,12 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     @Override
     public void OnMixSoundSuccess(String outputFile) {
+
+        if (DEBUG) {
+            String tempMixAudioWav = tempDirectory + File.separator + "mixAudio.wav";
+            UtilsAudio.copyWaveFile(outputFile, tempMixAudioWav);
+        }
+
         encodeAudio(outputFile);
 
         if (listener!= null) {

@@ -1,6 +1,6 @@
 package com.videonasocialmedia.transcoder.audio.listener;
 
-import com.videonasocialmedia.transcoder.audio.AudioToExport;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 /**
  * Created by alvaro on 19/09/16.
@@ -8,6 +8,6 @@ import com.videonasocialmedia.transcoder.audio.AudioToExport;
 public interface OnAudioDecoderListener {
 
     void OnFileDecodedError(String error);
-    void onFileDecodedMediaSuccess(AudioToExport media, String outputFile);
+    void onFileDecodedMediaSuccess(Media media, String outputFile);
     void OnFileDecodedSuccess(String outputFile);
 }

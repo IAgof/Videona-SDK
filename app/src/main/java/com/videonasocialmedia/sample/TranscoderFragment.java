@@ -32,11 +32,15 @@ import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Filter;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
 import java.util.concurrent.Future;
 
 import butterknife.BindView;
@@ -236,8 +240,18 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       }
     }
 
+    // Modo rápido de pruebas
+    Video audio1 = new Video(inputVideo, 0.5f);
+    Video audio2 = new Video(inputVideo2, 0.5f);
+    String inputFile3 = new File(inputVideo).getParent() + File.separator + "input_video_3.mp4";
+    Video audio3 = new Video(inputFile3, 0.9f);
+    List<Media> mediaList = new ArrayList<>();
+    mediaList.add(audio1);
+    mediaList.add(audio2);
+    mediaList.add(audio3);
+
     try {
-      mFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputVideo, inputVideo2, 0.90f,
+      mFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
           tempDir, outputAudio, getDurationFile(inputVideo), this);
     } catch (IOException e) {
       e.printStackTrace();

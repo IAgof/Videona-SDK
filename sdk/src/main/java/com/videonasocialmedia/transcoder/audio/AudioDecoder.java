@@ -6,6 +6,7 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -20,7 +21,7 @@ import java.nio.ByteBuffer;
 public class AudioDecoder {
 
     private final static String LOG_TAG = "AudioDecoder";
-    private AudioToExport media;
+    private Media media;
 
 
     private String inputFile;
@@ -50,7 +51,7 @@ public class AudioDecoder {
         this.listener = listener;
     }
 
-    public AudioDecoder(AudioToExport media, String tempDirectory, long durationFile,
+    public AudioDecoder(Media media, String tempDirectory, long durationFile,
                         OnAudioDecoderListener listener){
         this.media = media;
         this.inputFile = media.getMediaPath();

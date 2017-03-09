@@ -4,6 +4,7 @@ package com.videonasocialmedia.transcoder.audio;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -85,7 +86,7 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   @Override
-  public void onFileDecodedMediaSuccess(AudioToExport media, String outputFile) {
+  public void onFileDecodedMediaSuccess(Media media, String outputFile) {
 
   }
 

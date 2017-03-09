@@ -80,7 +80,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
                     mixAudio();
                 } else {
-                    onExportEndedListener.onExportSuccess(new Video(exportedVideoFilePath));
+                    onExportEndedListener.onExportSuccess(new Video(exportedVideoFilePath, 1f));
                 }
                 // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
 //                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
@@ -274,8 +274,12 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         final String videoExportedWithVoiceOverPath = outputFilesDirectory
                 + getNewExportedVideoFileName();
         Music voiceOver = vmComposition.getMusic();
-        audioMixer.mixAudio(exportedVideoFilePath, voiceOver.getMediaPath(), voiceOver.getVolume(),
-                tempAudioPath, FileUtils.getDurationFile(exportedVideoFilePath), new AudioMixer.OnMixAudioListener() {
+        Video video = new Video(exportedVideoFilePath, 1-voiceOver.getVolume());
+        List<Media> mediaList = new ArrayList<>();
+        mediaList.add(video);
+        mediaList.add(voiceOver);
+        audioMixer.mixAudio(mediaList, tempAudioPath,
+            FileUtils.getDurationFile(exportedVideoFilePath), new AudioMixer.OnMixAudioListener() {
                 @Override
                 public void onMixAudioSuccess(String path) {
                     VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
@@ -292,7 +296,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                                     // TODO(jliarte): 23/12/16 too many callbacks??
                                     // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
                                     onExportEndedListener.onExportSuccess(
-                                            new Video(videoExportedWithVoiceOverPath));
+                                            new Video(videoExportedWithVoiceOverPath, 1f));
                                 }
                             });
                 }

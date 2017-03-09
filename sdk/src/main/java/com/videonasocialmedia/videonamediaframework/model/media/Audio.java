@@ -29,9 +29,9 @@ public class Audio extends Media {
     /**
      * Constructor of minimum number of parameters. Default constructor.
      */
-    public Audio(int identifier, String mediaPath, License license) {
+    public Audio(int identifier, String mediaPath, float volume, License license) {
         // TODO(jliarte): 29/11/16 add a super constructor? query media duration?
-        super(identifier, null, mediaPath, 0, 0, license);
+        super(identifier, null, mediaPath, volume, 0, 0, license);
     }
 
     /**
@@ -39,9 +39,9 @@ public class Audio extends Media {
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.Media
      */
-    public Audio(int identifier, String iconPath, String mediaPath, int fileStartTime, int duration,
-                 License license) {
-        super(identifier, iconPath, mediaPath, fileStartTime, duration, license);
+    public Audio(int identifier, String iconPath, String mediaPath, float volume, int fileStartTime,
+                 int duration, License license) {
+        super(identifier, iconPath, mediaPath, volume, fileStartTime, duration, license);
     }
 
     /**
@@ -49,11 +49,11 @@ public class Audio extends Media {
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.Media
      */
-    public Audio(int identifier, String iconPath, String selectedIconPath, String title,
-                 String mediaPath, int fileStartTime, int duration, Transition opening,
-                 Transition ending, MediaMetadata metadata, License license) {
-        super(identifier, iconPath, selectedIconPath, title, mediaPath, fileStartTime, duration,
-                opening, ending, metadata, license);
+    public Audio(int identifier, String iconPath, String selectedIconPath,
+                 String title, String mediaPath, float volume, int fileStartTime, int duration,
+                 Transition opening, Transition ending, MediaMetadata metadata, License license) {
+        super(identifier, iconPath, selectedIconPath, title, mediaPath, volume, fileStartTime,
+            duration, opening, ending, metadata, license);
     }
 
     @Override

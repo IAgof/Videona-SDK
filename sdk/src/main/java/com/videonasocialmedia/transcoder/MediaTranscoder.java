@@ -22,17 +22,16 @@ import android.util.Log;
 
 import com.videonasocialmedia.transcoder.audio.AudioEffect;
 import com.videonasocialmedia.transcoder.audio.AudioMixer;
-import com.videonasocialmedia.transcoder.audio.AudioToExport;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Future;
@@ -538,10 +537,10 @@ public class MediaTranscoder {
     }
 
 
-    public Future<Void> mixAudioTwoFiles(final String inputFile1, final String inputFile2, final float volume,
-                                         final String tempDirectory, final String outputFile,
-                                         final long durationOutputFile,
-                                         final OnAudioMixerListener listener) throws IOException {
+    public Future<Void> mixAudioFiles(final List<Media> mediaList,
+                                      final String tempDirectory, final String outputFile,
+                                      final long durationOutputFile,
+                                      final OnAudioMixerListener listener) throws IOException {
 
         Looper looper = Looper.myLooper();
         if (looper == null) looper = Looper.getMainLooper();
@@ -550,13 +549,6 @@ public class MediaTranscoder {
         final Future<Void> createdFuture = mExecutor.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                //AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
-                  //      outputFile, durationOutputFile);
-                AudioToExport audio1 = new AudioToExport(inputFile1, volume);
-                AudioToExport audio2 = new AudioToExport(inputFile2, volume);
-                List<AudioToExport> mediaList = new ArrayList<>();
-                mediaList.add(audio1);
-                mediaList.add(audio2);
 
                 AudioMixer mixer = new AudioMixer(mediaList, tempDirectory,
                     outputFile, durationOutputFile);

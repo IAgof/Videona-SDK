@@ -148,7 +148,7 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
 
     String videoTest = externalDir + File.separator + "6segundos.mp4";
 
-    Video videoShare = new Video(videoPath);
+    Video videoShare = new Video(videoPath, 1f);
     movieList.add(videoShare);
 
     videonaPlayer.initPreviewLists(movieList);
