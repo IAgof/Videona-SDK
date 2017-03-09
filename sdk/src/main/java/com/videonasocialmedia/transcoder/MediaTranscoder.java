@@ -394,6 +394,7 @@ public class MediaTranscoder {
                                                      final float volume,
                                                      final String tempDirectory,
                                                      final String outputFile,
+                                                     final long durationOutputFile,
                                                      final OnAudioMixerListener listener) {
 
         ListeningExecutorService pool =
@@ -402,7 +403,7 @@ public class MediaTranscoder {
             @Override
             public Void call() throws Exception {
                 AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
-                    outputFile);
+                        outputFile, durationOutputFile);
                 mixer.setOnAudioMixerListener(listener);
                 mixer.export();
                 return null;

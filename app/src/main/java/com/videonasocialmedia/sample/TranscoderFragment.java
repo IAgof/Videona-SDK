@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -244,9 +245,18 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
     }
 
     listenableFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputVideo, inputVideo2, 0.90f,
-        tempDir, outputAudio, this);
+        tempDir, outputAudio, getDurationFile(inputVideo), this);
 
 
+  }
+
+  public static long getDurationFile(String filePath){
+    long duration = 0;
+    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+    retriever.setDataSource(filePath);
+    duration = Integer.parseInt(retriever.extractMetadata(
+        MediaMetadataRetriever.METADATA_KEY_DURATION));
+    return duration*1000;
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
