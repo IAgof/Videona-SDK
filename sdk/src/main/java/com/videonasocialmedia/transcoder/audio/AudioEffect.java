@@ -85,6 +85,11 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   @Override
+  public void onFileDecodedMediaSuccess(AudioToExport media, String outputFile) {
+
+  }
+
+  @Override
   public void OnFileEncodedSuccess(String outputFile) {
     deleteTempFiles();
     if (listener != null) {

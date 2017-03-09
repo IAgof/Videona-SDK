@@ -16,6 +16,7 @@ import android.media.AudioTrack;
 import android.util.Log;
 
 import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -29,6 +30,8 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
 import java.nio.channels.FileChannel;
+import java.util.ArrayList;
+import java.util.List;
 
 public class MixSound {
 
@@ -50,6 +53,88 @@ public class MixSound {
     }
 
     private byte[] output;
+
+    public void mixAudio(List<AudioToExport> mediaList, String outputTempMixAudioPath)
+        throws IOException {
+        List<File> inputFileList = new ArrayList<>(mediaList.size());
+        for(AudioToExport media: mediaList){
+            inputFileList.add(new File(media.getMediaPath()));
+        }
+        List<RandomAccessFile> randomAccessFileList = new ArrayList<>(mediaList.size());
+        for(File file: inputFileList){
+            randomAccessFileList.add(new RandomAccessFile(file,"r"));
+        }
+
+        List<FileChannel> fileChannelList = new ArrayList<>(mediaList.size());
+        for(RandomAccessFile randomAccessFile: randomAccessFileList){
+            fileChannelList.add(randomAccessFile.getChannel());
+        }
+
+        int SIZE_4MB = 1024*1024*4;
+
+        List<ByteBuffer> bufferList = new ArrayList<>(mediaList.size());
+        for(int i=0; i<mediaList.size(); i++){
+            bufferList.add(ByteBuffer.allocate(SIZE_4MB));
+        }
+
+        int maxLength = bufferList.get(0).limit(); // Video fix buffer length, first list element always is Video
+        int indexOutput = 0;
+        long maxSizeOutput = randomAccessFileList.get(0).length();
+        output = new byte[(int)maxSizeOutput];
+
+        while(fileChannelList.get(0).read(bufferList.get(0)) > 0)
+        {
+            if(indexOutput + maxLength > output.length){
+                maxLength = output.length - indexOutput;
+                Log.d(LOG_TAG, "last Flip");
+            }
+
+            for(int i = 1; i<fileChannelList.size(); i++){
+                fileChannelList.get(i).read(bufferList.get(i));
+            }
+
+            for(ByteBuffer buffer: bufferList){
+                buffer.flip();
+            }
+
+            List<byte[]> dataList = new ArrayList<>(mediaList.size());
+            float normalizeVolume = 0;
+            for(AudioToExport media: mediaList){
+                normalizeVolume = normalizeVolume + media.getMediaVolume();
+            }
+
+            for(AudioToExport media: mediaList){
+                byte[] data = adjustVolume(bufferList.get(mediaList.indexOf(media)).array(),
+                    media.getMediaVolume()/normalizeVolume);
+                dataList.add(data);
+            }
+
+            byte[] tempOutput = manipulateSamples(dataList);
+
+            for (int j = 0; j < maxLength; j++) {
+                output[j] = tempOutput[j];
+            }
+
+            for(ByteBuffer buffer: bufferList){
+                buffer.clear();
+            }
+
+            indexOutput = indexOutput + maxLength;
+        }
+
+        for(FileChannel fileChannel: fileChannelList){
+            fileChannel.close();
+        }
+        for(RandomAccessFile randomAccessFile: randomAccessFileList){
+            randomAccessFile.close();
+        }
+
+        convertByteToFile(output, outputTempMixAudioPath);
+
+        listener.OnMixSoundSuccess(outputTempMixAudioPath);
+
+    }
+
 
     public void mixAudioTwoFiles(String inputFileOne, String inputFileTwo, float scaleFactor,
                                  String outputFile) throws IOException {
@@ -142,6 +227,40 @@ public class MixSound {
 
         listener.OnMixSoundSuccess(outputFile);
 
+    }
+
+    private byte[] manipulateSamples(List<byte[]> dataList) {
+
+        AudioTrack audioTrack = new AudioTrack(AudioManager.STREAM_MUSIC,
+            48000, AudioFormat.CHANNEL_IN_STEREO,
+            AudioFormat.ENCODING_PCM_16BIT, 48000, AudioTrack.MODE_STREAM);
+
+        // Convert byte[] to short[] (16 bit) to float[] (32 bit) (End result: Big Endian)
+        List<ShortBuffer> shortBufferList = new ArrayList<>(dataList.size());
+        for(byte[] data: dataList){
+            shortBufferList.add(ByteBuffer.wrap(data).asShortBuffer());
+        }
+
+        List<short[]> audioShortsList = new ArrayList<>(dataList.size());
+        for(ShortBuffer shortBuffer: shortBufferList){
+            audioShortsList.add(new short[shortBuffer.capacity()]);
+        }
+
+        for(int i=0; i<dataList.size(); i++){
+            shortBufferList.get(i).get(audioShortsList.get(i));
+        }
+
+        int length = audioShortsList.get(0).length; // Video always first element, bigger time, size.
+        float[] audioFloats = new float[length];
+
+        for (int j = 0; j < length; j++) {
+
+            for(short[] audioShort: audioShortsList){
+                audioFloats[j] = audioFloats[j] + ((float) Short.reverseBytes(audioShort[j]) / 0x8000);
+            }
+        }
+
+        return new byte[0];
     }
 
     private byte[] manipulateSamples(byte[] data1, byte[] data2) {

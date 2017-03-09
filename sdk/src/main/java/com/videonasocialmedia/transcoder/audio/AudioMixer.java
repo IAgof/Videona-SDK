@@ -11,6 +11,7 @@ import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by alvaro on 19/09/16.
@@ -39,6 +40,8 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     private long durationOutputFile;
 
+    private List<AudioToExport> mediaList;
+
     public AudioMixer(String inputFile1, String inputFile2, float volume,
                       String tempDirectory, String outputFile, long durationOutputFile) {
         this.inputFile1 = inputFile1;
@@ -52,15 +55,62 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
         cleanTempDirectory();
     }
 
+    public AudioMixer(List<AudioToExport> mediaList, String tempDirectory, String outputFile,
+                      long durationOutputFile){
+        this.mediaList = mediaList;
+        this.tempDirectory = tempDirectory;
+        this.outputFile = outputFile;
+        this.durationOutputFile = durationOutputFile;
+        cleanTempDirectory();
+    }
+
     public void setOnAudioMixerListener(OnAudioMixerListener listener) {
         this.listener = listener;
     }
 
     public void export() {
-        audioDecoder1 = new AudioDecoder(inputFile1, tempFileOne, this);
+        /*audioDecoder1 = new AudioDecoder(inputFile1, tempFileOne, this);
         audioDecoder2 = new AudioDecoder(inputFile2, tempFileTwo, durationOutputFile, this);
         audioDecoder1.decode();
-        audioDecoder2.decode();
+        audioDecoder2.decode();*/
+        for(AudioToExport media: mediaList){
+            AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile, this);
+            decoder.decode();
+        }
+
+        for(AudioToExport media: mediaList) {
+            while (!media.isMediaAudioDecoded()) {
+                try {
+                    int countWaiting = 0;
+                    if (countWaiting > 100) {
+                        break;
+                    }
+                    countWaiting++;
+                    Thread.sleep(1000);
+                } catch (InterruptedException exception) {
+                    exception.printStackTrace();
+                }
+            }
+        }
+        mixAudio(mediaList);
+    }
+
+    private void mixAudio(List<AudioToExport> mediaList) {
+        MixSound mixSound = new MixSound(this);
+        String outputTempMixAudioPath = tempDirectory + File.separator + "mixAudio.pcm";
+
+        try {
+            mixSound.mixAudio(mediaList, outputTempMixAudioPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+      /*  try {
+            mixSound.mixAudioTwoFiles(mediaList.get(0).getMediaDecodeAudioPath(),
+                mediaList.get(1).getMediaDecodeAudioPath(), mediaList.get(1).getMediaVolume(),
+                outputTempMixAudioPath);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }*/
     }
 
     @NonNull
@@ -92,42 +142,28 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     @Override
-    public void OnFileDecodedSuccess(String inputFile) {
-        if (inputFile.compareTo(inputFile1) == 0) {
-            isInputFile1Decoded = true;
-            if(listener!= null) listener.onAudioMixerProgress("Decoded file 1");
-
-            if (DEBUG) {
-                String tempFileOneWav = tempDirectory + File.separator + "tempFile1.wav";
-                UtilsAudio.copyWaveFile(tempFileOne, tempFileOneWav);
-            }
-        }
-
-        if (inputFile.compareTo(inputFile2) == 0) {
-            isInputFile2Decoded = true;
-            if(listener!= null) listener.onAudioMixerProgress("Decoded file 2");
-
-            if (DEBUG) {
-                String tempFileTwoWav = tempDirectory + File.separator + "tempFile2.wav";
-                UtilsAudio.copyWaveFile(tempFileTwo, tempFileTwoWav);
-            }
-        }
-        if (isInputFile1Decoded && isInputFile2Decoded) {
-            mixTwoSounds();
-        }
+    public void OnFileDecodedError(String error) {
+        // do something
     }
 
     @Override
-    public void OnFileDecodedError(String error) {
-        //listener.onAudioMixerError(error);
+    public void onFileDecodedMediaSuccess(AudioToExport media, String outputFile) {
+        media.setMediaDecodeAudioPath(outputFile);
+    }
+
+    @Override
+    public void OnFileDecodedSuccess(String outputFile) {
+
     }
 
     @Override
     public void OnMixSoundSuccess(String outputFile) {
+        encodeAudio(outputFile);
+
         if (listener!= null) {
             listener.onAudioMixerProgress("Audio files mixed");
         }
-        encodeAudio(outputFile);
+
     }
 
     @Override
