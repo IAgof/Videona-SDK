@@ -550,6 +550,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   @Override
+  public void setVoiceOver(Music voiceOver) {
+
+  }
+
+  @Override
   public void setVideoTransitionFade() {
     isSetVideoTransitionFadeActivated = true;
   }

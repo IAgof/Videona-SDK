@@ -2,13 +2,11 @@ package com.videonasocialmedia.videonamediaframework.model;
 
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
-import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.MediaTrack;
 
 import java.util.ArrayList;
-import java.util.List;
 
 /**
  * Videona Media Composition class for representing a media composition with audio and video
@@ -19,6 +17,11 @@ public class VMComposition {
    * Lenght of the VMComposition
    */
   private int duration = 0;
+
+  private int NUM_OF_AUDIO_TRACKS_SUPPORTED = 2;
+
+  public final static int INDEX_AUDIO_TRACKS_MUSIC = 0;
+  public final static int INDEX_AUDIO_TRACKS_VOICE_OVER = 1;
 
   public MediaTrack getMediaTrack() {
     return mediaTrack;
@@ -49,8 +52,11 @@ public class VMComposition {
 
   public VMComposition() {
     this.mediaTrack = new MediaTrack();
-    this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack());
+    this.audioTracks = new ArrayList<>(NUM_OF_AUDIO_TRACKS_SUPPORTED);
+    for(int i=0; i<audioTracks.size(); i++){
+      audioTracks.add(new AudioTrack());
+    }
+
   }
 
   public VMComposition(VMComposition vmComposition) throws IllegalItemOnTrack {
@@ -80,11 +86,29 @@ public class VMComposition {
      */
     Music result = null;
     try {
-      result = (Music) getAudioTracks().get(0).getItems().get(0);
+      result = (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_MUSIC).getItems().get(0);
     } catch (Exception exception) {
       // exception retrieving music, we'll return null
     }
     return result;
+  }
+
+  public Music getVoiceOver() {
+    /**
+     * TODO(jliarte): review this method and matching use case
+     * @see com.videonasocialmedia.vimojo.domain.editor.GetMusicFromProjectUseCase
+     */
+    Music result = null;
+    try {
+      result = (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_VOICE_OVER).getItems().get(0);
+    } catch (Exception exception) {
+      // exception retrieving music, we'll return null
+    }
+    return result;
+  }
+
+  public boolean hasVoiceOver() {
+    return (getVoiceOver() != null);
   }
 
   public boolean hasMusic() {

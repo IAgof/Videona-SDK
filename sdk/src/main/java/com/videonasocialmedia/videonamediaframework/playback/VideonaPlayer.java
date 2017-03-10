@@ -25,6 +25,7 @@ public interface VideonaPlayer {
   void seekClipTo(int seekTimeInMsec);
   void seekToClip(int position);
   void setMusic(Music music);
+  void setVoiceOver(Music voiceOver);
   void setVolume(float volume);
   void setVideoTransitionFade();
   void setAudioTransitionFade();

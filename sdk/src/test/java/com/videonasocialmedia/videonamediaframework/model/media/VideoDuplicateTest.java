@@ -71,7 +71,7 @@ public class VideoDuplicateTest {
 
     private Video getFakeVideoTrimmed() {
 
-        Video video = new Video("somePath");
+        Video video = new Video("somePath", 1f);
         // simulate operation, trimm video
         video.setTempPath("newTempPath");
         video.setStartTime(0);
@@ -86,7 +86,7 @@ public class VideoDuplicateTest {
 
     private Video getFakeVideoTextAdded() {
 
-        Video video = new Video("somePath");
+        Video video = new Video("somePath", 1f);
         // simulate operation, add text to video
         video.setTempPath("newTempPath");
         video.setClipText("blablabla");
