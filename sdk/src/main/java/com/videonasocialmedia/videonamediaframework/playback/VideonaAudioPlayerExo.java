@@ -66,12 +66,11 @@ public class VideonaAudioPlayerExo implements VideonaAudioPlayer{
     audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
         MediaCodecSelector.DEFAULT);
     player.prepare(audioRenderer);
-    setVolume(clipToPlay.getVolume());
+    setAudioVolume(clipToPlay.getVolume());
     rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
   }
 
-
-  private void setVolume(float volume) {
+  public void setAudioVolume(float volume) {
     player.sendMessage(audioRenderer,
         MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
   }

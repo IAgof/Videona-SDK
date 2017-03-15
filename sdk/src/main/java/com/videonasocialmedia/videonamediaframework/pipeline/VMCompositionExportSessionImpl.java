@@ -152,11 +152,20 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     protected Movie createMovieFromComposition(ArrayList<String> videoTranscodedPaths)
             throws IOException {
         Movie merge;
-        if (vmComposition.hasMusic() && checkMusicPath()
-                && (vmComposition.getMusic().getVolume() >= 1f)) {
+        //// TODO:(alvaro.martinez) 15/03/17 Add logic to export VoiceOver and Music
+        Music audio = null;
+        if(vmComposition.hasMusic()){
+            audio = vmComposition.getMusic();
+        }
+        if(vmComposition.hasVoiceOver()){
+            audio = vmComposition.getVoiceOver();
+        }
+        boolean vmCompositionHasAudioAdded = vmComposition.hasMusic() || vmComposition.hasVoiceOver();
+        if (vmCompositionHasAudioAdded && checkMusicPath()
+                && (audio.getVolume() >= 1f)) {
             merge = appender.appendVideos(videoTranscodedPaths, false);
             double movieDuration = getMovieDuration(merge);
-            merge = addAudio(merge, vmComposition.getMusic().getMediaPath(), movieDuration);
+            merge = addAudio(merge, audio.getMediaPath(), movieDuration);
         } else {
             merge = appender.appendVideos(videoTranscodedPaths, true);
         }
@@ -165,7 +174,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     @NonNull
     private boolean checkMusicPath() {
-        File musicFile = new File(vmComposition.getMusic().getMediaPath());
+        File musicFile = null;
+        if(vmComposition.hasMusic()) {
+            musicFile = new File(vmComposition.getMusic().getMediaPath());
+        }
+        if(vmComposition.hasVoiceOver()){
+            musicFile = new File(vmComposition.getVoiceOver().getMediaPath());
+        }
         // TODO(jliarte): 28/12/16 this method for checking path does not work, as the File object is still created. Should check exists() method
         if (musicFile == null) {
             onExportEndedListener.onExportError("Music not found");

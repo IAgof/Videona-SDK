@@ -27,6 +27,8 @@ public interface VideonaPlayer {
   void setMusic(Music music);
   void setVoiceOver(Music voiceOver);
   void setVideoVolume(float volume);
+  void setMusicVolume(float volume);
+  void setVoiceOverVolume(float volume);
   void setVideoTransitionFade();
   void setAudioTransitionFade();
   int getCurrentPosition();

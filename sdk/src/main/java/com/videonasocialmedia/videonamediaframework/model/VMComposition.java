@@ -52,8 +52,8 @@ public class VMComposition {
 
   public VMComposition() {
     this.mediaTrack = new MediaTrack();
-    this.audioTracks = new ArrayList<>(NUM_OF_AUDIO_TRACKS_SUPPORTED);
-    for(int i=0; i<audioTracks.size(); i++){
+    this.audioTracks = new ArrayList<>();
+    for(int i=0; i<NUM_OF_AUDIO_TRACKS_SUPPORTED; i++){
       audioTracks.add(new AudioTrack());
     }
 
