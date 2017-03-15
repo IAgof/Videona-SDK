@@ -22,13 +22,15 @@ import com.google.android.exoplayer.upstream.DefaultAllocator;
 import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 
+
+
 import java.io.IOException;
 
 
 public class RendererBuilder implements ExtractorSampleSource.EventListener,
         MediaCodecVideoTrackRenderer.EventListener, MediaCodecAudioTrackRenderer.EventListener {
-  private static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
-  private static final int BUFFER_SEGMENT_COUNT = 256;
+  public static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
+  public static final int BUFFER_SEGMENT_COUNT = 256;
   public static final int RENDERER_COUNT = 3;
 
   private final static String TAG = "RendererBuilder";
@@ -36,6 +38,7 @@ public class RendererBuilder implements ExtractorSampleSource.EventListener,
   private final Context context;
   private final String userAgent;
   private MediaCodecAudioTrackRenderer audioRenderer;
+  private MediaCodecVideoTrackRenderer videoRenderer;
 
   public MediaCodecAudioTrackRenderer getAudioRenderer() {
     return audioRenderer;
@@ -47,22 +50,24 @@ public class RendererBuilder implements ExtractorSampleSource.EventListener,
     this.userAgent = userAgent;
   }
 
-  protected void buildRenderers(RendererBuilderListener playerListener, Uri videoUri, Handler playerHandler) {
+  protected void buildRenderers(RendererBuilderListener playerListener, Uri videoUri,
+                                Handler playerHandler) {
     final long startTime = System.currentTimeMillis();
 
     Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
 
     // Build the video and audio renderers.
     DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(playerHandler, null);
-    DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
-    ExtractorSampleSource sampleSource = new ExtractorSampleSource(videoUri, dataSource,
-        allocator, BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, playerHandler, this, 0);
-    MediaCodecVideoTrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(context,
-        sampleSource, MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT,
-        5000, playerHandler, this, 50);
-    audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
-        MediaCodecSelector.DEFAULT, null, true, playerHandler, this,
-        AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
+      DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
+      ExtractorSampleSource sampleSource = new ExtractorSampleSource(videoUri, dataSource,
+          allocator, BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, playerHandler, this, 0);
+      videoRenderer = new MediaCodecVideoTrackRenderer(context,
+          sampleSource, MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT,
+          5000, playerHandler, this, 50);
+      audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
+          MediaCodecSelector.DEFAULT, null, true, playerHandler, this,
+          AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
+
     // (jliarte): 1/09/16 maybe it's easier with the traditional method using audio manager,
     //      as here we would to advance the audio track to the current position in timeline
     //      on each clip played

@@ -6,7 +6,6 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -37,6 +36,7 @@ import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer.util.Util;
 
 
+
 import com.videonasocialmedia.sdk.R;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
@@ -54,7 +54,7 @@ import java.util.List;
 /**
  * Created by jliarte on 25/08/16.
  */
-public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
+public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, VideonaAudioPlayer,
     SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener,
         RendererBuilder.RendererBuilderListener {
   private static final String TAG = "VideonaPlayerExo";
@@ -91,8 +91,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private Format videoFormat;
   private Surface surface;
 
-  private Music music;
-  private MediaPlayer musicPlayer;
+  private VideonaAudioPlayerExo musicPlayer;
+  private VideonaAudioPlayerExo voiceOverPlayer;
   private List<Video> videoList;
   private int currentClipIndex = 0;
   private int currentTimePositionInList = 0;
@@ -114,8 +114,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       }
     }
   };
-  private float musicVolume = 0.5f;
-  private static final float DEFAULT_VOLUME = 0.5f;
 
   private ValueAnimator outAnimator;
   private ValueAnimator inAnimator;
@@ -125,6 +123,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private boolean isSetAudioTransitionFadeActivated = false;
   private boolean isInAnimatorLaunched;
   private boolean isOutAnimatorLaunched;
+  private float videoVolume;
 
   /**
    * Default constructor.
@@ -212,35 +211,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     // TODO(jliarte): 1/09/16 instantiate field when need to adjust volume
     //        AudioManager audioManager = (AudioManager) context.getApplicationContext()
     //                .getSystemService(Context.AUDIO_SERVICE);
-    initMusicPlayer();
     initClipList();
     initSeekBar();
     clipTimesRanges = new ArrayList<>();
     setupInAnimator();
     setupOutAnimator();
-  }
-
-  private void initMusicPlayer() {
-    if (musicPlayer == null && videoHasMusic()) {
-      musicPlayer = MediaPlayer.create(getContext(), Uri.parse(music.getMediaPath()));
-      if (musicPlayer != null) {
-        musicPlayer.setVolume(musicVolume, musicVolume);
-      }
-    }
-  }
-
-  /**
-   * Sets video and music/voice over volumes.
-   *
-   * @param volume music/voice over track volume. Video track volume will be the 1 - volume
-   */
-  public void setVolume(float volume) {
-    player.sendMessage(rendererBuilder.getAudioRenderer(),
-        MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, 1f - volume);
-    if (musicPlayer != null) {
-      musicPlayer.setVolume(volume, volume);
-    }
-    musicVolume = volume;
   }
 
   private void updateSeekBarProgress() {
@@ -329,7 +304,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   public void onPause() {
     pausePreview();
     releaseVideoView();
-    releaseMusicPlayer();
   }
 
   private void releaseVideoView() {
@@ -339,13 +313,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       player = null;
       clearNextBufferedClip();
     }
-  }
-
-  private void releaseMusicPlayer() {
-    if (musicPlayer != null) {
-      musicPlayer.stop();
-      musicPlayer.release();
-      musicPlayer = null;
+    if(videoHasMusic()){
+      releaseAudio();
     }
   }
 
@@ -375,6 +344,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       this.currentTimePositionInList = instantTime;
       setSeekBarProgress(currentTimePositionInList);
       Video clipToPlay = videoList.get(getClipIndexByProgress(this.currentTimePositionInList));
+      videoVolume = clipToPlay.getVolume();
       initClipPreview(clipToPlay);
     }
   }
@@ -390,7 +360,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       rendererBuildingState = RENDERER_BUILDING_STATE_BUILDING;
       maybeReportPlayerState();
       rendererBuilder.buildRenderers(this, Uri.fromFile(new File(clipToPlay.getMediaPath())),
-              this.getMainHandler());
+            this.getMainHandler());
     } else {
       onRenderers(nextClipRenderers, (DefaultBandwidthMeter) bandwidthMeter);
     }
@@ -470,6 +440,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     if (player != null) {
       player.setPlayWhenReady(true);
     }
+    if(videoHasMusic()){
+      playAudio();
+    }
     // TODO(jliarte): 31/08/16 else??? - player should not ever be null!!
     hidePlayButton();
     seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
@@ -477,23 +450,26 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   @Override
   public void pausePreview() {
-    pauseMusic();
     pauseVideo();
     seekBarUpdaterHandler.removeCallbacksAndMessages(null);
     showPlayButton();
+  }
+
+  @Override
+  public void setVideoVolume(float volume) {
+    player.sendMessage(rendererBuilder.getAudioRenderer(),
+        MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
   }
 
   private void pauseVideo() {
     if (player != null) {
       player.setPlayWhenReady(false);
     }
-  }
-
-  private void pauseMusic() {
-    if (musicPlayer != null && musicPlayer.isPlaying()) {
-      musicPlayer.pause();
+    if(videoHasMusic()){
+      pauseAudio();
     }
   }
+
 
   @Override
   public void seekTo(int seekTimeInMsec) {
@@ -503,9 +479,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
       if (currentClipIndex() != clipIndex) {
         clearNextBufferedClip();
-        seekToClip(clipIndex);
+        seekToClipPosition(clipIndex);
       } else {
         player.seekTo(getClipPositionFromTimeLineTime());
+      }
+
+      if(videoHasMusic()){
+        seekAudioTo(currentTimePositionInList);
       }
     }
   }
@@ -515,18 +495,19 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   @Override
-  public void seekClipTo(int seekTimeInMsec) {
+  public void seekClipToTime(int seekTimeInMsec) {
     if (player != null) {
       currentTimePositionInList = seekTimeInMsec
           - videoList.get(currentClipIndex()).getStartTime()
           + (int) clipTimesRanges.get(currentClipIndex()).getLower();
       setSeekBarProgress(currentTimePositionInList);
       player.seekTo(seekTimeInMsec);
+      seekTo(currentTimePositionInList);
     }
   }
 
   @Override
-  public void seekToClip(int position) {
+  public void seekToClipPosition(int position) {
     pausePreview();
     currentClipIndex = position;
     // TODO(jliarte): 6/09/16 (hot)fix for Pablo's Index out of bonds
@@ -538,20 +519,53 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     setSeekBarProgress(currentTimePositionInList);
   }
 
+  /** VideonaAudioPlayer interface, Music and VoiceOver have the same behaviour **/
   @Override
-  public void setMusic(Music music) {
-    this.music = music;
-    initMusicPlayer();
-    if (musicPlayer != null) {
-      musicPlayer.seekTo(currentTimePositionInList);
-      musicVolume = music.getVolume();
-      setVolume(music.getVolume());
+  public void playAudio() {
+    if(musicPlayer != null){
+      musicPlayer.playAudio();
+    }
+
+    if(voiceOverPlayer != null){
+      voiceOverPlayer.playAudio();
     }
   }
 
   @Override
-  public void setVoiceOver(Music voiceOver) {
+  public void pauseAudio() {
+    if(musicPlayer != null){
+      musicPlayer.pauseAudio();
+    }
 
+    if(voiceOverPlayer != null){
+      voiceOverPlayer.pauseAudio();
+    }
+  }
+
+  @Override
+  public void releaseAudio() {
+    if (musicPlayer != null) {
+      musicPlayer.releaseAudio();
+      musicPlayer = null;
+    }
+    if(voiceOverPlayer != null){
+      voiceOverPlayer.releaseAudio();
+      voiceOverPlayer = null;
+    }
+  }
+
+  @Override
+  public void seekAudioTo(long timeInMs) {
+    if (musicPlayer != null) {
+      musicPlayer.seekAudioTo(timeInMs);
+    }
+    if(voiceOverPlayer != null){
+      voiceOverPlayer.seekAudioTo(timeInMs);
+    }
+  }
+
+  private boolean videoHasMusic() {
+    return musicPlayer!=null || voiceOverPlayer!=null;
   }
 
   @Override
@@ -562,6 +576,16 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   @Override
   public void setAudioTransitionFade() {
     isSetAudioTransitionFadeActivated = true;
+  }
+
+  @Override
+  public void setMusic(Music music) {
+    musicPlayer = new VideonaAudioPlayerExo(getContext(), music);
+  }
+
+  @Override
+  public void setVoiceOver(Music voiceOver) {
+    voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), voiceOver);
   }
 
   @Override
@@ -622,7 +646,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         if(isSetVideoTransitionFadeActivated)
           imageTransitionFade.setAlpha(value);
         if(isSetAudioTransitionFadeActivated)
-          setVolume(value);
+          setVideoVolume(value*videoVolume);
       }
     });
     inAnimator.addListener(new Animator.AnimatorListener() {
@@ -665,7 +689,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         if(isSetVideoTransitionFadeActivated)
           imageTransitionFade.setAlpha(value);
         if(isSetAudioTransitionFadeActivated)
-          setVolume(value);
+          setVideoVolume(value*videoVolume);
       }
     });
     outAnimator.addListener(new Animator.AnimatorListener() {
@@ -778,12 +802,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     currentClipIndex++;
     if (hasNextClipToPlay()) {
       Video video = videoList.get(currentClipIndex());
+      videoVolume = video.getVolume();
       currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
       initClipPreview(video);
     } else {
       pausePreview();
       clearNextBufferedClip();
-      seekToClip(0);
+      seekToClipPosition(0);
       // avoid black frame, imageTransitionFade over player
       imageTransitionFade.setVisibility(INVISIBLE);
     }
@@ -827,8 +852,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       case ExoPlayer.STATE_READY:
         updateClipTextPreview();
         if (playWhenReady) {
-          startMusicTrackPlayback();
-          // player.seekTo(getClipPositionFromTimeLineTime());
+          // player.seekAudioTo(getClipPositionFromTimeLineTime());
         }
         break;
       default:
@@ -861,23 +885,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     return null;
   }
 
-  private void startMusicTrackPlayback() {
-    if (videoHasMusic()) {
-      playMusicSyncWithVideo();
-    }
-  }
-
-  private void playMusicSyncWithVideo() {
-    // releaseMusicPlayer();
-    initMusicPlayer();
-    if (musicPlayer != null) {
-      musicPlayer.seekTo(currentTimePositionInList);
-      if (!musicPlayer.isPlaying()) {
-        musicPlayer.start();
-      }
-    }
-  }
-
   /**
    * Sets video preview mute status.
    *
@@ -898,9 +905,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
             */
   }
 
-  private boolean videoHasMusic() {
-    return (music != null);
-  }
 
   @Override
   public void onPlayWhenReadyCommitted() {
@@ -931,11 +935,17 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         ? ((MediaCodecTrackRenderer) renderers[TYPE_AUDIO]).codecCounters : null;
     this.bandwidthMeter = bandwidthMeter;
     pushSurface(false);
-    player.prepare(renderers);
+
+    player.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
+    //player.prepare(renderers);
     player.seekTo(getClipPositionFromTimeLineTime());
-    setVolume(musicVolume);
+    if(videoHasMusic()){
+      seekAudioTo(currentTimePositionInList);
+    }
+    setVideoVolume(videoVolume);
     rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
   }
+
 
   private void prebufferNextClip() {
     if (currentClipIndex < videoList.size() - 1) {
@@ -950,7 +960,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
                   nextClipRenderers = renderers;
                 }
               },
-              Uri.fromFile(new File(nextClipToPlay.getMediaPath())), this.getMainHandler());
+              Uri.fromFile(new File(nextClipToPlay.getMediaPath())),
+              this.getMainHandler());
     }
   }
 

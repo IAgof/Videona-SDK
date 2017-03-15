@@ -22,11 +22,11 @@ public interface VideonaPlayer {
   void playPreview();
   void pausePreview();
   void seekTo(int timeInMsec);
-  void seekClipTo(int seekTimeInMsec);
-  void seekToClip(int position);
+  void seekClipToTime(int seekTimeInMsec);
+  void seekToClipPosition(int position);
   void setMusic(Music music);
   void setVoiceOver(Music voiceOver);
-  void setVolume(float volume);
+  void setVideoVolume(float volume);
   void setVideoTransitionFade();
   void setAudioTransitionFade();
   int getCurrentPosition();
