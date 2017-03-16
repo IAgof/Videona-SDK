@@ -53,7 +53,7 @@ public class FileUtils {
     return duration*1000;
   }
 
-  public static void removeFile(String filePath){
+  public static void removeFile(String filePath) {
     File f = new File(filePath);
     f.delete();
   }

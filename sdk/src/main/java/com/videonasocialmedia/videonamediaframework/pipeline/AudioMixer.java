@@ -5,8 +5,6 @@ import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 
 import java.io.File;
-import java.io.IOException;
-import java.util.concurrent.Future;
 
 /**
  * Created by alvaro on 22/09/16.
@@ -37,7 +35,8 @@ public class AudioMixer implements OnAudioMixerListener {
     public void mixAudio(String inputFileOne, String inputFileTwo, float volume,
                          String tempAudioPath, long durationAudioFile, OnMixAudioListener listener) {
         this.listener = listener;
-            ListenableFuture<Void> listenableFuture =
+        // TODO(jliarte): 16/03/17 should we return the transcoding job?
+        ListenableFuture<Void> transcodingJob =
                 MediaTranscoder.getInstance().mixAudioTwoFiles(inputFileOne, inputFileTwo, volume,
                     tempAudioPath, outputFilePath, durationAudioFile, this);
     }
