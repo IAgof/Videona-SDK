@@ -173,7 +173,12 @@ public class VideoTrackTranscoder implements TrackTranscoder {
         return endOfVideoToEncode;
     }
 
-    @Override
+  @Override
+  public void setTrackFinished() {
+    endOfVideoToEncode = true;
+  }
+
+  @Override
     public MediaFormat getDeterminedFormat() {
         return mActualOutputFormat;
     }

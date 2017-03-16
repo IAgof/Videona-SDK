@@ -45,8 +45,8 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
         this.inputFile2 = inputFile2;
         this.volume = volume;
         this.tempDirectory = tempDirectory;
-        tempFileOne  = tempDirectory + File.separator + "tempFile1.pcm";
-        tempFileTwo = tempDirectory + File.separator + "tempFile2.pcm";
+        this.tempFileOne  = tempDirectory + File.separator + "tempFile1.pcm";
+        this.tempFileTwo = tempDirectory + File.separator + "tempFile2.pcm";
         this.outputFile = outputFile;
         this.durationOutputFile = durationOutputFile;
         cleanTempDirectory();
@@ -139,7 +139,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     @Override
     public void OnFileEncodedSuccess(String outputFile) {
-        if (listener!= null) {
+        if (listener != null) {
             listener.onAudioMixerProgress("Transcoded completed");
             listener.onAudioMixerSuccess(outputFile);
         }
