@@ -76,7 +76,7 @@ public class TranscoderHelper {
           future = Futures.transform(listenableFuture,
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
-        videoToEdit.setListentableFuture(future);
+        videoToEdit.setTranscodingTask(future);
 
       }
     }).start();
@@ -117,7 +117,7 @@ public class TranscoderHelper {
           future = Futures.transform(listenableFuture,
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
-        videoToEdit.setListentableFuture(future);
+        videoToEdit.setTranscodingTask(future);
       }
     }).start();
   }
@@ -155,7 +155,7 @@ public class TranscoderHelper {
           future = Futures.transform(listenableFuture,
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
-        videoToEdit.setListentableFuture(future);
+        videoToEdit.setTranscodingTask(future);
       }
     }).start();
   }
@@ -239,7 +239,7 @@ public class TranscoderHelper {
 
   private void checkVideoIsBeenTranscoded(Video videoToEdit) {
     if(!videoToEdit.outputVideoIsFinished()) {
-      ListenableFuture<Void> listenableFuture = videoToEdit.getListenableFuture();
+      ListenableFuture<Void> listenableFuture = videoToEdit.getTranscodingTask();
       if(listenableFuture!=null && !listenableFuture.isDone()){
         Log.d(TAG, "Cancel future " + listenableFuture.toString());
         listenableFuture.cancel(true);
