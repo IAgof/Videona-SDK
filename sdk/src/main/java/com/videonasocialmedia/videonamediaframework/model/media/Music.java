@@ -24,8 +24,8 @@ public class Music extends Audio {
     private float volume = DEFAULT_MUSIC_VOLUME;
 
     public Music(int iconResourceId, String musicTitle, int musicResourceId, int colorResourceId,
-                 String author, String musicDuration) {
-        super(musicResourceId, "", "", musicTitle, "", 0, 0, null, null, null, null);
+                 String author, String musicDuration, int duration) {
+        super(musicResourceId, "", "", musicTitle, "", 0, duration, null, null, null, null);
 
         this.musicResourceId = musicResourceId;
         this.colorResourceId = colorResourceId;
@@ -36,8 +36,8 @@ public class Music extends Audio {
     }
 
     public Music(int iconResourceId, String musicTitle, int musicResourceId, String musicPath,
-                 int colorResourceId, String author, String musicDuration) {
-        super(musicResourceId, "", "", musicTitle, musicPath, 0, 0, null, null, null, null);
+                 int colorResourceId, String author, String musicDuration, int duration) {
+        super(musicResourceId, "", "", musicTitle, musicPath, 0, duration, null, null, null, null);
         this.musicResourceId = musicResourceId;
         this.colorResourceId = colorResourceId;
         this.musicTitle = musicTitle;
@@ -46,18 +46,18 @@ public class Music extends Audio {
         this.musicDuration = musicDuration;
     }
 
-    public Music(String musicPath){
-        super(0,"","", "", musicPath, 0, 0, null, null, null, null);
+    public Music(String musicPath, int duration){
+        super(0,"","", "", musicPath, 0, duration, null, null, null, null);
     }
 
-    public Music(String musicPath, float volume) {
-        super(0,"","", "", musicPath, 0, 0, null, null, null, null);
+    public Music(String musicPath, float volume, int duration) {
+        super(0,"","", "", musicPath, 0, duration, null, null, null, null);
         this.volume = volume;
     }
 
   public Music(Music item) {
     super(item.getMusicResourceId(), item.getIconPath(), item.getSelectedIconPath(),
-        item.getMusicTitle(), item.getMediaPath(), item.getStartTime(), item.getStopTime(),
+        item.getMusicTitle(), item.getMediaPath(), item.getStartTime(), item.getDuration(),
         null, null, null, null);
     this.colorResourceId = item.getColorResourceId();
     this.iconResourceId = item.getIconResourceId();
