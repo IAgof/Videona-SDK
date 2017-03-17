@@ -1,10 +1,14 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
 
+import android.util.Log;
+
+import com.google.common.base.Function;
+import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
-import com.videonasocialmedia.transcoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
@@ -19,6 +23,11 @@ public class TranscoderHelper {
 
   private TextToDrawable drawableGenerator;
   private MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+  private String TAG = "TranscoderHelper";
+
+  // TODO:(alvaro.martinez) 21/02/17 Where we define this default values?
+  public static final int TIME_FADE_IN_MS = 500;
+  public static final int TIME_FADE_OUT_MS = 500;
 
   public TranscoderHelper(TextToDrawable drawableGenerator, MediaTranscoder mediaTranscoder) {
     this.drawableGenerator = drawableGenerator;
@@ -30,53 +39,200 @@ public class TranscoderHelper {
         this.mediaTranscoder = mediaTranscoder;
   }
 
-  public void generateOutputVideoWithOverlayImageAndTrimming(Drawable fadeTransition,
-                                                             boolean isFadeActivated,
-                                                             Video videoToEdit,
-                                                             VideonaFormat format,
-                                                             MediaTranscoderListener listener)
-          throws IOException {
-    Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
+  public void generateOutputVideoWithOverlayImageAndTrimming(
+          final Drawable fadeTransition,
+          final boolean isVideoFadeActivated,
+          final boolean isAudioFadeActivated,
+          final Video videoToEdit,
+          final VideonaFormat format,
+          final String intermediatesTempAudioFadeDirectory,
+          final TranscoderHelperListener listener) {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        cancelPendingTranscodingTasks(videoToEdit);
+
+        Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
             videoToEdit.getClipTextPosition());
 
-    mediaTranscoder.transcodeTrimAndOverlayImageToVideo(fadeTransition, isFadeActivated,
-        videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, listener, imageText,
-        videoToEdit.getStartTime(), videoToEdit.getStopTime());
+        ListenableFuture<Void> transcodingJob = null;
+        try {
+          transcodingJob = mediaTranscoder.transcodeTrimAndOverlayImageToVideo(fadeTransition, isVideoFadeActivated,
+              videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, imageText,
+              videoToEdit.getStartTime(), videoToEdit.getStopTime());
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+        ListenableFuture<Void> chainedTranscodingJob;
+        if (isAudioFadeActivated) {
+          chainedTranscodingJob = Futures.transform(transcodingJob,
+              applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory, listener),
+              MoreExecutors.newDirectExecutorService());
+        } else {
+          chainedTranscodingJob = Futures.transform(transcodingJob,
+              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+        }
+        videoToEdit.setTranscodingTask(chainedTranscodingJob);
+      }
+    }).start();
   }
 
-  public void generateOutputVideoWithOverlayImage(Drawable fadeTransition,
-                                                  boolean isFadeActivated,
-                                                  Video video, VideonaFormat format,
-                                                  MediaTranscoderListener listener)
-          throws IOException  {
-    Image imageText = getImageFromTextAndPosition(video.getClipText(), video.getClipTextPosition());
+  public void generateOutputVideoWithOverlayImage(final Drawable fadeTransition,
+                                                final boolean isVideoFadeActivated,
+                                                final boolean isAudioFadeActivated,
+                                                final Video videoToEdit, final VideonaFormat format,
+                                                final String intermediatesTempAudioFadeDirectory,
+                                                final TranscoderHelperListener listener) {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        cancelPendingTranscodingTasks(videoToEdit);
 
-    mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition, isFadeActivated,
-        video.getMediaPath(), video.getTempPath(), format, listener, imageText);
+        Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
+            videoToEdit.getClipTextPosition());
+
+        ListenableFuture<Void> listenableFuture =
+            null;
+        try {
+          listenableFuture = mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition, isVideoFadeActivated,
+              videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, imageText);
+        } catch (IOException e) {
+          e.printStackTrace();
+          listener.onErrorTranscoding(videoToEdit, e.getMessage());
+        }
+
+        ListenableFuture<Void> future;
+        if(isAudioFadeActivated){
+          future = Futures.transform(listenableFuture,
+              applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory,listener),
+              MoreExecutors.newDirectExecutorService());
+        } else {
+          future = Futures.transform(listenableFuture,
+              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+        }
+        videoToEdit.setTranscodingTask(future);
+      }
+    }).start();
   }
 
-  public void generateOutputVideoWithTrimming(Drawable fadeTransition,
-                                              boolean isFadeActivated,
-                                              Video video, VideonaFormat format,
-                                              MediaTranscoderListener listener)
-          throws IOException {
-    mediaTranscoder.transcodeAndTrimVideo(fadeTransition, isFadeActivated, video.getMediaPath(),
-        video.getTempPath(), format, listener, video.getStartTime(), video.getStopTime());
+  public void generateOutputVideoWithTrimming(final Drawable fadeTransition,
+                                              final boolean isVideoFadeActivated,
+                                              final boolean isAudioFadeActivated,
+                                              final Video videoToEdit, final VideonaFormat format,
+                                              final String intermediatesTempAudioFadeDirectory,
+                                              final TranscoderHelperListener listener) {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        cancelPendingTranscodingTasks(videoToEdit);
+
+        ListenableFuture<Void> listenableFuture =
+            null;
+        try {
+          listenableFuture = mediaTranscoder.transcodeAndTrimVideo(fadeTransition, isVideoFadeActivated,
+              videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format,
+              videoToEdit.getStartTime(), videoToEdit.getStopTime());
+        } catch (IOException e) {
+          e.printStackTrace();
+          listener.onErrorTranscoding(videoToEdit, e.getMessage());
+        }
+
+        ListenableFuture<Void> future;
+        if(isAudioFadeActivated){
+          future = Futures.transform(listenableFuture,
+              applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory,listener),
+              MoreExecutors.newDirectExecutorService());
+        } else {
+          future = Futures.transform(listenableFuture,
+              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+        }
+        videoToEdit.setTranscodingTask(future);
+      }
+    }).start();
   }
 
-  @NonNull
   public Image getImageFromTextAndPosition(String text, String textPosition) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
             Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
-
     return new Image(textDrawable, Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
   }
 
-  public void generateFileWithAudioFadeInFadeOut(String inputFile, int timeFadeInMs, int timeFadeOutMs,
-                                                 String tempDirectory, String outputFile,
-                                                 OnAudioEffectListener listener) throws IOException {
-
-    mediaTranscoder.audioFadeInFadeOutToFile(inputFile, timeFadeInMs, timeFadeOutMs, tempDirectory,
-            outputFile, listener);
+  public void generateFileWithAudioFadeInFadeOut(final String inputFile, final int timeFadeInMs,
+                                                 final int timeFadeOutMs,
+                                                 final String tempDirectory,
+                                                 final String outputFile,
+                                                 final OnAudioEffectListener listener) {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        mediaTranscoder.audioFadeInFadeOutToFile(inputFile, timeFadeInMs, timeFadeOutMs,
+            tempDirectory, outputFile, listener);
+      }
+    }).start();
   }
+
+  private Function<? super Void, ? extends Void> updateVideo(
+                                                          final Video videoToEdit,
+                                                          final TranscoderHelperListener listener) {
+    return new Function<Void, Void>() {
+      @Override
+      public Void apply(Void input) {
+        successVideoTranscoded(videoToEdit, listener);
+        return input;
+      }
+    };
+  }
+
+  private Function<? super Void, ? extends Void> applyAudioFadeInOut(
+                                                   final Video videoToEdit,
+                                                   final String intermediatesTempAudioFadeDirectory,
+                                                   final TranscoderHelperListener listener) {
+    return new Function<Void, Void>() {
+
+      @Override
+      public Void apply(Void input) {
+        ApplyAudioFadeInFadeOutToVideo.OnApplyAudioFadeInFadeOutToVideoListener audioListener =
+            new ApplyAudioFadeInFadeOutToVideo.OnApplyAudioFadeInFadeOutToVideoListener() {
+              @Override
+              public void OnGetAudioFadeInFadeOutError(String message, Video video) {
+                Log.d(TAG, "OnGetAudioFadeInFadeOutError ");
+                listener.onErrorTranscoding(video, message);
+              }
+
+              @Override
+              public void OnGetAudioFadeInFadeOutSuccess(Video video) {
+                Log.d(TAG, "OnGetAudioFadeInFadeOutSuccess ");
+                successVideoTranscoded(videoToEdit, listener);
+              }
+            };
+        ApplyAudioFadeInFadeOutToVideo applyAudioFadeInFadeOutToVideo =
+            new ApplyAudioFadeInFadeOutToVideo(audioListener, intermediatesTempAudioFadeDirectory);
+        try {
+          applyAudioFadeInFadeOutToVideo.applyAudioFadeToVideo(videoToEdit,
+              TIME_FADE_IN_MS, TIME_FADE_OUT_MS);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        return input;
+      }
+    };
+  }
+
+  private void successVideoTranscoded(Video videoToEdit, TranscoderHelperListener listener) {
+    Log.d(TAG, "successVideoTranscoded");
+    videoToEdit.setTempPathFinished(true);
+    listener.onSuccessTranscoding(videoToEdit);
+  }
+
+  private void cancelPendingTranscodingTasks(Video videoToEdit) {
+    if (!videoToEdit.outputVideoIsFinished()) {
+      ListenableFuture<Void> transcodingTask = videoToEdit.getTranscodingTask();
+      if (transcodingTask != null && !transcodingTask.isDone()) {
+        Log.d(TAG, "Cancel transcoding task " + transcodingTask.toString());
+        transcodingTask.cancel(true);
+      }
+    }
+  }
+
 }

@@ -52,4 +52,9 @@ public class FileUtils {
         MediaMetadataRetriever.METADATA_KEY_DURATION));
     return duration*1000;
   }
+
+  public static void removeFile(String filePath) {
+    File f = new File(filePath);
+    f.delete();
+  }
 }
