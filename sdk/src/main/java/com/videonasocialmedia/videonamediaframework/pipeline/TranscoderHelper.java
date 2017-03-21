@@ -92,54 +92,75 @@ public class TranscoderHelper {
         Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
             videoToEdit.getClipTextPosition());
 
-        ListenableFuture<Void> listenableFuture =
+        ListenableFuture<Void> transcodingJob =
             null;
         try {
-          listenableFuture = mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition, isVideoFadeActivated,
+          transcodingJob = mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition, isVideoFadeActivated,
               videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, imageText);
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
         }
 
-        ListenableFuture<Void> future;
+        ListenableFuture<Void> chainedTranscodingJob;
         if(isAudioFadeActivated){
-          future = Futures.transform(listenableFuture,
+          chainedTranscodingJob = Futures.transform(transcodingJob,
               applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory,listener),
               MoreExecutors.newDirectExecutorService());
         } else {
-          future = Futures.transform(listenableFuture,
+          chainedTranscodingJob = Futures.transform(transcodingJob,
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
-        videoToEdit.setTranscodingTask(future);
+        videoToEdit.setTranscodingTask(chainedTranscodingJob);
       }
     }).start();
   }
 
-  public void generateOutputVideoWithWatermarkImage(String inFilePath, String outFilePath,
-                                                    VideonaFormat format,
-                                                    String watermarkPath,
-                                                    MediaTranscoderListener listener)
+  public void generateOutputVideoWithWatermarkImage(final String inFilePath,
+                                                    final String outFilePath,
+                                                    final VideonaFormat format,
+                                                    final String watermarkPath,
+                                                    final VMCompositionExportSession.OnExportEndedListener listener)
       throws IOException  {
 
-    Image watermark = new Image(watermarkPath, Constants.DEFAULT_CANVAS_WIDTH,
-        Constants.DEFAULT_CANVAS_HEIGHT);
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
 
-    Drawable fakeDrawable = Drawable.createFromPath(watermarkPath);
+        Image watermark = new Image(watermarkPath, Constants.DEFAULT_CANVAS_WIDTH,
+            Constants.DEFAULT_CANVAS_HEIGHT);
 
-    mediaTranscoder.transcodeAndOverlayImageToVideo(fakeDrawable, false, inFilePath, outFilePath, format,
-        listener, watermark);
+        Drawable fakeDrawable = Drawable.createFromPath(watermarkPath);
+
+        ListenableFuture<Void> transcodingJob =
+            null;
+        try {
+          transcodingJob = mediaTranscoder.transcodeAndOverlayImageToVideo(fakeDrawable, false,
+              inFilePath, outFilePath, format, watermark);
+        } catch (IOException e) {
+          e.printStackTrace();
+          listener.onExportError(String.valueOf(e));
+        }
+
+        ListenableFuture<Void> chainedTranscodingJob;
+        chainedTranscodingJob = Futures.transform(transcodingJob,
+            updateVideoExportedWithWatermark(outFilePath, listener),
+            MoreExecutors.newDirectExecutorService());
+
+      }
+    }).start();
   }
 
-  public void generateOutputVideoWithTrimming(Drawable fadeTransition,
-                                              boolean isFadeActivated,
-                                              Video video, VideonaFormat format,
-                                              MediaTranscoderListener listener)
-      throws IOException {
-    mediaTranscoder.transcodeAndTrimVideo(fadeTransition, isFadeActivated, video.getMediaPath(),
-        video.getTempPath(), format, listener, video.getStartTime(), video.getStopTime());
+  private Function<? super Void, ? extends Void> updateVideoExportedWithWatermark(
+      final String outFilePath, final VMCompositionExportSession.OnExportEndedListener listener) {
+    return new Function<Void, Void>() {
+      @Override
+      public Void apply(Void input) {
+        successVideoTranscodedWithWatermark(outFilePath, listener);
+        return input;
+      }
+    };
   }
-
 
   public void generateOutputVideoWithTrimming(final Drawable fadeTransition,
                                               final boolean isVideoFadeActivated,
@@ -152,10 +173,10 @@ public class TranscoderHelper {
       public void run() {
         cancelPendingTranscodingTasks(videoToEdit);
 
-        ListenableFuture<Void> listenableFuture =
+        ListenableFuture<Void> transcodingJob =
             null;
         try {
-          listenableFuture = mediaTranscoder.transcodeAndTrimVideo(fadeTransition, isVideoFadeActivated,
+          transcodingJob = mediaTranscoder.transcodeAndTrimVideo(fadeTransition, isVideoFadeActivated,
               videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format,
               videoToEdit.getStartTime(), videoToEdit.getStopTime());
         } catch (IOException e) {
@@ -163,16 +184,16 @@ public class TranscoderHelper {
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
         }
 
-        ListenableFuture<Void> future;
+        ListenableFuture<Void> chainedTranscodingJob;
         if(isAudioFadeActivated){
-          future = Futures.transform(listenableFuture,
+          chainedTranscodingJob = Futures.transform(transcodingJob,
               applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory,listener),
               MoreExecutors.newDirectExecutorService());
         } else {
-          future = Futures.transform(listenableFuture,
+          chainedTranscodingJob = Futures.transform(transcodingJob,
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
-        videoToEdit.setTranscodingTask(future);
+        videoToEdit.setTranscodingTask(chainedTranscodingJob);
       }
     }).start();
   }
@@ -258,6 +279,12 @@ public class TranscoderHelper {
         transcodingTask.cancel(true);
       }
     }
+  }
+
+  private void successVideoTranscodedWithWatermark(String outputFile,
+                                                   VMCompositionExportSession.OnExportEndedListener listener){
+    Log.d(TAG, "succesVideoExportedWithWatermark");
+    listener.onExportSuccess(new Video(outputFile));
   }
 
 }

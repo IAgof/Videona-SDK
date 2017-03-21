@@ -7,7 +7,6 @@ import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
-import com.videonasocialmedia.transcoder.MediaTranscoderListener;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
@@ -320,36 +319,12 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
         TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
         final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
-        MediaTranscoderListener mediaTranscoderListener = new MediaTranscoderListener() {
-            @Override
-            public void onTranscodeProgress(double progress) {
-
-            }
-
-            @Override
-            public void onTranscodeCompleted() {
-                File f = new File(inFilePath);
-                f.delete();
-                onExportEndedListener.onExportSuccess(
-                    new Video(outputFilePath));
-            }
-
-            @Override
-            public void onTranscodeCanceled() {
-                onExportEndedListener.onExportError("Error adding watermark canceled");
-            }
-
-            @Override
-            public void onTranscodeFailed(Exception exception) {
-                onExportEndedListener.onExportError("Error adding watermark failed");
-            }
-        };
 
         try {
             transcoderHelper.generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
                 vmComposition.getVideonaFormat(),
                 watermark.getResourceWatermarkFilePath(),
-                mediaTranscoderListener);
+                onExportEndedListener);
         } catch (IOException e) {
             e.printStackTrace();
         }
