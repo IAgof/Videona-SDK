@@ -24,14 +24,14 @@ task checkstyle(type: Checkstyle) {
 }
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.2"
+    compileSdkVersion 25
+    buildToolsVersion '25.0.2'
 
     defaultConfig {
         minSdkVersion 21 // Fix Clip range in VideoPlayerExo and use api 18
         targetSdkVersion 23
-        versionCode 2 // 20170217
-        versionName "0.2.0" // 20170217
+        versionCode 5 // 20170316
+        versionName "0.2.3" // 20170316
     }
     buildTypes {
         release {
@@ -42,6 +42,7 @@ android {
 
     testOptions {
         unitTests.all {
+            jvmArgs '-noverify' // workarround to fix VerifyError caused by proguard sdk minify
             systemProperty 'robolectric.offline', 'true'
             systemProperty 'robolectric.dependency.dir', "$System.env.ROBOLECTRIC_LIB_PATH"
         }
@@ -53,7 +54,7 @@ dependencies {
 //    androidTestCompile('com.android.support.test.espresso:espresso-core:2.2.2', {
 //        exclude group: 'com.android.support', module: 'support-annotations'
 //    })
-    compile 'com.android.support:appcompat-v7:23.2.1'
+    compile 'com.android.support:appcompat-v7:25.2.0'
     testCompile 'org.hamcrest:hamcrest-library:1.3'
     testCompile 'org.hamcrest:hamcrest-core:1.3'
     testCompile('junit:junit:4.12') {
@@ -73,4 +74,6 @@ dependencies {
 
     compile 'com.google.android.exoplayer:exoplayer:r1.5.10'
     compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
+
+    compile 'com.google.guava:guava:19.0'
 }

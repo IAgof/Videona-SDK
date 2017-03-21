@@ -283,7 +283,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 + getNewExportedVideoFileName();
         Music voiceOver = vmComposition.getMusic();
         audioMixer.mixAudio(exportedVideoFilePath, voiceOver.getMediaPath(), voiceOver.getVolume(),
-                tempAudioPath, new AudioMixer.OnMixAudioListener() {
+                tempAudioPath, FileUtils.getDurationFile(exportedVideoFilePath), new AudioMixer.OnMixAudioListener() {
                 @Override
                 public void onMixAudioSuccess(String path) {
                     VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
