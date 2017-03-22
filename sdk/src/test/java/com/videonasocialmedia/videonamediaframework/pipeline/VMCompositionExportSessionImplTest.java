@@ -200,9 +200,7 @@ public class VMCompositionExportSessionImplTest {
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
     Music music = new Music("music/path");
-    assert music.getVolume() == 0.5f; // default music volume 0.5f
-    // set music to 1f, exporter swap audio, not mixed
-    music.setVolume(1f);
+    assert music.getVolume() == 1f;
     vmComposition.getAudioTracks().get(0).insertItem(music);
     assert vmComposition.hasMusic();
     VMCompositionExportSessionImpl vmCompositionExportSession =
