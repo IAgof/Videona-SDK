@@ -90,7 +90,7 @@ public class VMCompositionExportSessionImplTest {
   public void createMovieFromCompositionCallsAppenderWithoutAudioIfMusicIsSet()
           throws IOException, IllegalItemOnTrack {
     VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path", 1f, 0);
+    Music music = new Music("music/path", 1f);
     vmComposition.getAudioTracks().get(0).insertItem(music);
     VMCompositionExportSessionImpl exporter = getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(exporter);
@@ -143,7 +143,7 @@ public class VMCompositionExportSessionImplTest {
   public void exportCallsMixAudioIfMusicVolumeIsLowerThan1()
           throws IOException, IllegalItemOnTrack {
     VMComposition vmComposition = new VMComposition();
-    Music voiceOver = new Music("music/path", 0.8f, 0);
+    Music voiceOver = new Music("music/path", 0.8f);
     vmComposition.getAudioTracks().get(0).insertItem(voiceOver);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -163,7 +163,7 @@ public class VMCompositionExportSessionImplTest {
   public void exportDoesNotCallMixAudioIfMusicVolumeIs1()
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path", 1f, 0);
+    Music music = new Music("music/path", 1f);
     vmComposition.getAudioTracks().get(0).insertItem(music);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -196,10 +196,8 @@ public class VMCompositionExportSessionImplTest {
   public void createMovieFromCompositionAppenderWithoutOriginalVideoMusicIfCompositionHasMusic()
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path", 0);
-    assert music.getVolume() == 0.5f; // default music volume 0.5f
-    // set music to 1f, exporter swap audio, not mixed
-    music.setVolume(1f);
+    Music music = new Music("music/path");
+    assert music.getVolume() == 1f;
     vmComposition.getAudioTracks().get(0).insertItem(music);
     assert vmComposition.hasMusic();
     VMCompositionExportSessionImpl vmCompositionExportSession =
@@ -219,7 +217,7 @@ public class VMCompositionExportSessionImplTest {
   public void createMovieFromCompositionCallsAppenderWithOriginalVideoMusicIfCompositionMusicVolumeLowerThan1()
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
-    Music voiceOver = new Music("voice/over/path", 0.9f, 0);
+    Music voiceOver = new Music("voice/over/path", 0.9f);
     vmComposition.getAudioTracks().get(0).insertItem(voiceOver);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
