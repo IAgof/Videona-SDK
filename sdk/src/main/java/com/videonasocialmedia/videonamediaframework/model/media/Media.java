@@ -83,7 +83,6 @@ public abstract class Media extends MediaElement {
 
     protected int position;
 
-
     /**
      * Constructor of minimum number of parameters. Default constructor.
      *

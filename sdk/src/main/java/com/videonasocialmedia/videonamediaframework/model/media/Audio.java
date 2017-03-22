@@ -53,7 +53,7 @@ public class Audio extends Media {
                  String mediaPath, int fileStartTime, int duration, Transition opening,
                  Transition ending, MediaMetadata metadata, License license) {
         super(identifier, iconPath, selectedIconPath, title, mediaPath, fileStartTime, duration,
-            opening, ending, metadata, license);
+                opening, ending, metadata, license);
     }
 
     @Override
