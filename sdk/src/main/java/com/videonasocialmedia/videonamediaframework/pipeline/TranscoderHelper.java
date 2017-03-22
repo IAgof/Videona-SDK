@@ -120,7 +120,7 @@ public class TranscoderHelper {
                                                     final String outFilePath,
                                                     final VideonaFormat format,
                                                     final String watermarkPath,
-                                                    final VMCompositionExportSession.OnExportEndedListener listener)
+                                                    final VMCompositionExportSession listener)
       throws IOException  {
 
     new Thread(new Runnable() {
@@ -139,7 +139,7 @@ public class TranscoderHelper {
               inFilePath, outFilePath, format, watermark);
         } catch (IOException e) {
           e.printStackTrace();
-          listener.onExportError(String.valueOf(e));
+          listener.onVMCompositionExportError(String.valueOf(e));
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -152,7 +152,7 @@ public class TranscoderHelper {
   }
 
   private Function<? super Void, ? extends Void> updateVideoExportedWithWatermark(
-      final String outFilePath, final VMCompositionExportSession.OnExportEndedListener listener) {
+      final String outFilePath, final VMCompositionExportSession listener) {
     return new Function<Void, Void>() {
       @Override
       public Void apply(Void input) {
@@ -282,9 +282,9 @@ public class TranscoderHelper {
   }
 
   private void successVideoTranscodedWithWatermark(String outputFile,
-                                                   VMCompositionExportSession.OnExportEndedListener listener){
+                                                   VMCompositionExportSession listener){
     Log.d(TAG, "succesVideoExportedWithWatermark");
-    listener.onExportSuccess(new Video(outputFile));
+    listener.onVMCompositionExportWatermarkAdded();
   }
 
 }

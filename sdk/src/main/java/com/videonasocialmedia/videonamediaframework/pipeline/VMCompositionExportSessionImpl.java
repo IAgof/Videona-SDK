@@ -76,18 +76,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             if (result != null) {
                 exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
                 saveFinalVideo(result, exportedVideoFilePath);
-                if (vmComposition.hasMusic()
-                        && (vmComposition.getMusic().getVolume() < 1f)) {
-                    // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
-                    mixAudio();
+                if(vmComposition.hasWatermark()){
+                    // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
+                    addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
                 } else {
-                    Video videoExported = new Video(exportedVideoFilePath);
-                    if(vmComposition.hasWatermark()){
-                        // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
-                        addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
-                    } else {
-                        onExportEndedListener.onExportSuccess(videoExported);
-                    }
+                    addMusicOrFinishExport();
                 }
                 // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
 //                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
@@ -99,6 +92,28 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             onExportEndedListener.onExportError(String.valueOf(npe));
             npe.printStackTrace(); 
         }
+    }
+
+    private void addMusicOrFinishExport() {
+        if (vmComposition.hasMusic()
+                && (vmComposition.getMusic().getVolume() < 1f)) {
+            // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
+            mixAudio();
+        } else {
+            Video videoExported = new Video(exportedVideoFilePath);
+            onExportEndedListener.onExportSuccess(videoExported);
+        }
+    }
+
+    @Override
+    public void onVMCompositionExportWatermarkAdded() {
+        addMusicOrFinishExport();
+    }
+
+    @Override
+    public void onVMCompositionExportError(String error) {
+        // How to manage this error? Propagade to onExportEndedListener?
+        onExportEndedListener.onExportError(error);
     }
 
     private ArrayList<String> createVideoPathList(LinkedList<Media> medias) {
@@ -298,12 +313,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                                 public void onExportSuccess() {
                                     // TODO(jliarte): 23/12/16 too many callbacks??
                                     // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
-                                    if(vmComposition.hasWatermark()){
-                                     addWatermark(vmComposition.getWatermark(),videoExportedWithVoiceOverPath );
-                                    }else {
-                                        onExportEndedListener.onExportSuccess(
+                                    onExportEndedListener.onExportSuccess(
                                             new Video(videoExportedWithVoiceOverPath));
-                                    }
                                 }
                             });
                 }
@@ -315,7 +326,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             });
     }
 
-    private void addWatermark(Watermark watermark, final String inFilePath) {
+    protected void addWatermark(Watermark watermark, final String inFilePath) {
         MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
         TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
         final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
@@ -324,7 +335,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             transcoderHelper.generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
                 vmComposition.getVideonaFormat(),
                 watermark.getResourceWatermarkFilePath(),
-                onExportEndedListener);
+                this);
         } catch (IOException e) {
             e.printStackTrace();
         }
