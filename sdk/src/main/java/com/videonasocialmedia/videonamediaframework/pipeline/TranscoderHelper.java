@@ -39,6 +39,52 @@ public class TranscoderHelper {
         this.mediaTranscoder = mediaTranscoder;
   }
 
+  public void generateOutputVideoWithAVTransitions(final Drawable fadeTransition,
+                                                   final boolean isVideoFadeActivated,
+                                                   final boolean isAudioFadeActivated,
+                                                   final Video videoToEdit,
+                                                   final VideonaFormat format,
+                                                   final String intermediatesTempAudioFadeDirectory,
+                                                   final TranscoderHelperListener listener) {
+
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        cancelPendingTranscodingTasks(videoToEdit);
+
+        ListenableFuture<Void> transcodingJob = null;
+        try {
+          transcodingJob = mediaTranscoder.transcodeOnlyVideo(fadeTransition, isVideoFadeActivated,
+              videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+        ListenableFuture<Void> chainedTranscodingJob;
+        if (isAudioFadeActivated) {
+          chainedTranscodingJob = Futures.transform(transcodingJob,
+              applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory, listener),
+              MoreExecutors.newDirectExecutorService());
+        } else {
+          chainedTranscodingJob = Futures.transform(transcodingJob,
+              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+        }
+        videoToEdit.setTranscodingTask(chainedTranscodingJob);
+      }
+    }).start();
+  }
+
+  public void generateOutputVideoWithAudioTransition(final Video videoToEdit,
+                                                     final String intermediatesTempAudioFadeDirectory,
+                                                     final TranscoderHelperListener listener) {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory, listener);
+      }
+    }).start();
+  }
+
   public void generateOutputVideoWithOverlayImageAndTrimming(
           final Drawable fadeTransition,
           final boolean isVideoFadeActivated,
