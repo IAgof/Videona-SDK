@@ -116,50 +116,21 @@ public class TranscoderHelper {
     }).start();
   }
 
-  public void generateOutputVideoWithWatermarkImage(final String inFilePath,
+  public ListenableFuture<Void> generateOutputVideoWithWatermarkImage(final String inFilePath,
                                                     final String outFilePath,
                                                     final VideonaFormat format,
-                                                    final String watermarkPath,
-                                                    final VMCompositionExportSession listener)
+                                                    final Image watermark)
       throws IOException  {
 
-    new Thread(new Runnable() {
-      @Override
-      public void run() {
-
-        Image watermark = new Image(watermarkPath, Constants.DEFAULT_CANVAS_WIDTH,
-            Constants.DEFAULT_CANVAS_HEIGHT);
-
-        Drawable fakeDrawable = Drawable.createFromPath(watermarkPath);
-
-        ListenableFuture<Void> transcodingJob =
-            null;
-        try {
-          transcodingJob = mediaTranscoder.transcodeAndOverlayImageToVideo(fakeDrawable, false,
-              inFilePath, outFilePath, format, watermark);
-        } catch (IOException e) {
-          e.printStackTrace();
-          listener.onVMCompositionExportError(String.valueOf(e));
-        }
-
-        ListenableFuture<Void> chainedTranscodingJob;
-        chainedTranscodingJob = Futures.transform(transcodingJob,
-            updateVideoExportedWithWatermark(outFilePath, listener),
-            MoreExecutors.newDirectExecutorService());
-
-      }
-    }).start();
-  }
-
-  private Function<? super Void, ? extends Void> updateVideoExportedWithWatermark(
-      final String outFilePath, final VMCompositionExportSession listener) {
-    return new Function<Void, Void>() {
-      @Override
-      public Void apply(Void input) {
-        successVideoTranscodedWithWatermark(outFilePath, listener);
-        return input;
-      }
-    };
+    ListenableFuture<Void> transcodingJobWatermark = null;
+    Drawable fakeDrawable = Drawable.createFromPath("");
+    try {
+      transcodingJobWatermark = mediaTranscoder.transcodeAndOverlayImageToVideo(fakeDrawable, false,
+          inFilePath, outFilePath, format, watermark);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return transcodingJobWatermark;
   }
 
   public void generateOutputVideoWithTrimming(final Drawable fadeTransition,
@@ -281,10 +252,10 @@ public class TranscoderHelper {
     }
   }
 
-  private void successVideoTranscodedWithWatermark(String outputFile,
+  /*private void successVideoTranscodedWithWatermark(String outputFile,
                                                    VMCompositionExportSession listener){
     Log.d(TAG, "succesVideoExportedWithWatermark");
     listener.onVMCompositionExportWatermarkAdded();
-  }
+  }*/
 
 }

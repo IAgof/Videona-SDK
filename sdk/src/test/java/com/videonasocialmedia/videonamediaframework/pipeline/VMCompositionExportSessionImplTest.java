@@ -4,10 +4,10 @@ import android.support.annotation.NonNull;
 
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
-import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrameRate;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
@@ -48,7 +48,7 @@ public class VMCompositionExportSessionImplTest {
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
   @Mock
-  private Watermark mockedWatermark;
+  private Image mockedWatermark;
 
 //  @Test
 //  public void addAudioAppendsNewTrackToMovie() throws Exception {
@@ -247,7 +247,7 @@ public class VMCompositionExportSessionImplTest {
 
     exportSessionSpy.export();
 
-    verify(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
+    verify(exportSessionSpy).addWatermark(any(Image.class), anyString());
   }
 
   @Test
@@ -265,7 +265,7 @@ public class VMCompositionExportSessionImplTest {
 
     exportSessionSpy.export();
 
-    verify(exportSessionSpy, never()).addWatermark(any(Watermark.class), anyString());
+    verify(exportSessionSpy, never()).addWatermark(any(Image.class), anyString());
   }
 
   @NonNull

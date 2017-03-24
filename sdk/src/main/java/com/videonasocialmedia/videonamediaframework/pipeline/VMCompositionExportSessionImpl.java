@@ -3,13 +3,14 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
-import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
@@ -28,6 +29,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
 
 /**
  * @author Juan Javier Cabanas
@@ -66,6 +68,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     @Override
     public void export() {
+        // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
         waitForOutputFilesFinished();
 
         LinkedList<Media> medias = getMediasFromComposition();
@@ -78,7 +81,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 saveFinalVideo(result, exportedVideoFilePath);
                 if(vmComposition.hasWatermark()){
                     // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
-                    addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
+                    ListenableFuture watermarkFuture =
+                        addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
+                    waitFutureToFinish(watermarkFuture);
+                    addMusicOrFinishExport();
                 } else {
                     addMusicOrFinishExport();
                 }
@@ -94,6 +100,21 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
+    private void waitFutureToFinish(ListenableFuture future) {
+        while(!future.isDone()){
+            try {
+                int countWaiting = 0;
+                if (countWaiting > MAX_SECONDS_WAITING_FOR_TEMP_FILES) {
+                    break;
+                }
+                countWaiting++;
+                Thread.sleep(1000);
+            } catch (InterruptedException exception) {
+                exception.printStackTrace();
+            }
+        }
+    }
+
     private void addMusicOrFinishExport() {
         if (vmComposition.hasMusic()
                 && (vmComposition.getMusic().getVolume() < 1f)) {
@@ -103,17 +124,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Video videoExported = new Video(exportedVideoFilePath);
             onExportEndedListener.onExportSuccess(videoExported);
         }
-    }
-
-    @Override
-    public void onVMCompositionExportWatermarkAdded() {
-        addMusicOrFinishExport();
-    }
-
-    @Override
-    public void onVMCompositionExportError(String error) {
-        // How to manage this error? Propagade to onExportEndedListener?
-        onExportEndedListener.onExportError(error);
     }
 
     private ArrayList<String> createVideoPathList(LinkedList<Media> medias) {
@@ -326,19 +336,20 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             });
     }
 
-    protected void addWatermark(Watermark watermark, final String inFilePath) {
+    protected ListenableFuture<Void> addWatermark(Image watermark, final String inFilePath) {
         MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
         TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
+        ListenableFuture watermarkFuture = null;
         final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
+        exportedVideoFilePath = outputFilePath;
 
         try {
-            transcoderHelper.generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
-                vmComposition.getVideonaFormat(),
-                watermark.getResourceWatermarkFilePath(),
-                this);
+            watermarkFuture = transcoderHelper
+                .generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
+                    vmComposition.getVideonaFormat(), watermark);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
+        return watermarkFuture;
     }
 }

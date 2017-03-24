@@ -2,10 +2,10 @@ package com.videonasocialmedia.videonamediaframework.model;
 
 
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
-import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.MediaTrack;
@@ -54,7 +54,7 @@ public class VMComposition {
 
   private boolean isWatermarkActivated;
 
-  private Watermark watermark;
+  private Image watermark;
 
   private Profile profile;
 
@@ -62,7 +62,8 @@ public class VMComposition {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
     audioTracks.add(new AudioTrack());
-    this.watermark = new Watermark(resourceWatermarkFilePath);
+    this.watermark = new Image(resourceWatermarkFilePath, Constants.DEFAULT_CANVAS_WIDTH,
+        Constants.DEFAULT_CANVAS_HEIGHT);
     this.profile = profile;
   }
 
@@ -78,7 +79,8 @@ public class VMComposition {
     for (AudioTrack audioTrack : vmComposition.getAudioTracks()) {
       audioTracks.add(new AudioTrack(audioTrack));
     }
-    this.watermark = new Watermark(vmComposition.getWatermark().getResourceWatermarkFilePath());
+    this.watermark = new Image(vmComposition.getWatermark().getResourceFilePath(),
+        Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
     this.profile = new Profile(vmComposition.getProfile());
   }
 
@@ -124,7 +126,7 @@ public class VMComposition {
     this.isWatermarkActivated = isWatermarkActivated;
   }
 
-  public Watermark getWatermark() {
+  public Image getWatermark() {
     return watermark;
   }
 
