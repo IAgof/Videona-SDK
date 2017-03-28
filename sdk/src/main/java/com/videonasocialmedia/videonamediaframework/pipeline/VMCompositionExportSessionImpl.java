@@ -11,6 +11,7 @@ import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
@@ -336,9 +337,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             });
     }
 
-    protected ListenableFuture<Void> addWatermark(Image watermark, final String inFilePath) {
+    protected ListenableFuture<Void> addWatermark(Watermark watermark, final String inFilePath) {
         MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
         TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
+        Image imageWatermark = new Image(watermark.getResourceWatermarkFilePath(),
+            Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
         ListenableFuture watermarkFuture = null;
         final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
         exportedVideoFilePath = outputFilePath;
@@ -346,7 +349,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         try {
             watermarkFuture = transcoderHelper
                 .generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
-                    vmComposition.getVideonaFormat(), watermark);
+                    vmComposition.getVideonaFormat(), imageWatermark);
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -8,6 +8,7 @@ import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
+import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrameRate;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
@@ -249,7 +250,7 @@ public class VMCompositionExportSessionImplTest {
 
     exportSessionSpy.export();
 
-    verify(exportSessionSpy).addWatermark(any(Image.class), anyString());
+    verify(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
   }
 
   @Test
@@ -267,7 +268,7 @@ public class VMCompositionExportSessionImplTest {
 
     exportSessionSpy.export();
 
-    verify(exportSessionSpy, never()).addWatermark(any(Image.class), anyString());
+    verify(exportSessionSpy, never()).addWatermark(any(Watermark.class), anyString());
   }
 
   @NonNull
