@@ -4,9 +4,11 @@ import android.support.annotation.NonNull;
 
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
+import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrameRate;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
@@ -46,6 +48,8 @@ public class VMCompositionExportSessionImplTest {
   private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
+  @Mock
+  private Image mockedWatermark;
 
 //  @Test
 //  public void addAudioAppendsNewTrackToMovie() throws Exception {
@@ -229,6 +233,42 @@ public class VMCompositionExportSessionImplTest {
     vmCompositionExportSession.createMovieFromComposition(videoPaths);
 
     verify(mockedAppender).appendVideos(videoPaths, true);
+  }
+
+  @Test
+  public void exportCallsAddWatermarkIfWatermarkIsSelectedInComposition() throws IOException {
+    VMComposition vmComposition = new VMComposition();
+    vmComposition.setWatermarkActivated(true);
+
+    assertThat("Watermark is activated", vmComposition.hasWatermark(), is(true));
+
+    VMCompositionExportSessionImpl vmCompositionExportSession =
+        getVmCompositionExportSession(vmComposition);
+    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
+    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
+    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
+
+    exportSessionSpy.export();
+
+    verify(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
+  }
+
+  @Test
+  public void exportDoesNotCallsAddWatermarkIfWatermarkIsNotSelectedInComposition() throws IOException {
+    VMComposition vmComposition = new VMComposition();
+    vmComposition.setWatermarkActivated(false);
+
+    assertThat("Watermark is not activated", vmComposition.hasWatermark(), is(false));
+
+    VMCompositionExportSessionImpl vmCompositionExportSession =
+        getVmCompositionExportSession(vmComposition);
+    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
+    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
+    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
+
+    exportSessionSpy.export();
+
+    verify(exportSessionSpy, never()).addWatermark(any(Watermark.class), anyString());
   }
 
   @NonNull
