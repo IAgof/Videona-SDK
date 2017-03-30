@@ -370,7 +370,7 @@ public class MediaTranscoder {
     }
 
 
-    public Future<Void> mixAudioTwoFiles(final List<Media> mediaList,
+    public ListenableFuture<Void> mixAudioFiles(final List<Media> mediaList,
                                          final String tempDirectory, final String outputFile,
                                          final long durationOutputFile,
                                          final OnAudioMixerListener listener) throws IOException {

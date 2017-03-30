@@ -122,7 +122,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
             mixAudio();
         } else {
-            Video videoExported = new Video(exportedVideoFilePath);
+            Video videoExported = new Video(exportedVideoFilePath, 1f);
             onExportEndedListener.onExportSuccess(videoExported);
         }
     }

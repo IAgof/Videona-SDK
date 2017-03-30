@@ -14,6 +14,9 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResol
 
 import java.util.ArrayList;
 
+import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACKS_MUSIC;
+import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACKS_VOICE_OVER;
+
 /**
  * Videona Media Composition class for representing a media composition with audio and video
  * tracks, effects and transformations.
@@ -26,9 +29,6 @@ public class VMComposition {
   private int duration = 0;
 
   private int NUM_OF_AUDIO_TRACKS_SUPPORTED = 2;
-
-  public final static int INDEX_AUDIO_TRACKS_MUSIC = 0;
-  public final static int INDEX_AUDIO_TRACKS_VOICE_OVER = 1;
 
   public MediaTrack getMediaTrack() {
     return mediaTrack;

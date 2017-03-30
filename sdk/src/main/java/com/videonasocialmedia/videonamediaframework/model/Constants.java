@@ -11,4 +11,6 @@ public class Constants {
   public static final int DEFAULT_CANVAS_WIDTH = 1280;
   public static final int DEFAULT_CANVAS_HEIGHT = 720;
   public static final String MIXED_AUDIO_FILE_NAME ="AudioMixed.mp4";
+  public final static int INDEX_AUDIO_TRACKS_MUSIC = 0;
+  public final static int INDEX_AUDIO_TRACKS_VOICE_OVER = 1;
 }
