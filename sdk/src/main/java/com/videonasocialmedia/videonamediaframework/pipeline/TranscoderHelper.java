@@ -26,8 +26,8 @@ public class TranscoderHelper {
   private String TAG = "TranscoderHelper";
 
   // TODO:(alvaro.martinez) 21/02/17 Where we define this default values?
-  public static final int TIME_FADE_IN_MS = 500;
-  public static final int TIME_FADE_OUT_MS = 500;
+  public static final int TIME_FADE_IN_MS = 125;
+  public static final int TIME_FADE_OUT_MS = 125;
 
   public TranscoderHelper(TextToDrawable drawableGenerator, MediaTranscoder mediaTranscoder) {
     this.drawableGenerator = drawableGenerator;
