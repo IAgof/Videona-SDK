@@ -55,6 +55,7 @@
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer { public <methods>;}
 -keep interface com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer$OnMixAudioListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper { public <methods>;}
+-keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSessionImpl { public <methods>;}
 -keep interface com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSession { *; }
 -keep interface com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSession$* { *; }

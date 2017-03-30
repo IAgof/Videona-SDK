@@ -3,11 +3,15 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+import com.videonasocialmedia.transcoder.MediaTranscoder;
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
@@ -16,7 +20,6 @@ import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
-import com.videonasocialmedia.videonamediaframework.model.media.Profile;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 
@@ -27,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+
 
 /**
  * @author Juan Javier Cabanas
@@ -65,6 +69,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     @Override
     public void export() {
+        // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
         waitForOutputFilesFinished();
 
         LinkedList<Media> medias = getMediasFromComposition();
@@ -75,12 +80,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             if (result != null) {
                 exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
                 saveFinalVideo(result, exportedVideoFilePath);
-                if (vmComposition.hasMusic()
-                        && (vmComposition.getMusic().getVolume() < 1f)) {
-                    // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
-                    mixAudio();
+                if(vmComposition.hasWatermark()){
+                    // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
+                    ListenableFuture watermarkFuture =
+                        addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
+                    waitFutureToFinish(watermarkFuture);
+                    addMusicOrFinishExport();
                 } else {
-                    onExportEndedListener.onExportSuccess(new Video(exportedVideoFilePath, 1f));
+                    addMusicOrFinishExport();
                 }
                 // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
 //                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
@@ -91,6 +98,32 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         } catch (NullPointerException npe) {
             onExportEndedListener.onExportError(String.valueOf(npe));
             npe.printStackTrace(); 
+        }
+    }
+
+    private void waitFutureToFinish(ListenableFuture future) {
+        while(!future.isDone()){
+            try {
+                int countWaiting = 0;
+                if (countWaiting > MAX_SECONDS_WAITING_FOR_TEMP_FILES) {
+                    break;
+                }
+                countWaiting++;
+                Thread.sleep(1000);
+            } catch (InterruptedException exception) {
+                exception.printStackTrace();
+            }
+        }
+    }
+
+    private void addMusicOrFinishExport() {
+        if (vmComposition.hasMusic()
+                && (vmComposition.getMusic().getVolume() < 1f)) {
+            // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
+            mixAudio();
+        } else {
+            Video videoExported = new Video(exportedVideoFilePath);
+            onExportEndedListener.onExportSuccess(videoExported);
         }
     }
 
@@ -321,5 +354,24 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     onExportEndedListener.onExportError("Error mixing audio");
                 }
             });
+    }
+
+    protected ListenableFuture<Void> addWatermark(Watermark watermark, final String inFilePath) {
+        MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+        TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
+        Image imageWatermark = new Image(watermark.getResourceWatermarkFilePath(),
+            Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
+        ListenableFuture watermarkFuture = null;
+        final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
+        exportedVideoFilePath = outputFilePath;
+
+        try {
+            watermarkFuture = transcoderHelper
+                .generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
+                    vmComposition.getVideonaFormat(), imageWatermark);
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return watermarkFuture;
     }
 }

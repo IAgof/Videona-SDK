@@ -4,9 +4,11 @@ import android.support.annotation.NonNull;
 
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
+import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrameRate;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
@@ -49,6 +51,8 @@ public class VMCompositionExportSessionImplTest {
   private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
+  @Mock
+  private Image mockedWatermark;
 
 //  @Test
 //  public void addAudioAppendsNewTrackToMovie() throws Exception {
@@ -93,7 +97,7 @@ public class VMCompositionExportSessionImplTest {
   public void createMovieFromCompositionCallsAppenderWithoutAudioIfMusicIsSet()
           throws IOException, IllegalItemOnTrack {
     VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path", 1f);
+    Music music = new Music("music/path", 1f, 0);
     vmComposition.getAudioTracks().get(INDEX_AUDIO_TRACKS_MUSIC).insertItem(music);
     VMCompositionExportSessionImpl exporter = getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(exporter);
@@ -147,7 +151,7 @@ public class VMCompositionExportSessionImplTest {
   public void exportCallsMixAudioIfMusicVolumeIsLowerThan1()
           throws IOException, IllegalItemOnTrack {
     VMComposition vmComposition = new VMComposition();
-    Music voiceOver = new Music("music/path", 0.8f);
+    Music voiceOver = new Music("music/path", 0.8f, 0);
     vmComposition.getAudioTracks().get(INDEX_AUDIO_TRACKS_VOICE_OVER).insertItem(voiceOver);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -167,7 +171,7 @@ public class VMCompositionExportSessionImplTest {
   public void exportDoesNotCallMixAudioIfMusicVolumeIs1()
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path", 1f);
+    Music music = new Music("music/path", 1f, 0);
     vmComposition.getAudioTracks().get(INDEX_AUDIO_TRACKS_MUSIC).insertItem(music);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -200,7 +204,7 @@ public class VMCompositionExportSessionImplTest {
   public void createMovieFromCompositionAppenderWithoutOriginalVideoMusicIfCompositionHasMusic()
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path");
+    Music music = new Music("music/path", 0);
     assert music.getVolume() == 0.5f; // default music volume 0.5f
     // set music to 1f, exporter swap audio, not mixed
     music.setVolume(1f);
@@ -223,7 +227,7 @@ public class VMCompositionExportSessionImplTest {
   public void createMovieFromCompositionCallsAppenderWithOriginalVideoMusicIfCompositionMusicVolumeLowerThan1()
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
-    Music voiceOver = new Music("voice/over/path", 0.9f);
+    Music voiceOver = new Music("voice/over/path", 0.9f, 0);
     vmComposition.getAudioTracks().get(INDEX_AUDIO_TRACKS_MUSIC).insertItem(voiceOver);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -233,6 +237,42 @@ public class VMCompositionExportSessionImplTest {
     vmCompositionExportSession.createMovieFromComposition(videoPaths);
 
     verify(mockedAppender).appendVideos(videoPaths, true);
+  }
+
+  @Test
+  public void exportCallsAddWatermarkIfWatermarkIsSelectedInComposition() throws IOException {
+    VMComposition vmComposition = new VMComposition();
+    vmComposition.setWatermarkActivated(true);
+
+    assertThat("Watermark is activated", vmComposition.hasWatermark(), is(true));
+
+    VMCompositionExportSessionImpl vmCompositionExportSession =
+        getVmCompositionExportSession(vmComposition);
+    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
+    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
+    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
+
+    exportSessionSpy.export();
+
+    verify(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
+  }
+
+  @Test
+  public void exportDoesNotCallsAddWatermarkIfWatermarkIsNotSelectedInComposition() throws IOException {
+    VMComposition vmComposition = new VMComposition();
+    vmComposition.setWatermarkActivated(false);
+
+    assertThat("Watermark is not activated", vmComposition.hasWatermark(), is(false));
+
+    VMCompositionExportSessionImpl vmCompositionExportSession =
+        getVmCompositionExportSession(vmComposition);
+    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
+    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
+    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
+
+    exportSessionSpy.export();
+
+    verify(exportSessionSpy, never()).addWatermark(any(Watermark.class), anyString());
   }
 
   @NonNull

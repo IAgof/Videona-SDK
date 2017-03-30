@@ -1,3 +1,3 @@
-v0.2.1
-- Update preview player with audio and video fade transitions.
-- Improved player added prebuffering of next clip to a faster switching.
+v0.2.5
+- Updated duration audio, video fade transitions.
+- TranscoderHelper, created new methods to transcoder video, only apply to audio, video transitions.

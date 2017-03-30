@@ -120,7 +120,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     @Override
     public void OnFileEncodedSuccess(String outputFile) {
-        if (listener!= null) {
+        if (listener != null) {
             listener.onAudioMixerProgress("Transcoded completed");
             listener.onAudioMixerSuccess(outputFile);
         }
