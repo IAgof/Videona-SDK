@@ -16,6 +16,10 @@ public class Image extends Overlay{
         super(overlayImagePath, width, height, positionX, positionY);
     }
 
+    public Image(String overlayImagePath, int width, int height) {
+        super(overlayImagePath, width, height, 0, 0);
+    }
+
     public Image(Drawable overlayImage, int width, int height) {
         super(overlayImage, width, height, 0, 0);
     }
@@ -25,4 +29,5 @@ public class Image extends Overlay{
         // Old blend. GLES20.glBlendFunc(GLES20.GL_SRC_COLOR, GLES20.GL_DST_COLOR);
         GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
     }
+
 }
