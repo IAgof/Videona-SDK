@@ -260,8 +260,12 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
     mediaList.add(audio3);
 
 
-    listenableFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(mediaList,
-        tempDir, outputAudio, getDurationFile(inputVideo), this);
+    try {
+      listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
+          tempDir, outputAudio, getDurationFile(inputVideo), this);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
 
   }
@@ -284,7 +288,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
           Environment.DIRECTORY_MOVIES));
 
       final String inPath = getPath(getActivity(), data.getData());
-      final Video videoToEdit = new Video(inPath);
+      final Video videoToEdit = new Video(inPath, 1f);
       videoToEdit.setTempPath(externalDir);
       final String exportedPath = videoToEdit.getTempPath();
       progressBar.setMax(PROGRESS_BAR_MAX);

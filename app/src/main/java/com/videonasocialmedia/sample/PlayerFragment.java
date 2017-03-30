@@ -174,9 +174,9 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
 
 
 
-    videonaPlayer.setVoiceOver(new Music(audioTest2, 0.4f));
+    videonaPlayer.setVoiceOver(new Music(audioTest2, 0.4f, 0));
     videonaPlayer.bindVideoList(movieList);
-    videonaPlayer.setMusic(new Music(audioTest, 0.3f));
+    videonaPlayer.setMusic(new Music(audioTest, 0.3f, 0));
 
   }
 
