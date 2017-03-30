@@ -34,7 +34,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private static final int DRAIN_STATE_NONE = 0;
     private static final int DRAIN_STATE_SHOULD_RETRY_IMMEDIATELY = 1;
     private static final int DRAIN_STATE_CONSUMED = 2;
-    public static final int NUM_FRAMES_APPLY_FADE = 15;
+    public static final int NUM_FRAMES_APPLY_FADE = 2;
 
     private final MediaExtractor mExtractor;
     private final int mTrackIndex;
@@ -57,13 +57,15 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private boolean mEncoderStarted;
     private long mWrittenPresentationTimeUs;
 
-    private int alpha = 255; // shoulde be initialize to gain. Value from 0 to 255
+    private int alphaIn = 255; // shoulde be initialize to gain. Value from 0 to 255
+    private int alphaOut = 0; // shoulde be initialize to gain. Value from 0 to 255
     private Overlay overlay;
     private int numDropFrames = 0;
     private long endVideoTimeUs;
     private long startVideoTimeUs = 0;
-    private long startTransitionVideoTimeUs = 500000;
-    private long endTransitionVideoTimeUs = 500000;
+    private long startTransitionVideoTimeUs = 75000;
+    private long endTransitionVideoTimeUs = 75000;
+    private int numFramesVideoTransition = 0;
     private boolean endOfVideoToEncode = false;
     private long durationFileUs;
 
@@ -147,6 +149,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
 
         startVideoTimeUs = startTime*1000;
         startTransitionVideoTimeUs += startVideoTimeUs;
+        Log.d(TAG, "Update startTransitionVideoTimeUs " + startTransitionVideoTimeUs);
 
         mExtractor.seekTo(startVideoTimeUs, MediaExtractor.SEEK_TO_PREVIOUS_SYNC);
         Log.d(TAG, "seekTo Previous time " + mExtractor.getSampleTime());
@@ -283,15 +286,17 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             mDecoderOutputSurfaceWrapper.awaitNewImage();
 
           if(isFadeActivated) {
-            if (instantTime > startVideoTimeUs && instantTime < startTransitionVideoTimeUs) {
-              alpha = Math.max(0, alpha - (255 / NUM_FRAMES_APPLY_FADE));
-              mDecoderOutputSurfaceWrapper.drawImageFadeTransition(alpha);
-              Log.d(TAG, "alpha " + alpha);
+            if (numFramesVideoTransition < NUM_FRAMES_APPLY_FADE) {
+              numFramesVideoTransition++;
+              mDecoderOutputSurfaceWrapper.drawImageFadeTransition(alphaIn);
+              Log.d(TAG, "alpha in " + alphaIn);
+              alphaIn = Math.max(0, alphaIn - (255 / NUM_FRAMES_APPLY_FADE));
+
             } else {
               if (instantTime > endTransitionVideoTimeUs) {
-                alpha = alpha + (255 / NUM_FRAMES_APPLY_FADE);
-                mDecoderOutputSurfaceWrapper.drawImageFadeTransition(Math.min(alpha, 255));
-                Log.d(TAG, "alpha " + alpha);
+                mDecoderOutputSurfaceWrapper.drawImageFadeTransition(Math.min(alphaOut, 255));
+                Log.d(TAG, "alpha out " + alphaOut);
+                alphaOut = Math.min(255, alphaOut + (255 / NUM_FRAMES_APPLY_FADE));
               } else {
                 mDecoderOutputSurfaceWrapper.drawImage();
               }

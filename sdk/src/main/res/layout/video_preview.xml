@@ -53,7 +53,7 @@
 
             <ImageView
                 android:id="@+id/image_transition_fade"
-                android:src="@drawable/alpha_transition_black"
+                android:src="@drawable/alpha_transition_white"
                 android:scaleType="fitStart"
                 android:alpha="0"
                 android:layout_width="match_parent"

@@ -26,8 +26,8 @@ public class TranscoderHelper {
   private String TAG = "TranscoderHelper";
 
   // TODO:(alvaro.martinez) 21/02/17 Where we define this default values?
-  public static final int TIME_FADE_IN_MS = 500;
-  public static final int TIME_FADE_OUT_MS = 500;
+  public static final int TIME_FADE_IN_MS = 125;
+  public static final int TIME_FADE_OUT_MS = 125;
 
   public TranscoderHelper(TextToDrawable drawableGenerator, MediaTranscoder mediaTranscoder) {
     this.drawableGenerator = drawableGenerator;
@@ -37,6 +37,52 @@ public class TranscoderHelper {
   // TODO:(alvaro.martinez) 22/11/16 unify in one constructor ¿?
   public TranscoderHelper(MediaTranscoder mediaTranscoder) {
         this.mediaTranscoder = mediaTranscoder;
+  }
+
+  public void generateOutputVideoWithAVTransitions(final Drawable fadeTransition,
+                                                   final boolean isVideoFadeActivated,
+                                                   final boolean isAudioFadeActivated,
+                                                   final Video videoToEdit,
+                                                   final VideonaFormat format,
+                                                   final String intermediatesTempAudioFadeDirectory,
+                                                   final TranscoderHelperListener listener) {
+
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        cancelPendingTranscodingTasks(videoToEdit);
+
+        ListenableFuture<Void> transcodingJob = null;
+        try {
+          transcodingJob = mediaTranscoder.transcodeOnlyVideo(fadeTransition, isVideoFadeActivated,
+              videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+
+        ListenableFuture<Void> chainedTranscodingJob;
+        if (isAudioFadeActivated) {
+          chainedTranscodingJob = Futures.transform(transcodingJob,
+              applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory, listener),
+              MoreExecutors.newDirectExecutorService());
+        } else {
+          chainedTranscodingJob = Futures.transform(transcodingJob,
+              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+        }
+        videoToEdit.setTranscodingTask(chainedTranscodingJob);
+      }
+    }).start();
+  }
+
+  public void generateOutputVideoWithAudioTransition(final Video videoToEdit,
+                                                     final String intermediatesTempAudioFadeDirectory,
+                                                     final TranscoderHelperListener listener) {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        applyAudioFadeInOut(videoToEdit, intermediatesTempAudioFadeDirectory, listener);
+      }
+    }).start();
   }
 
   public void generateOutputVideoWithOverlayImageAndTrimming(
