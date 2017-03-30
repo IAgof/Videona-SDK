@@ -321,11 +321,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     protected void mixAudio() {
         final String videoExportedWithVoiceOverPath = outputFilesDirectory
                 + getNewExportedVideoFileName();
-        Music voiceOver = vmComposition.getMusic();
-        Video video = new Video(exportedVideoFilePath, 1-voiceOver.getVolume());
+        Music voiceOverOrMusic = vmComposition.getMusic();
+        Video video = new Video(exportedVideoFilePath, 1-voiceOverOrMusic.getVolume());
         List<Media> mediaList = new ArrayList<>();
         mediaList.add(video);
-        mediaList.add(voiceOver);
+        mediaList.add(voiceOverOrMusic);
         audioMixer.mixAudio(mediaList, tempAudioPath,
             FileUtils.getDurationFile(exportedVideoFilePath), new AudioMixer.OnMixAudioListener() {
                 @Override
