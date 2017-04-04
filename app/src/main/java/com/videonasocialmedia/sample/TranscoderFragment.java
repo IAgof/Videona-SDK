@@ -24,7 +24,6 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
@@ -33,18 +32,15 @@ import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 
-import com.videonasocialmedia.transcoder.video.format.VideoTranscoderFormat;
-import com.videonasocialmedia.transcoder.video.overlay.Filter;
+import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
+
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
-import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffect;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener;
 import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -304,14 +300,14 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
             videoToEdit.setStopTime(10000);
 
             transcoderHelper.generateOutputVideoWithTrimming(fadeTransition,
-                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideoTranscoderFormat(),"", listener);
+                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"", listener);
 
           break;
         }
         case REQUEST_CODE_TRANSCODE_VIDEO: {
           // TODO:(alvaro.martinez) 2/03/17 create new API task, transcode only video
           transcoderHelper.generateOutputVideoWithTrimming(fadeTransition, isVideoFadeActivated,
-              isAudioFadeActivated, videoToEdit, new VideoTranscoderFormat(), "", listener);
+              isAudioFadeActivated, videoToEdit, new VideonaFormat(), "", listener);
 
           break;
         }
@@ -322,7 +318,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
           //videoToEdit.setClipTextPosition(TextEffect.TextPosition.TOP.name());
 
           transcoderHelper.generateOutputVideoWithOverlayImage(fadeTransition, isVideoFadeActivated,
-              isAudioFadeActivated, videoToEdit, new VideoTranscoderFormat(), "", listener);
+              isAudioFadeActivated, videoToEdit, new VideonaFormat(), "", listener);
 
           break;
         }

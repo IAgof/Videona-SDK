@@ -10,7 +10,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
-import com.videonasocialmedia.transcoder.video.format.VideoTranscoderFormat;
+import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -43,7 +43,7 @@ public class TranscoderHelper {
                                                    final boolean isVideoFadeActivated,
                                                    final boolean isAudioFadeActivated,
                                                    final Video videoToEdit,
-                                                   final VideoTranscoderFormat format,
+                                                   final VideonaFormat format,
                                                    final String intermediatesTempAudioFadeDirectory,
                                                    final TranscoderHelperListener listener) {
 
@@ -90,7 +90,7 @@ public class TranscoderHelper {
           final boolean isVideoFadeActivated,
           final boolean isAudioFadeActivated,
           final Video videoToEdit,
-          final VideoTranscoderFormat format,
+          final VideonaFormat format,
           final String intermediatesTempAudioFadeDirectory,
           final TranscoderHelperListener listener) {
     new Thread(new Runnable() {
@@ -127,7 +127,7 @@ public class TranscoderHelper {
   public void generateOutputVideoWithOverlayImage(final Drawable fadeTransition,
                                                 final boolean isVideoFadeActivated,
                                                 final boolean isAudioFadeActivated,
-                                                final Video videoToEdit, final VideoTranscoderFormat format,
+                                                final Video videoToEdit, final VideonaFormat format,
                                                 final String intermediatesTempAudioFadeDirectory,
                                                 final TranscoderHelperListener listener) {
     new Thread(new Runnable() {
@@ -164,7 +164,7 @@ public class TranscoderHelper {
 
   public ListenableFuture<Void> generateOutputVideoWithWatermarkImage(final String inFilePath,
                                                     final String outFilePath,
-                                                    final VideoTranscoderFormat format,
+                                                    final VideonaFormat format,
                                                     final Image watermark)
       throws IOException  {
 
@@ -182,7 +182,7 @@ public class TranscoderHelper {
   public void generateOutputVideoWithTrimming(final Drawable fadeTransition,
                                               final boolean isVideoFadeActivated,
                                               final boolean isAudioFadeActivated,
-                                              final Video videoToEdit, final VideoTranscoderFormat format,
+                                              final Video videoToEdit, final VideonaFormat format,
                                               final String intermediatesTempAudioFadeDirectory,
                                               final TranscoderHelperListener listener) {
     new Thread(new Runnable() {
@@ -215,7 +215,7 @@ public class TranscoderHelper {
     }).start();
   }
 
-  public ListenableFuture<Void> adaptVideoToTranscoder(final String origVideoPath, final VideoTranscoderFormat format,
+  public ListenableFuture<Void> adaptVideoToTranscoder(final String origVideoPath, final VideonaFormat format,
                                                        final String destVideoPath)
       throws IOException {
     ListenableFuture<Void> transcodingJobAdapt = null;
