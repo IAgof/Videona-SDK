@@ -1,7 +1,7 @@
 package com.videonasocialmedia.videonamediaframework.model;
 
 
-import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
+import com.videonasocialmedia.transcoder.video.format.VideoTranscoderFormat;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
@@ -128,15 +128,15 @@ public class VMComposition {
     return watermark;
   }
 
-  public VideonaFormat getVideonaFormat() {
+  public VideoTranscoderFormat getVideonaFormat() {
     VideoResolution resolution =  profile.getVideoResolution();
     VideoQuality quality = profile.getVideoQuality();
-    VideonaFormat videonaFormat;
+    VideoTranscoderFormat videonaFormat;
     if(resolution!=null && quality!=null) {
-      videonaFormat = new VideonaFormat(quality.getVideoBitRate(), resolution.getWidth(),
+      videonaFormat = new VideoTranscoderFormat(quality.getVideoBitRate(), resolution.getWidth(),
           resolution.getHeight());
     } else {
-      videonaFormat = new VideonaFormat();
+      videonaFormat = new VideoTranscoderFormat();
     }
     return videonaFormat;
   }

@@ -319,8 +319,6 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
 
-    private void setupRangeTimeVideoTranscoder(int startTimeMs, int endTimeMs){
-
     private void setupRangeTimeVideoTranscoder(int startTimeMs, int endTimeMs) {
         if(startTimeMs*1000 > mDurationUs) {
             throw new InvalidOutputFormatException("start time bigger than durations file");
@@ -450,6 +448,8 @@ public class MediaTranscoderEngine {
          * @param progress Progress in [0.0, 1.0] range, or negative value if progress is unknown.
          */
         void onProgress(double progress);
+    }
+
     public void interruptTranscoding() {
         interruptTranscoding = true;
     }

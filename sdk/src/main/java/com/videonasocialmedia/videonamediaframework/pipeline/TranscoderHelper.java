@@ -43,7 +43,7 @@ public class TranscoderHelper {
                                                    final boolean isVideoFadeActivated,
                                                    final boolean isAudioFadeActivated,
                                                    final Video videoToEdit,
-                                                   final VideonaFormat format,
+                                                   final VideoTranscoderFormat format,
                                                    final String intermediatesTempAudioFadeDirectory,
                                                    final TranscoderHelperListener listener) {
 
@@ -90,7 +90,7 @@ public class TranscoderHelper {
           final boolean isVideoFadeActivated,
           final boolean isAudioFadeActivated,
           final Video videoToEdit,
-          final VideonaFormat format,
+          final VideoTranscoderFormat format,
           final String intermediatesTempAudioFadeDirectory,
           final TranscoderHelperListener listener) {
     new Thread(new Runnable() {
@@ -127,7 +127,7 @@ public class TranscoderHelper {
   public void generateOutputVideoWithOverlayImage(final Drawable fadeTransition,
                                                 final boolean isVideoFadeActivated,
                                                 final boolean isAudioFadeActivated,
-                                                final Video videoToEdit, final VideonaFormat format,
+                                                final Video videoToEdit, final VideoTranscoderFormat format,
                                                 final String intermediatesTempAudioFadeDirectory,
                                                 final TranscoderHelperListener listener) {
     new Thread(new Runnable() {
@@ -164,7 +164,7 @@ public class TranscoderHelper {
 
   public ListenableFuture<Void> generateOutputVideoWithWatermarkImage(final String inFilePath,
                                                     final String outFilePath,
-                                                    final VideonaFormat format,
+                                                    final VideoTranscoderFormat format,
                                                     final Image watermark)
       throws IOException  {
 
@@ -182,7 +182,7 @@ public class TranscoderHelper {
   public void generateOutputVideoWithTrimming(final Drawable fadeTransition,
                                               final boolean isVideoFadeActivated,
                                               final boolean isAudioFadeActivated,
-                                              final Video videoToEdit, final VideonaFormat format,
+                                              final Video videoToEdit, final VideoTranscoderFormat format,
                                               final String intermediatesTempAudioFadeDirectory,
                                               final TranscoderHelperListener listener) {
     new Thread(new Runnable() {
@@ -201,23 +201,6 @@ public class TranscoderHelper {
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
         }
 
-  public void generateOutputVideoImport(Drawable fadeTransition,
-                                              boolean isFadeActivated,
-                                              Video video, VideoTranscoderFormat format,
-                                              MediaTranscoderListener listener)
-      throws IOException {
-    mediaTranscoder.transcodeOnlyVideo(fadeTransition, isFadeActivated, video.getMediaPath(),
-        video.getTempPath(), format, listener);
-  }
-
-  public void adaptVideoToTranscoder(String origVideoPath, VideoTranscoderFormat format,
-                                     MediaTranscoderListener listener, String destVideoPath)
-                                     throws IOException {
-
-    mediaTranscoder.adaptVideo(origVideoPath, format, listener, destVideoPath);
-  }
-
-  @NonNull
         ListenableFuture<Void> chainedTranscodingJob;
         if(isAudioFadeActivated){
           chainedTranscodingJob = Futures.transform(transcodingJob,
@@ -231,6 +214,14 @@ public class TranscoderHelper {
       }
     }).start();
   }
+
+  public void adaptVideoToTranscoder(String origVideoPath, VideoTranscoderFormat format,
+                                     String destVideoPath)
+      throws IOException {
+
+    mediaTranscoder.adaptVideo(origVideoPath, format, destVideoPath);
+  }
+
 
   public Image getImageFromTextAndPosition(String text, String textPosition) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
