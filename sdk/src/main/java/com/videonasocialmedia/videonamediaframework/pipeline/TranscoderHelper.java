@@ -215,11 +215,16 @@ public class TranscoderHelper {
     }).start();
   }
 
-  public void adaptVideoToTranscoder(String origVideoPath, VideoTranscoderFormat format,
-                                     String destVideoPath)
+  public ListenableFuture<Void> adaptVideoToTranscoder(final String origVideoPath, final VideoTranscoderFormat format,
+                                                       final String destVideoPath)
       throws IOException {
-
-    mediaTranscoder.adaptVideo(origVideoPath, format, destVideoPath);
+    ListenableFuture<Void> transcodingJobAdapt = null;
+    try {
+      transcodingJobAdapt = mediaTranscoder.adaptVideo(origVideoPath, format, destVideoPath);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return transcodingJobAdapt;
   }
 
 

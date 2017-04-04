@@ -469,7 +469,7 @@ public class MediaTranscoder {
 
     }
 
-    public ListenableFuture<Void> adaptVideo(final FileInputStream fileInputStream,
+    private ListenableFuture<Void> adaptVideo(final FileInputStream fileInputStream,
                                    final FileDescriptor inFileDescriptor,
                                    final String outPath,
                                    final MediaFormatStrategy outFormatStrategy) throws IOException {
