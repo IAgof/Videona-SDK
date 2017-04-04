@@ -82,7 +82,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
   private static final int REQUEST_CODE_OVERLAY_VIDEO = 3;
   private static final int REQUEST_CODE_FADE_INOUT_AUDIO = 4;
   private static final int PROGRESS_BAR_MAX = 1000;
-  private ListenableFuture listenableFuture;
+  private ListenableFuture<Void> listenableFuture;
 
 
   @BindView(R.id.btnMixAudio) Button mixAudio;
@@ -304,14 +304,14 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
             videoToEdit.setStopTime(10000);
 
             transcoderHelper.generateOutputVideoWithTrimming(fadeTransition,
-                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"", listener);
+                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideoTranscoderFormat(),"", listener);
 
           break;
         }
         case REQUEST_CODE_TRANSCODE_VIDEO: {
           // TODO:(alvaro.martinez) 2/03/17 create new API task, transcode only video
           transcoderHelper.generateOutputVideoWithTrimming(fadeTransition, isVideoFadeActivated,
-              isAudioFadeActivated, videoToEdit, new VideonaFormat(), "", listener);
+              isAudioFadeActivated, videoToEdit, new VideoTranscoderFormat(), "", listener);
 
           break;
         }
@@ -322,7 +322,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
           //videoToEdit.setClipTextPosition(TextEffect.TextPosition.TOP.name());
 
           transcoderHelper.generateOutputVideoWithOverlayImage(fadeTransition, isVideoFadeActivated,
-              isAudioFadeActivated, videoToEdit, new VideonaFormat(), "", listener);
+              isAudioFadeActivated, videoToEdit, new VideoTranscoderFormat(), "", listener);
 
           break;
         }
