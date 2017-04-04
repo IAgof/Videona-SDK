@@ -29,7 +29,8 @@ import com.videonasocialmedia.transcoder.MediaTranscoderListener;
 
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
-import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
+
+import com.videonasocialmedia.transcoder.video.format.VideoTranscoderFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Filter;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffect;
@@ -299,7 +300,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
 
           try {
             mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fadeTransition,
-                isFadeActivated, inPath, file.getAbsolutePath(), new VideonaFormat(), listener,
+                isFadeActivated, inPath, file.getAbsolutePath(), new VideoTranscoderFormat(), listener,
                 5000, 10000);
           } catch (IOException e) {
             e.printStackTrace();
@@ -311,7 +312,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
 
           try {
             mFuture = MediaTranscoder.getInstance().transcodeOnlyVideo(fadeTransition,
-                isFadeActivated, inPath, file.getAbsolutePath(), new VideonaFormat(), listener);
+                isFadeActivated, inPath, file.getAbsolutePath(), new VideoTranscoderFormat(), listener);
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -326,7 +327,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
            Drawable drawable = Drawable.createFromPath(pathName);
            Image imageText = new Image(pathName, 1280, 720, 0, 0);
            */
-          VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
+          VideoTranscoderFormat videonaFormat = new VideoTranscoderFormat(5000 * 1000, 1920, 1080);
           Filter imageFilter = new Filter(getActivity().getDrawable(R.drawable.overlay_filter_bollywood),
               videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
 
