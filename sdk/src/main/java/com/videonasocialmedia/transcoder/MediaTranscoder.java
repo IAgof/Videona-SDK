@@ -444,9 +444,9 @@ public class MediaTranscoder {
         return transcodingJob;
     }
 
-    public ListenableFuture<Void> adaptVideo(final String origVideoPath,
-                                   final MediaFormatStrategy outFormatStrategy,
-                                   final String destVideoPath) throws IOException {
+    public ListenableFuture<Void> transcodeAdaptVideoToFormat(final String origVideoPath,
+                                                              final MediaFormatStrategy outFormatStrategy,
+                                                              final String destVideoPath) throws IOException {
 
         FileInputStream fileInputStream = null;
         FileDescriptor inFileDescriptor;
@@ -464,14 +464,14 @@ public class MediaTranscoder {
             throw e;
         }
 
-        return adaptVideo(fileInputStream, inFileDescriptor, destVideoPath, outFormatStrategy);
+        return transcodeAdaptVideoToFormat(fileInputStream, inFileDescriptor, destVideoPath, outFormatStrategy);
 
     }
 
-    private ListenableFuture<Void> adaptVideo(final FileInputStream fileInputStream,
-                                   final FileDescriptor inFileDescriptor,
-                                   final String outPath,
-                                   final MediaFormatStrategy outFormatStrategy) throws IOException {
+    private ListenableFuture<Void> transcodeAdaptVideoToFormat(final FileInputStream fileInputStream,
+                                                               final FileDescriptor inFileDescriptor,
+                                                               final String outPath,
+                                                               final MediaFormatStrategy outFormatStrategy) throws IOException {
 
         final MediaTranscoderEngine engine = new MediaTranscoderEngine();
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {

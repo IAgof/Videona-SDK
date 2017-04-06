@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -215,18 +216,35 @@ public class TranscoderHelper {
     }).start();
   }
 
-  public ListenableFuture<Void> adaptVideoToTranscoder(final String origVideoPath, final VideonaFormat format,
-                                                       final String destVideoPath)
+  public void adaptVideoToTranscoder(final Video videoToAdapt, final VideonaFormat format,
+                                     final String destVideoPath, final TranscoderHelperListener listener)
       throws IOException {
-    ListenableFuture<Void> transcodingJobAdapt = null;
-    try {
-      transcodingJobAdapt = mediaTranscoder.adaptVideo(origVideoPath, format, destVideoPath);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return transcodingJobAdapt;
-  }
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        ListenableFuture<Void> transcodingJob =
+            null;
+        try {
+          transcodingJob = mediaTranscoder.transcodeAdaptVideoToFormat(videoToAdapt.getMediaPath(), format,
+              destVideoPath);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        videoToAdapt.setTranscodingTask(transcodingJob);
+        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(Void result) {
+            listener.onSuccessTranscoding(videoToAdapt);
+          }
 
+          @Override
+          public void onFailure(Throwable t) {
+
+          }
+        });
+      }
+    }).start();
+  }
 
   public Image getImageFromTextAndPosition(String text, String textPosition) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
