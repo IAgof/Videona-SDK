@@ -167,7 +167,6 @@ public class TranscoderHelper {
                                                     final VideonaFormat format,
                                                     final Image watermark)
       throws IOException  {
-
     ListenableFuture<Void> transcodingJobWatermark = null;
     Drawable fakeDrawable = Drawable.createFromPath("");
     try {

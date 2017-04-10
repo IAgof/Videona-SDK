@@ -253,7 +253,7 @@ public class VMCompositionExportSessionImplTest {
 
     exportSessionSpy.export();
 
-    verify(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
+    verify(exportSessionSpy).addWatermarkToGeneratedVideo(any(Watermark.class), anyString());
   }
 
   @Test
@@ -271,7 +271,7 @@ public class VMCompositionExportSessionImplTest {
 
     exportSessionSpy.export();
 
-    verify(exportSessionSpy, never()).addWatermark(any(Watermark.class), anyString());
+    verify(exportSessionSpy, never()).addWatermarkToGeneratedVideo(any(Watermark.class), anyString());
   }
 
   @NonNull

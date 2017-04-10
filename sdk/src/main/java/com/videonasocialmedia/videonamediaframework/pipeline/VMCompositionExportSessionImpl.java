@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -80,15 +81,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             if (result != null) {
                 exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
                 saveFinalVideo(result, exportedVideoFilePath);
-                if(vmComposition.hasWatermark()){
-                    // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
-                    ListenableFuture watermarkFuture =
-                        addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
-                    waitFutureToFinish(watermarkFuture);
-                    addMusicOrFinishExport();
-                } else {
-                    addMusicOrFinishExport();
-                }
+                applyWatermarkToVideoAndWaitForFinish();
+                addMusicOrFinishExport();
                 // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
 //                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
             }
@@ -101,17 +95,18 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
-    private void waitFutureToFinish(ListenableFuture future) {
-        while(!future.isDone()){
+    private void applyWatermarkToVideoAndWaitForFinish() {
+        if (vmComposition.hasWatermark()) {
+            // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
+            //    vmComposition.getResourceWatermarkFilePath()
+            ListenableFuture watermarkingJob = addWatermarkToGeneratedVideo(
+                    vmComposition.getWatermark(), exportedVideoFilePath);
             try {
-                int countWaiting = 0;
-                if (countWaiting > MAX_SECONDS_WAITING_FOR_TEMP_FILES) {
-                    break;
-                }
-                countWaiting++;
-                Thread.sleep(1000);
-            } catch (InterruptedException exception) {
-                exception.printStackTrace();
+                watermarkingJob.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -187,10 +182,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         Movie merge;
         //// TODO:(alvaro.martinez) 15/03/17 Add logic to export VoiceOver and Music
         Music audio = null;
-        if(vmComposition.hasMusic()){
+        if (vmComposition.hasMusic()) {
             audio = vmComposition.getMusic();
         }
-        if(vmComposition.hasVoiceOver()){
+        if (vmComposition.hasVoiceOver()) {
             audio = vmComposition.getVoiceOver();
         }
         boolean vmCompositionHasAudioAdded = vmComposition.hasMusic() || vmComposition.hasVoiceOver();
@@ -356,22 +351,22 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             });
     }
 
-    protected ListenableFuture<Void> addWatermark(Watermark watermark, final String inFilePath) {
+    protected ListenableFuture<Void> addWatermarkToGeneratedVideo(Watermark watermark, final String inFilePath) {
         MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
         TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
         Image imageWatermark = new Image(watermark.getResourceWatermarkFilePath(),
             Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
-        ListenableFuture watermarkFuture = null;
+        ListenableFuture watermarkingJob = null;
         final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
         exportedVideoFilePath = outputFilePath;
 
         try {
-            watermarkFuture = transcoderHelper
+            watermarkingJob = transcoderHelper
                 .generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
                     vmComposition.getVideonaFormat(), imageWatermark);
         } catch (IOException e) {
             e.printStackTrace();
         }
-        return watermarkFuture;
+        return watermarkingJob;
     }
 }
