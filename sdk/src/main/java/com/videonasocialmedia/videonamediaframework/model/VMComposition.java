@@ -66,7 +66,9 @@ public class VMComposition {
   public VMComposition(String resourceWatermarkFilePath, Profile profile) {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack());
+    for(int i=0; i<NUM_OF_AUDIO_TRACKS_SUPPORTED; i++){
+      audioTracks.add(new AudioTrack());
+    }
     this.watermark = new Watermark(resourceWatermarkFilePath);
     this.profile = profile;
   }

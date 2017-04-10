@@ -118,7 +118,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     private void addMusicOrFinishExport() {
         if (vmComposition.hasMusic()
-                && (vmComposition.getMusic().getVolume() < 1f)) {
+                || vmComposition.hasVoiceOver()) {
             // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
             mixAudio();
         } else {
@@ -321,11 +321,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     protected void mixAudio() {
         final String videoExportedWithVoiceOverPath = outputFilesDirectory
                 + getNewExportedVideoFileName();
-        Music voiceOverOrMusic = vmComposition.getMusic();
-        Video video = new Video(exportedVideoFilePath, 1-voiceOverOrMusic.getVolume());
+        Video video = new Video(exportedVideoFilePath, 1f);
         List<Media> mediaList = new ArrayList<>();
         mediaList.add(video);
-        mediaList.add(voiceOverOrMusic);
+        if(vmComposition.hasMusic())
+            mediaList.add(vmComposition.getMusic());
+        if(vmComposition.hasVoiceOver())
+            mediaList.add(vmComposition.getVoiceOver());
         audioMixer.mixAudio(mediaList, tempAudioPath,
             FileUtils.getDurationFile(exportedVideoFilePath), new AudioMixer.OnMixAudioListener() {
                 @Override
