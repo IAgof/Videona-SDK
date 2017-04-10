@@ -8,19 +8,17 @@
 package com.videonasocialmedia.videonamediaframework.model.media;
 
 public class Music extends Audio {
-    public static final float DEFAULT_MUSIC_VOLUME = 0.5f;
-    //TODO en el futuro no será un recurso sino que se obtendrá
+  //TODO en el futuro no será un recurso sino que se obtendrá
     private int musicResourceId;
-    private int colorResourceId;
-    //TODO refactorizar nombre
+  private int colorResourceId;
+  //TODO refactorizar nombre
     private String musicTitle;
-    private String author;
-    // TODO(jliarte): 15/12/16 we set a string with the music duration in mm:ss, could lead to
+  private String author;
+  // TODO(jliarte): 15/12/16 we set a string with the music duration in mm:ss, could lead to
     //                inconsistencies with actual length
     private String musicDuration;
-    private int iconResourceId;
 
-  public static float DEFAULT_VOLUME = 0.5f;
+    private int iconResourceId;
 
     public Music(int iconResourceId, String musicTitle, int musicResourceId, int colorResourceId,
                  String author, String musicDuration, int duration) {

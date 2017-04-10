@@ -25,8 +25,9 @@ import com.videonasocialmedia.videonamediaframework.model.licensing.License;
 public class Audio extends Media {
 
     public static String AUDIO_PATH = "";
+  public static float DEFAULT_VOLUME = 0.5f;
 
-    /**
+  /**
      * Constructor of minimum number of parameters. Default constructor.
      */
     public Audio(int identifier, String mediaPath, float volume, License license) {
