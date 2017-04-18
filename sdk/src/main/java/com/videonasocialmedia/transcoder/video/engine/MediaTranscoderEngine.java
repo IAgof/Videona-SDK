@@ -274,7 +274,7 @@ public class MediaTranscoderEngine {
         });
     }
 
-    private void setupAudioTranscoder(){
+    private void setupAudioTranscoder() {
         if (audioOutputFormat == null) {
             mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mAudioTrackIndex, muxer, Muxer.SampleType.AUDIO);
@@ -312,7 +312,7 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
 
-    private void setupVideoTranscoder(){
+    private void setupVideoTranscoder() {
         mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
         mVideoTrackTranscoder.setup();
@@ -439,7 +439,6 @@ public class MediaTranscoderEngine {
             }
         }
     }
-
 
     public interface ProgressCallback {
         /**
