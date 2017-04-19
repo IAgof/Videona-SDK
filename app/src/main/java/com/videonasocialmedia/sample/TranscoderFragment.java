@@ -262,7 +262,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
 
     try {
       listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
-          tempDir, outputAudio, getDurationFile(inputVideo), this);
+          tempDir, outputAudio, getDurationFile(inputVideo));
     } catch (IOException e) {
       e.printStackTrace();
     }
