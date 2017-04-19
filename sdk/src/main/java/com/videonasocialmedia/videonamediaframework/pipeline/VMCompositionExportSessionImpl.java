@@ -1,5 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
+import android.media.MediaMetadataRetriever;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -53,7 +54,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     protected Appender appender;
 
     public VMCompositionExportSessionImpl(VMComposition vmComposition, String outputFilesDirectory,
-                                          String tempFilesDirectory, OnExportEndedListener onExportEndedListener) {
+                                          String tempFilesDirectory, OnExportEndedListener
+                                              onExportEndedListener) {
         this.onExportEndedListener = onExportEndedListener;
         this.vmComposition = vmComposition;
         this.outputFilesDirectory = outputFilesDirectory;
@@ -369,4 +371,5 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
         return watermarkFuture;
     }
+
 }
