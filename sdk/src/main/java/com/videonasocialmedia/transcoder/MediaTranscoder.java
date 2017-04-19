@@ -372,39 +372,18 @@ public class MediaTranscoder {
 
     public ListenableFuture<Void> mixAudioFiles(final List<Media> mediaList,
                                          final String tempDirectory, final String outputFile,
-                                         final long durationOutputFile,
-                                         final OnAudioMixerListener listener) throws IOException {
+                                         final long durationOutputFile) throws IOException {
       final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
         @Override
         public Void call() throws Exception {
 
                 AudioMixer mixer = new AudioMixer(mediaList, tempDirectory,
                     outputFile, durationOutputFile);
-
-                mixer.setOnAudioMixerListener(listener);
                 mixer.export();
                 return null;
             }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode success " + result);
-                listener.onAudioMixerSuccess(outputFile);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task", t.getCause());
-                if (transcodingJob != null && transcodingJob.isCancelled()) {
-                    listener.onAudioMixerCanceled();
-                } else {
-                    listener.onAudioMixerError(t.getMessage());
-                }
-            }
-        });
         return transcodingJob;
     }
 

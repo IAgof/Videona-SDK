@@ -493,7 +493,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
       if (currentClipIndex() != clipIndex) {
         clearNextBufferedClip();
-        seekToClipPosition(clipIndex);
+        seekToClip(clipIndex);
       } else {
         player.seekTo(getClipPositionFromTimeLineTime());
       }
@@ -521,7 +521,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   }
 
   @Override
-  public void seekToClipPosition(int position) {
+  public void seekToClip(int position) {
     pausePreview();
     currentClipIndex = position;
     // TODO(jliarte): 6/09/16 (hot)fix for Pablo's Index out of bonds
@@ -822,7 +822,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     } else {
       pausePreview();
       clearNextBufferedClip();
-      seekToClipPosition(0);
+      seekToClip(0);
       // avoid black frame, imageTransitionFade over player
       imageTransitionFade.setVisibility(INVISIBLE);
     }

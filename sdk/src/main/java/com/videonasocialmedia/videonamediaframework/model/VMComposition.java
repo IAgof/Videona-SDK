@@ -28,8 +28,6 @@ public class VMComposition {
    */
   private int duration = 0;
 
-  private int NUM_OF_AUDIO_TRACKS_SUPPORTED = 2;
-
   public MediaTrack getMediaTrack() {
     return mediaTrack;
   }
@@ -66,9 +64,8 @@ public class VMComposition {
   public VMComposition(String resourceWatermarkFilePath, Profile profile) {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    for(int i=0; i<NUM_OF_AUDIO_TRACKS_SUPPORTED; i++){
-      audioTracks.add(new AudioTrack());
-    }
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_MUSIC));
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_VOICE_OVER));
     this.watermark = new Watermark(resourceWatermarkFilePath);
     this.profile = profile;
   }
@@ -76,10 +73,8 @@ public class VMComposition {
   public VMComposition() {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    for(int i=0; i<NUM_OF_AUDIO_TRACKS_SUPPORTED; i++){
-      audioTracks.add(new AudioTrack());
-    }
-
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_MUSIC));
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_VOICE_OVER));
   }
 
   public VMComposition(VMComposition vmComposition) throws IllegalItemOnTrack {

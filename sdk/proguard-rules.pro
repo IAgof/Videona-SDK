@@ -52,8 +52,6 @@
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.ApplyAudioFadeInFadeOutToVideo$* { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioCompositionExportSession { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioCompositionExportSession$* { public *;}
--keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer { public <methods>;}
--keep interface com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer$OnMixAudioListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSessionImpl { public <methods>;}

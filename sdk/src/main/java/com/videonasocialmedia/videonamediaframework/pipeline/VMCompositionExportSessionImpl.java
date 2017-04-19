@@ -12,6 +12,7 @@ import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
+import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
@@ -50,7 +51,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     private boolean trimCorrect = true;
     protected Trimmer audioTrimmer;
     protected Appender appender;
-    private AudioMixer audioMixer;
 
     public VMCompositionExportSessionImpl(VMComposition vmComposition, String outputFilesDirectory,
                                           String tempFilesDirectory, OnExportEndedListener onExportEndedListener) {
@@ -64,7 +64,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         tempVideoExportedPath = outputFilesDirectory + File.separator + "export";
         audioTrimmer = new AudioTrimmer();
         appender = new Appender();
-        audioMixer = new AudioMixer(outputAudioMixedFile);
     }
 
     @Override
@@ -74,20 +73,21 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
         LinkedList<Media> medias = getMediasFromComposition();
         ArrayList<String> videoTrimmedPaths = createVideoPathList(medias);
-
         try {
             Movie result = createMovieFromComposition(videoTrimmedPaths);
             if (result != null) {
+
                 exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
                 saveFinalVideo(result, exportedVideoFilePath);
+                long durationMovie = FileUtils.getDurationFile(exportedVideoFilePath); // result.getTimescale();
                 if(vmComposition.hasWatermark()){
                     // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
                     ListenableFuture watermarkFuture =
                         addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
                     waitFutureToFinish(watermarkFuture);
-                    addMusicOrFinishExport();
+                    addMusicOrFinishExport(exportedVideoFilePath, durationMovie);
                 } else {
-                    addMusicOrFinishExport();
+                    addMusicOrFinishExport(exportedVideoFilePath, durationMovie);
                 }
                 // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
 //                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
@@ -116,15 +116,52 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
-    private void addMusicOrFinishExport() {
+    public void addMusicOrFinishExport(String exportedVideoFilePath, long durationMovie) {
         if (vmComposition.hasMusic()
                 || vmComposition.hasVoiceOver()) {
             // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
-            mixAudio();
+            mixAudio(getMediasAndVolumesToMixFromProjectTracks(exportedVideoFilePath), durationMovie);
         } else {
             Video videoExported = new Video(exportedVideoFilePath, 1f);
             onExportEndedListener.onExportSuccess(videoExported);
         }
+    }
+
+    private List<Media> getMediasAndVolumesToMixFromProjectTracks(String exportedVideoFilePath) {
+
+        float videoVolume;
+        if(vmComposition.getMediaTrack().isMute()){
+            videoVolume = 0f;
+        } else {
+            videoVolume = vmComposition.getMediaTrack().getVolume();
+        }
+        Video video = new Video(exportedVideoFilePath, videoVolume);
+        List<Media> mediaList = new ArrayList<>();
+        mediaList.add(video);
+        if(vmComposition.hasMusic()) {
+            Music music = vmComposition.getMusic();
+            AudioTrack musicTrack = vmComposition.getAudioTracks()
+                .get(Constants.INDEX_AUDIO_TRACKS_MUSIC);
+            if(musicTrack.isMute()){
+                music.setVolume(0f);
+            } else {
+                music.setVolume(musicTrack.getVolume());
+            }
+            mediaList.add(music);
+        }
+        if(vmComposition.hasVoiceOver()) {
+            Music voiceOver = vmComposition.getVoiceOver();
+            AudioTrack voiceOverTrack = vmComposition.getAudioTracks()
+                .get(Constants.INDEX_AUDIO_TRACKS_VOICE_OVER);
+            if(voiceOverTrack.isMute()){
+                voiceOver.setVolume(0f);
+            } else {
+                voiceOver.setVolume(voiceOverTrack.getVolume());
+            }
+            mediaList.add(voiceOver);
+        }
+
+        return mediaList;
     }
 
     private ArrayList<String> createVideoPathList(LinkedList<Media> medias) {
@@ -184,42 +221,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     protected Movie createMovieFromComposition(ArrayList<String> videoTranscodedPaths)
             throws IOException {
-        Movie merge;
-        //// TODO:(alvaro.martinez) 15/03/17 Add logic to export VoiceOver and Music
-        Music audio = null;
-        if(vmComposition.hasMusic()){
-            audio = vmComposition.getMusic();
-        }
-        if(vmComposition.hasVoiceOver()){
-            audio = vmComposition.getVoiceOver();
-        }
-        boolean vmCompositionHasAudioAdded = vmComposition.hasMusic() || vmComposition.hasVoiceOver();
-        if (vmCompositionHasAudioAdded && checkMusicPath()
-                && (audio.getVolume() >= 1f)) {
-            merge = appender.appendVideos(videoTranscodedPaths, false);
-            double movieDuration = getMovieDuration(merge);
-            merge = addAudio(merge, audio.getMediaPath(), movieDuration);
-        } else {
-            merge = appender.appendVideos(videoTranscodedPaths, true);
-        }
-        return merge;
-    }
-
-    @NonNull
-    private boolean checkMusicPath() {
-        File musicFile = null;
-        if(vmComposition.hasMusic()) {
-            musicFile = new File(vmComposition.getMusic().getMediaPath());
-        }
-        if(vmComposition.hasVoiceOver()){
-            musicFile = new File(vmComposition.getVoiceOver().getMediaPath());
-        }
-        // TODO(jliarte): 28/12/16 this method for checking path does not work, as the File object is still created. Should check exists() method
-        if (musicFile == null) {
-            onExportEndedListener.onExportError("Music not found");
-            return false;
-        }
-        return true;
+        return appender.appendVideos(videoTranscodedPaths, true);
     }
 
     protected void saveFinalVideo(Movie result, String outputFilePath) throws IOException {
@@ -229,12 +231,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         Log.d("WRITING VIDEO FILE", "time spent in millis: " + spent);
     }
 
-    protected double getMovieDuration(Movie mergedVideoWithoutAudio) {
-        double movieDuration = mergedVideoWithoutAudio.getTracks().get(0).getDuration();
-        double timeScale = mergedVideoWithoutAudio.getTimescale();
+    protected double getMovieDuration(Movie movie) {
+        double movieDuration = movie.getTracks().get(0).getDuration();
+        double timeScale = movie.getTimescale();
         movieDuration = movieDuration / timeScale * 1000;
         return movieDuration;
     }
+
 
     // TODO(jliarte): 19/12/16 what happens when there is more than a path? is that really needed now?
     protected Movie addAudioList(Movie movie, ArrayList<String> audioPaths, double movieDuration) {
@@ -318,42 +321,33 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".mp4";
     }
 
-    protected void mixAudio() {
+    protected void mixAudio(List<Media> mediaList, long durationMovie) {
         final String videoExportedWithVoiceOverPath = outputFilesDirectory
                 + getNewExportedVideoFileName();
-        Video video = new Video(exportedVideoFilePath, 1f);
-        List<Media> mediaList = new ArrayList<>();
-        mediaList.add(video);
-        if(vmComposition.hasMusic())
-            mediaList.add(vmComposition.getMusic());
-        if(vmComposition.hasVoiceOver())
-            mediaList.add(vmComposition.getVoiceOver());
-        audioMixer.mixAudio(mediaList, tempAudioPath,
-            FileUtils.getDurationFile(exportedVideoFilePath), new AudioMixer.OnMixAudioListener() {
-                @Override
-                public void onMixAudioSuccess(String path) {
-                    VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
-                    videoAudioSwapper.export(exportedVideoFilePath, path,
-                            videoExportedWithVoiceOverPath,
-                            new ExporterVideoSwapAudio.VideoAudioSwapperListener() {
-                                @Override
-                                public void onExportError(String error) {
-                                    onExportEndedListener.onExportError("error mixing audio");
-                                }
+        MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+        TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
 
-                                @Override
-                                public void onExportSuccess() {
-                                    // TODO(jliarte): 23/12/16 too many callbacks??
-                                    // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
-                                    onExportEndedListener.onExportSuccess(
-                                            new Video(videoExportedWithVoiceOverPath, 1f));
-                                }
-                            });
+        ListenableFuture<Void> mixAudioListenableFuture =
+            transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath, outputAudioMixedFile,
+                durationMovie);
+        waitFutureToFinish(mixAudioListenableFuture);
+
+        // TODO:(alvaro.martinez) 19/04/17 Implement ListenableFuture in VideoAudioSwapper and remove listener
+        VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
+        videoAudioSwapper.export(exportedVideoFilePath, outputAudioMixedFile,
+            videoExportedWithVoiceOverPath,
+            new ExporterVideoSwapAudio.VideoAudioSwapperListener() {
+                @Override
+                public void onExportError(String error) {
+                    onExportEndedListener.onExportError("error mixing audio");
                 }
 
                 @Override
-                public void onMixAudioError() {
-                    onExportEndedListener.onExportError("Error mixing audio");
+                public void onExportSuccess() {
+                    // TODO(jliarte): 23/12/16 too many callbacks??
+                    // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
+                    onExportEndedListener.onExportSuccess(
+                        new Video(videoExportedWithVoiceOverPath, 1f));
                 }
             });
     }
@@ -366,7 +360,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         ListenableFuture watermarkFuture = null;
         final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
         exportedVideoFilePath = outputFilePath;
-
         try {
             watermarkFuture = transcoderHelper
                 .generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,

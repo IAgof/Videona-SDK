@@ -37,8 +37,8 @@ public class AudioTrack extends Track {
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.track.Track
      */
-    public AudioTrack() {
-        super();
+    public AudioTrack(int id) {
+        super(id);
     }
 
     /**
@@ -46,9 +46,9 @@ public class AudioTrack extends Track {
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.track.Track
      */
-    public AudioTrack(LinkedList<Media> items, HashMap<Integer, LinkedList<Effect>> effects,
+    public AudioTrack(int id, LinkedList<Media> items, HashMap<Integer, LinkedList<Effect>> effects,
                       HashMap<String, Transition> transitions) {
-        super(items, effects, transitions);
+        super(id, items, effects, transitions);
         this.checkItems();
     }
 
@@ -58,7 +58,8 @@ public class AudioTrack extends Track {
    * @param audioTrack the AudioTrack to copy from.
    */
   public AudioTrack(AudioTrack audioTrack) throws IllegalItemOnTrack {
-    super();
+    super(audioTrack.getId(), audioTrack.getVolume(), audioTrack.isMute(), audioTrack.isSolo(),
+        audioTrack.getPosition());
     for (Media item : audioTrack.getItems()) {
       // TODO:(alvaro.martinez) 3/01/17 review modelling and this copy constructor as we assume here we only have Music items
       this.insertItem(new Music((Music) item));

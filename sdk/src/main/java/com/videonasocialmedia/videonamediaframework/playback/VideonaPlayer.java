@@ -23,7 +23,7 @@ public interface VideonaPlayer {
   void pausePreview();
   void seekTo(int timeInMsec);
   void seekClipToTime(int seekTimeInMsec);
-  void seekToClipPosition(int position);
+  void seekToClip(int position);
   void setMusic(Music music);
   void setVoiceOver(Music voiceOver);
   void setVideoVolume(float volume);

@@ -269,4 +269,8 @@ public abstract class Media extends MediaElement {
     public float getVolume() {
         return volume;
     }
+
+    public void setVolume(float volume){
+        this.volume = volume;
+    }
 }

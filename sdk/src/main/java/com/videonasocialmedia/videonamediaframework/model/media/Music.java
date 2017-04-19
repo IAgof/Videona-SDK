@@ -7,6 +7,8 @@
 
 package com.videonasocialmedia.videonamediaframework.model.media;
 
+import java.util.UUID;
+
 public class Music extends Audio {
     public static final float DEFAULT_MUSIC_VOLUME = 0.5f;
     //TODO en el futuro no será un recurso sino que se obtendrá
@@ -19,6 +21,8 @@ public class Music extends Audio {
     //                inconsistencies with actual length
     private String musicDuration;
     private int iconResourceId;
+
+  private String uuid = UUID.randomUUID().toString();
 
   public static float DEFAULT_VOLUME = 0.5f;
 
@@ -103,6 +107,10 @@ public class Music extends Audio {
         return author;
     }
 
+    public void setMusicAuthor(String author){
+      this.author = author;
+    }
+
     public String getMusicDuration() {
         return musicDuration;
     }
@@ -115,4 +123,12 @@ public class Music extends Audio {
     public void setVolume(float volume) {
         this.volume = volume;
     }
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
+  }
 }

@@ -11,6 +11,7 @@
  */
 package com.videonasocialmedia.videonamediaframework.model.media.track;
 
+import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.effects.Effect;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
@@ -39,7 +40,7 @@ public class MediaTrack extends Track {
      * @see com.videonasocialmedia.videonamediaframework.model.media.track.Track
      */
     public MediaTrack() {
-        super();
+        super(Constants.INDEX_MEDIA_TRACKS);
     }
 
     /**
@@ -49,7 +50,7 @@ public class MediaTrack extends Track {
      */
     public MediaTrack(LinkedList<Media> items, HashMap<Integer, LinkedList<Effect>> effects,
                       HashMap<String, Transition> transitions) {
-        super(items, effects, transitions);
+        super(Constants.INDEX_MEDIA_TRACKS, items, effects, transitions);
         this.checkItems();
     }
 
@@ -59,7 +60,7 @@ public class MediaTrack extends Track {
    * @param mediaTrack mediaTrack object to copy from
    */
   public MediaTrack(MediaTrack mediaTrack) throws IllegalItemOnTrack {
-        super();
+        super(Constants.INDEX_MEDIA_TRACKS);
       for (Media media : mediaTrack.getItems()) {
           if (media instanceof Video) {
               this.insertItem(new Video((Video) media));

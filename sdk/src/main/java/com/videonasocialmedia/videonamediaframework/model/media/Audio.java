@@ -25,6 +25,7 @@ import com.videonasocialmedia.videonamediaframework.model.licensing.License;
 public class Audio extends Media {
 
     public static String AUDIO_PATH = "";
+    public static float DEFAULT_VOLUME = 0.5f;
 
     /**
      * Constructor of minimum number of parameters. Default constructor.
@@ -33,6 +34,7 @@ public class Audio extends Media {
         // TODO(jliarte): 29/11/16 add a super constructor? query media duration?
         super(identifier, null, mediaPath, volume, 0, 0, license);
     }
+
 
     /**
      * Constructor with icon path and media start time and duration.
