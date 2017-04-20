@@ -47,6 +47,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     public void export() {
+        // TODO:(alvaro.martinez) 20/04/17 Add ListenableFuture, decode files and make asynchronus
         for (Media media : mediaList) {
             AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile, this);
             decoder.decode();

@@ -1,6 +1,5 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
-import android.media.MediaMetadataRetriever;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -82,12 +81,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
                 exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
                 saveFinalVideo(result, exportedVideoFilePath);
-                long durationMovie = FileUtils.getDurationFile(exportedVideoFilePath); // result.getTimescale();
+                long durationMovie = FileUtils.getDurationFile(exportedVideoFilePath);
                 if(vmComposition.hasWatermark()){
                     // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
-                    ListenableFuture watermarkFuture =
-                        addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
-                    waitFutureToFinish(watermarkFuture);
+                    applyWatermarkToVideoAndWaitForFinish();
                     addMusicOrFinishExport(exportedVideoFilePath, durationMovie);
                 } else {
                     addMusicOrFinishExport(exportedVideoFilePath, durationMovie);
@@ -108,8 +105,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         if (vmComposition.hasWatermark()) {
             // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
             //    vmComposition.getResourceWatermarkFilePath()
-            ListenableFuture watermarkingJob = addWatermarkToGeneratedVideo(
-                    vmComposition.getWatermark(), exportedVideoFilePath);
+            ListenableFuture watermarkingJob = addWatermark(vmComposition.getWatermark(),
+                exportedVideoFilePath);
             try {
                 watermarkingJob.get();
             } catch (InterruptedException e) {
@@ -328,13 +325,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     protected void mixAudio(List<Media> mediaList, long durationMovie) {
         final String videoExportedWithVoiceOverPath = outputFilesDirectory
                 + getNewExportedVideoFileName();
-        MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
-        TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
 
-        ListenableFuture<Void> mixAudioListenableFuture =
-            transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath, outputAudioMixedFile,
-                durationMovie);
-        waitFutureToFinish(mixAudioListenableFuture);
+        applyMixAudioAndWaitForFinish(mediaList, durationMovie);
 
         // TODO:(alvaro.martinez) 19/04/17 Implement ListenableFuture in VideoAudioSwapper and remove listener
         VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
@@ -351,9 +343,25 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     // TODO(jliarte): 23/12/16 too many callbacks??
                     // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
                     onExportEndedListener.onExportSuccess(
-                        new Video(videoExportedWithVoiceOverPath, 1f));
+                        new Video(videoExportedWithVoiceOverPath, Video.DEFAULT_VOLUME));
                 }
             });
+    }
+
+    public void applyMixAudioAndWaitForFinish(List<Media> mediaList, long durationMovie) {
+
+        MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+        TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
+        ListenableFuture<Void> mixAudioJob =
+            transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath, outputAudioMixedFile,
+                durationMovie);
+        try {
+            mixAudioJob.get();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        } catch (ExecutionException e) {
+            e.printStackTrace();
+        }
     }
 
     protected ListenableFuture<Void> addWatermark(Watermark watermark, final String inFilePath) {
