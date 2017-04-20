@@ -208,7 +208,7 @@ public class MediaTranscoder {
             @Override
             public Void call() throws Exception {
                 engine.setDataSource(inputFileProcessor.getInFileDescriptor());
-                engine.adaptVideo(destVideoPath,
+                engine.adaptMediaToFormatStrategy(destVideoPath,
                         outFormatStrategy);
                 return null;
             }
