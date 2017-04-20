@@ -47,19 +47,16 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     public void export() {
-
-        for(Media media: mediaList){
+        for (Media media : mediaList) {
             AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile, this);
             decoder.decode();
         }
-
         mixAudio(mediaListDecoded);
     }
 
     private void mixAudio(List<Media> mediaList) {
         MixSound mixSound = new MixSound(this);
         String outputTempMixAudioPath = tempDirectory + File.separator + "mixAudio.pcm";
-
         try {
             mixSound.mixAudio(mediaList, outputTempMixAudioPath);
         } catch (IOException e) {
@@ -77,7 +74,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     @Override
-    public void OnFileDecodedError(String error) {
+    public void onFileDecodedError(String error) {
         // do something
     }
 
@@ -97,7 +94,6 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     @Override
     public void OnMixSoundSuccess(String outputFile) {
-
         if (DEBUG) {
             String tempMixAudioWav = tempDirectory + File.separator + "mixAudio.wav";
             UtilsAudio.copyWaveFile(outputFile, tempMixAudioWav);
@@ -108,7 +104,6 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
         if (listener!= null) {
             listener.onAudioMixerProgress("Audio files mixed");
         }
-
     }
 
     @Override
@@ -121,7 +116,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     @Override
     public void OnFileEncodedSuccess(String outputFile) {
         if (listener != null) {
-            listener.onAudioMixerProgress("Transcoded completed");
+            listener.onAudioMixerProgress("Transcoding completed");
             listener.onAudioMixerSuccess(outputFile);
         }
         if (!DEBUG) {

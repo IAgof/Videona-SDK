@@ -275,7 +275,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
   private boolean shouldLaunchStartTransition(int seekBarProgress) {
     int timeStartLastClip;
-    if(currentClipIndex() > 0){
+    if (currentClipIndex() > 0) {
       timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
     } else {
       timeStartLastClip = 0;
@@ -313,7 +313,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
       player = null;
       clearNextBufferedClip();
     }
-    if(videoHasMusic()){
+    if (videoHasMusic()) {
       releaseAudio();
     }
   }
@@ -440,7 +440,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     if (player != null) {
       player.setPlayWhenReady(true);
     }
-    if(videoHasMusic()){
+    if (videoHasMusic()) {
       playAudio();
     }
     // TODO(jliarte): 31/08/16 else??? - player should not ever be null!!
@@ -463,14 +463,14 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
   @Override
   public void setMusicVolume(float volume) {
-    if(musicPlayer!=null){
+    if (musicPlayer != null) {
       musicPlayer.setAudioVolume(volume);
     }
   }
 
   @Override
   public void setVoiceOverVolume(float volume) {
-    if(voiceOverPlayer!=null){
+    if (voiceOverPlayer != null) {
       voiceOverPlayer.setAudioVolume(volume);
     }
   }
@@ -479,7 +479,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     if (player != null) {
       player.setPlayWhenReady(false);
     }
-    if(videoHasMusic()){
+    if (videoHasMusic()) {
       pauseAudio();
     }
   }
@@ -498,7 +498,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
         player.seekTo(getClipPositionFromTimeLineTime());
       }
 
-      if(videoHasMusic()){
+      if (videoHasMusic()) {
         seekAudioTo(currentTimePositionInList);
       }
     }
@@ -536,22 +536,20 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   /** VideonaAudioPlayer interface, Music and VoiceOver have the same behaviour **/
   @Override
   public void playAudio() {
-    if(musicPlayer != null){
+    if (musicPlayer != null) {
       musicPlayer.playAudio();
     }
-
-    if(voiceOverPlayer != null){
+    if (voiceOverPlayer != null) {
       voiceOverPlayer.playAudio();
     }
   }
 
   @Override
   public void pauseAudio() {
-    if(musicPlayer != null){
+    if (musicPlayer != null) {
       musicPlayer.pauseAudio();
     }
-
-    if(voiceOverPlayer != null){
+    if (voiceOverPlayer != null) {
       voiceOverPlayer.pauseAudio();
     }
   }
@@ -562,7 +560,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
       musicPlayer.releaseAudio();
       musicPlayer = null;
     }
-    if(voiceOverPlayer != null){
+    if (voiceOverPlayer != null) {
       voiceOverPlayer.releaseAudio();
       voiceOverPlayer = null;
     }
@@ -573,13 +571,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     if (musicPlayer != null) {
       musicPlayer.seekAudioTo(timeInMs);
     }
-    if(voiceOverPlayer != null){
+    if (voiceOverPlayer != null) {
       voiceOverPlayer.seekAudioTo(timeInMs);
     }
   }
 
   private boolean videoHasMusic() {
-    return musicPlayer!=null || voiceOverPlayer!=null;
+    return musicPlayer != null || voiceOverPlayer != null;
   }
 
   @Override
@@ -650,25 +648,27 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   }
 
   private void setupInAnimator() {
-
     inAnimator = ValueAnimator.ofFloat(1f, 0f);
     inAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
       @Override
       public void onAnimationUpdate(ValueAnimator animation) {
         float value = (Float) animation.getAnimatedValue();
         Log.d(TAG, "setupInAnimator value " + value);
-        if(isSetVideoTransitionFadeActivated)
+        if (isSetVideoTransitionFadeActivated) {
           imageTransitionFade.setAlpha(value);
-        if(isSetAudioTransitionFadeActivated)
-          setVideoVolume(value*videoVolume);
+        }
+        if (isSetAudioTransitionFadeActivated) {
+          setVideoVolume(value * videoVolume);
+        }
       }
     });
+
     inAnimator.addListener(new Animator.AnimatorListener() {
       @Override
       public void onAnimationStart(Animator animation) {
-         if(imageTransitionFade.getVisibility() == INVISIBLE){
+        if (imageTransitionFade.getVisibility() == INVISIBLE) {
             imageTransitionFade.setVisibility(VISIBLE);
-          }
+        }
       }
 
       @Override
@@ -953,7 +953,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     player.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
     //player.prepare(renderers);
     player.seekTo(getClipPositionFromTimeLineTime());
-    if(videoHasMusic()){
+    if (videoHasMusic()) {
       seekAudioTo(currentTimePositionInList);
     }
     setVideoVolume(videoVolume);

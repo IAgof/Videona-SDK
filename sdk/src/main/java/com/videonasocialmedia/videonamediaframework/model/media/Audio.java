@@ -35,7 +35,6 @@ public class Audio extends Media {
         super(identifier, null, mediaPath, volume, 0, 0, license);
     }
 
-
     /**
      * Constructor with icon path and media start time and duration.
      *

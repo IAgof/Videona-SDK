@@ -30,8 +30,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class MixSound {
-
-
   // INSPIRATION:
   // http://fixabc.xyz/question/32019246/how-to-mix-pcm-audio-sources-java
   // http://stackoverflow.com/questions/19021484/how-to-remove-noise-mix-audio-in-android
@@ -138,11 +136,9 @@ public class MixSound {
     Log.d(LOG_TAG, "onMixSoundSuccess");
 
     listener.OnMixSoundSuccess(outputTempMixAudioPath);
-
   }
 
   private byte[] manipulateSamples(List<byte[]> dataList) {
-
     Log.d(LOG_TAG, "manipulateSamples ...");
 
     // Convert byte[] to short[] (16 bit) to float[] (32 bit) (End result: Big Endian)
@@ -206,9 +202,7 @@ public class MixSound {
     return array;
   }
 
-
   public static void convertByteToFile(byte[] fileBytes, String outputFile) throws FileNotFoundException {
-
     BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outputFile));
     try {
       bos.write(fileBytes);
@@ -219,7 +213,6 @@ public class MixSound {
       e.printStackTrace();
     }
   }
-
 
   public static byte[] getBytesFromFile(File file) throws IOException {
     InputStream is = new FileInputStream(file);

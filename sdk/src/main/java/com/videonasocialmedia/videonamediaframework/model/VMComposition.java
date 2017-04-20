@@ -1,6 +1,5 @@
 package com.videonasocialmedia.videonamediaframework.model;
 
-
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
@@ -24,7 +23,7 @@ import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX
 public class VMComposition {
 
   /**
-   * Lenght of the VMComposition
+   * Lenght of the VMComposition.
    */
   private int duration = 0;
 
@@ -37,7 +36,7 @@ public class VMComposition {
   }
 
   /**
-   * Track of Video and Image objects
+   * Track of Video and Image objects.
    */
   private MediaTrack mediaTrack;
 
@@ -77,6 +76,13 @@ public class VMComposition {
     audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_VOICE_OVER));
   }
 
+  /**
+   * Copy constructor.
+   *
+   * @param vmComposition The VM composition to be copied from.
+   * @throws IllegalItemOnTrack if any of MediaTrack items is not of type Video, or any item from
+   *     AudioTrack is not of type Audio
+   */
   public VMComposition(VMComposition vmComposition) throws IllegalItemOnTrack {
     this.mediaTrack = new MediaTrack(vmComposition.getMediaTrack());
     this.audioTracks = new ArrayList<>();
@@ -99,32 +105,30 @@ public class VMComposition {
     }
   }
 
+  /**
+   * Returns the music of the composition.
+   *
+   * @return the first element in the music track of the composition.
+   */
   public Music getMusic() {
-    /**
-     * TODO(jliarte): review this method and matching use case
-     * @see com.videonasocialmedia.vimojo.domain.editor.GetMusicFromProjectUseCase
-     */
-    Music result = null;
     try {
-      result = (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_MUSIC).getItems().get(0);
+      return  (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_MUSIC).getItems().get(0);
     } catch (Exception exception) {
-      // exception retrieving music, we'll return null
+      return null;
     }
-    return result;
   }
 
+  /**
+   * Returns the voiceover of the VM composition.
+   *
+   * @return the first element of the voiceover track
+   */
   public Music getVoiceOver() {
-    /**
-     * TODO(jliarte): review this method and matching use case
-     * @see com.videonasocialmedia.vimojo.domain.editor.GetMusicFromProjectUseCase
-     */
-    Music result = null;
     try {
-      result = (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_VOICE_OVER).getItems().get(0);
+      return (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_VOICE_OVER).getItems().get(0);
     } catch (Exception exception) {
-      // exception retrieving music, we'll return null
+      return null;
     }
-    return result;
   }
 
   public boolean hasVoiceOver() {
@@ -136,14 +140,14 @@ public class VMComposition {
   }
 
   public boolean hasVideos() {
-    return getMediaTrack().getItems().size() >0;
+    return getMediaTrack().getItems().size() > 0;
   }
 
-  public boolean hasWatermark(){
+  public boolean hasWatermark() {
     return isWatermarkActivated;
   }
 
-  public void setWatermarkActivated(boolean isWatermarkActivated){
+  public void setWatermarkActivated(boolean isWatermarkActivated) {
     this.isWatermarkActivated = isWatermarkActivated;
   }
 
@@ -151,11 +155,16 @@ public class VMComposition {
     return watermark;
   }
 
+  /**
+   * Returns the format of the VM composition.
+   *
+   * @return format of the VM composition.
+   */
   public VideonaFormat getVideonaFormat() {
     VideoResolution resolution =  profile.getVideoResolution();
     VideoQuality quality = profile.getVideoQuality();
     VideonaFormat videonaFormat;
-    if(resolution!=null && quality!=null) {
+    if (resolution != null && quality != null) {
       videonaFormat = new VideonaFormat(quality.getVideoBitRate(), resolution.getWidth(),
           resolution.getHeight());
     } else {

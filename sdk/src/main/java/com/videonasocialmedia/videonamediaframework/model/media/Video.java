@@ -29,6 +29,7 @@ import static com.videonasocialmedia.videonamediaframework.model.Constants.*;
  */
 public class Video extends Media {
 
+    public static float DEFAULT_VOLUME = 1f;
     private static final AtomicInteger count = new AtomicInteger(0);
 
     /**
