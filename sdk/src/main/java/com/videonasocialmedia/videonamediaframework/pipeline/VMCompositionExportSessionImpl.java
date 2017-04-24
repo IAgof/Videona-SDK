@@ -349,7 +349,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         try {
             watermarkFuture = transcoderHelper
                 .generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
-                    vmComposition.getVideonaFormat(), imageWatermark);
+                    vmComposition.getVideoFormat(), imageWatermark);
         } catch (IOException e) {
             e.printStackTrace();
         }

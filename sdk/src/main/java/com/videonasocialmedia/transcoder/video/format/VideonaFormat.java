@@ -36,19 +36,19 @@ public class VideonaFormat implements MediaFormatStrategy {
     private int audioBitrate = 192 * 1000;
     private int audioChannels = 1;
 
-    public VideonaFormat(){
+    public VideonaFormat() {
     }
 
-    public VideonaFormat(int videoBitrate,int videoWidth, int videoHeight){
+    public VideonaFormat(int videoBitrate, int videoWidth, int videoHeight) {
         this(videoBitrate, videoWidth, videoHeight, AUDIO_BITRATE_AS_IS, AUDIO_CHANNELS_AS_IS);
     }
 
-    public VideonaFormat(int audioBitrate, int audioChannels){
+    public VideonaFormat(int audioBitrate, int audioChannels) {
      this(VIDEO_BITRATE_AS_IS, VIDEO_WIDTH_AS_IS, VIDEO_HEIGHT_AS_IS, audioBitrate, audioChannels);
     }
 
-    public VideonaFormat(int videoBitrate, int width, int height, int audioBitrate, int audioChannels){
-
+    public VideonaFormat(int videoBitrate, int width, int height,
+                         int audioBitrate, int audioChannels) {
         this.videoBitrate = videoBitrate;
         this.videoWidth = width;
         this.videoHeight = height;
@@ -56,10 +56,8 @@ public class VideonaFormat implements MediaFormatStrategy {
         this.audioChannels = audioChannels;
     }
 
-
     @Override
     public MediaFormat createVideoOutputFormat(MediaFormat inputFormat) {
-
         if (videoBitrate == VIDEO_BITRATE_AS_IS || videoWidth == VIDEO_WIDTH_AS_IS ||
                 videoHeight == VIDEO_HEIGHT_AS_IS) return null;
 
