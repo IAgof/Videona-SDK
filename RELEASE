@@ -1,2 +1,2 @@
--v0.2.6
-   TranscoderHelper, add new feature adaptVideo to format.
+-v0.2.7
+    Update Video and TranscoderHelper to improve how to detect errors generating transcoding files
