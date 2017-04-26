@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 
 /**
@@ -70,7 +71,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     @Override
     public void export() {
         // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
-        waitForOutputFilesFinished();
+        waitForVideoTempFilesFinished();
 
         LinkedList<Media> medias = getMediasFromComposition();
         ArrayList<String> videoTrimmedPaths = createVideoPathList(medias);
@@ -80,15 +81,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             if (result != null) {
                 exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
                 saveFinalVideo(result, exportedVideoFilePath);
-                if(vmComposition.hasWatermark()){
-                    // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
-                    ListenableFuture watermarkFuture =
-                        addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
-                    waitFutureToFinish(watermarkFuture);
-                    addMusicOrFinishExport();
-                } else {
-                    addMusicOrFinishExport();
-                }
+                applyWatermarkToVideoAndWaitForFinish();
+                addMusicOrFinishExport();
                 // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
 //                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
             }
@@ -101,17 +95,17 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
-    private void waitFutureToFinish(ListenableFuture future) {
-        while(!future.isDone()){
+    private void applyWatermarkToVideoAndWaitForFinish() {
+        if (vmComposition.hasWatermark()) {
+            // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
+            ListenableFuture watermarkingJob = addWatermark(vmComposition.getWatermark(),
+                exportedVideoFilePath);
             try {
-                int countWaiting = 0;
-                if (countWaiting > MAX_SECONDS_WAITING_FOR_TEMP_FILES) {
-                    break;
-                }
-                countWaiting++;
-                Thread.sleep(1000);
-            } catch (InterruptedException exception) {
-                exception.printStackTrace();
+                watermarkingJob.get();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            } catch (ExecutionException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -276,22 +270,17 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         return audioTracks;
     }
 
-    private void waitForOutputFilesFinished() {
+    private void waitForVideoTempFilesFinished() {
         LinkedList<Media> medias = getMediasFromComposition();
-        int countWaiting = 0;
         for (Media media : medias) {
             Video video = (Video) media;
-            if (video.isEdited()) {
-                while (!video.outputVideoIsFinished()) {
-                    try {
-                        if (countWaiting > MAX_SECONDS_WAITING_FOR_TEMP_FILES) {
-                            break;
-                        }
-                        countWaiting++;
-                        Thread.sleep(1000);
-                    } catch (InterruptedException exception) {
-                        exception.printStackTrace();
-                    }
+            if (video.isEdited() && video.getTranscodingTask()!= null) {
+                try {
+                    video.getTranscodingTask().get();
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                } catch (ExecutionException e) {
+                    e.printStackTrace();
                 }
             }
         }
