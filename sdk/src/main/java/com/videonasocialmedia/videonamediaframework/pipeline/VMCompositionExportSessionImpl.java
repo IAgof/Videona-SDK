@@ -69,6 +69,9 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     @Override
     public void export() {
+
+        Log.d(TAG, "export, waiting for finish temporal files generation ");
+
         // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
         waitForOutputFilesFinished();
 
@@ -76,11 +79,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         ArrayList<String> videoTrimmedPaths = createVideoPathList(medias);
 
         try {
+            Log.d(TAG, "export, appending temporal files");
             Movie result = createMovieFromComposition(videoTrimmedPaths);
             if (result != null) {
                 exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
                 saveFinalVideo(result, exportedVideoFilePath);
                 if(vmComposition.hasWatermark()){
+                    Log.d(TAG, "export, adding watermark to video appended");
                     // TODO:(alvaro.martinez) 27/02/17 implement addWatermark feature vmComposition.getResourceWatermarkFilePath()
                     ListenableFuture watermarkFuture =
                         addWatermark(vmComposition.getWatermark(), exportedVideoFilePath);
@@ -112,6 +117,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 Thread.sleep(1000);
             } catch (InterruptedException exception) {
                 exception.printStackTrace();
+                onExportEndedListener.onExportError(exception.getMessage());
             }
         }
     }
@@ -120,8 +126,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         if (vmComposition.hasMusic()
                 && (vmComposition.getMusic().getVolume() < 1f)) {
             // (jliarte): 23/12/16 mixAudio is an async process so the execution is split here
+            Log.d(TAG, "export, mixing audio");
             mixAudio();
         } else {
+            Log.d(TAG, "export, video shared created, success");
             Video videoExported = new Video(exportedVideoFilePath);
             onExportEndedListener.onExportSuccess(videoExported);
         }
@@ -311,6 +319,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 tempAudioPath, FileUtils.getDurationFile(exportedVideoFilePath), new AudioMixer.OnMixAudioListener() {
                 @Override
                 public void onMixAudioSuccess(String path) {
+                    Log.d(TAG, "export, swapping audio mixed in video appended");
                     VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
                     videoAudioSwapper.export(exportedVideoFilePath, path,
                             videoExportedWithVoiceOverPath,
@@ -324,6 +333,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                                 public void onExportSuccess() {
                                     // TODO(jliarte): 23/12/16 too many callbacks??
                                     // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
+                                    Log.d(TAG, "export, video with music/voiceOver exported, success");
                                     onExportEndedListener.onExportSuccess(
                                             new Video(videoExportedWithVoiceOverPath));
                                 }
