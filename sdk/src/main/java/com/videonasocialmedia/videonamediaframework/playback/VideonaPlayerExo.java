@@ -502,7 +502,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       setSeekBarProgress(currentTimePositionInList);
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
       if (currentClipIndex() != clipIndex) {
-        clearNextBufferedClip();
+        // (jliarte): 26/04/17 moved into seekToClip
+//        clearNextBufferedClip();
         seekToClip(clipIndex);
       } else {
         player.seekTo(getClipPositionFromTimeLineTime());
@@ -527,7 +528,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   @Override
   public void seekToClip(int position) {
+    Log.d(TAG, "onClipClicked: " + position);
     pausePreview();
+    clearNextBufferedClip();
     currentClipIndex = position;
     // TODO(jliarte): 6/09/16 (hot)fix for Pablo's Index out of bonds
     if (position >= videoList.size() && position >= clipTimesRanges.size()) {
