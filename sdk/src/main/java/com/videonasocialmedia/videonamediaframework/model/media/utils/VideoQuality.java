@@ -14,14 +14,14 @@ public class VideoQuality {
     public VideoQuality(Quality quality) {
         switch (quality) {
             case LOW:
-                this.videoBitRate = 5000000;
+                this.videoBitRate = 16000000;
                 break;
             case GOOD:
-                this.videoBitRate = 8000000;
+                this.videoBitRate = 32000000;
                 break;
             case HIGH:
             default:
-                this.videoBitRate = 10000000;
+                this.videoBitRate = 50000000;
         }
     }
 

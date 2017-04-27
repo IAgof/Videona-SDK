@@ -274,7 +274,7 @@ public class MediaTranscoderEngine {
         });
     }
 
-    private void setupAudioTranscoder(){
+    private void setupAudioTranscoder() {
         if (audioOutputFormat == null) {
             mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mAudioTrackIndex, muxer, Muxer.SampleType.AUDIO);
@@ -308,6 +308,13 @@ public class MediaTranscoderEngine {
             mVideoTrackTranscoder = new VideoTrackTranscoder(fadeTransition, isFadeActivated,
                 mDurationUs, mExtractor, trackResult.mVideoTrackIndex,videoOutputFormat, muxer);
         }
+        mVideoTrackTranscoder.setup();
+        mExtractor.selectTrack(trackResult.mVideoTrackIndex);
+    }
+
+    private void setupVideoTranscoder() {
+        mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
+                trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
         mVideoTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
@@ -379,6 +386,33 @@ public class MediaTranscoderEngine {
                     // nothing to do
                 }
             }
+        }
+    }
+
+    public void adaptMediaToFormatStrategy(String outputPath, MediaFormatStrategy formatStrategy)
+        throws IOException, InterruptedException {
+
+        if (outputPath == null) {
+            throw new NullPointerException("Output path cannot be null.");
+        }
+        if (mInputFileDescriptor == null) {
+            throw new IllegalStateException("Data source is not set.");
+        }
+        try {
+            // NOTE: use single extractor to keep from running out audio track fast.
+            mExtractor = new MediaExtractor();
+            mExtractor.setDataSource(mInputFileDescriptor);
+            mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            setupMetadata();
+            setupOutputFormat(formatStrategy);
+            setupAudioTranscoder();
+            setupVideoTranscoder();
+            //setupTrackTranscoders(formatStrategy);
+            runPipelines();
+            mMuxer.stop();
+        } finally {
+            releaseCriticalResourcesOrThrowError();
+            releaseMuxer();
         }
     }
 

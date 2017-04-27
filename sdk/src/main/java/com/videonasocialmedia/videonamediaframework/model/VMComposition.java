@@ -128,7 +128,7 @@ public class VMComposition {
     return watermark;
   }
 
-  public VideonaFormat getVideonaFormat() {
+  public VideonaFormat getVideoFormat() {
     VideoResolution resolution =  profile.getVideoResolution();
     VideoQuality quality = profile.getVideoQuality();
     VideonaFormat videonaFormat;

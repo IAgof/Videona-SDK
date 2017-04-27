@@ -25,8 +25,6 @@ import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.audio.AudioEffect;
 import com.videonasocialmedia.transcoder.audio.AudioMixer;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
@@ -59,7 +57,6 @@ public class MediaTranscoder {
         return sMediaTranscoderInstance;
     }
 
-
     /**
      * Transcodes video file asynchronously.
      * Audio track will be kept unchanged.
@@ -73,60 +70,22 @@ public class MediaTranscoder {
                                                      final String outPath,
                                                      final MediaFormatStrategy outFormatStrategy)
                                                         throws IOException {
-        // TODO(jliarte): 16/03/17 can we extract this code to a common method? anyway, what is all of this for?
-        FileInputStream fileInputStream = null;
-        FileDescriptor inFileDescriptor;
-        try {
-            fileInputStream = new FileInputStream(inPath);
-            inFileDescriptor = fileInputStream.getFD();
-        } catch (IOException e) {
-            if (fileInputStream != null) {
-                try {
-                    fileInputStream.close();
-                } catch (IOException eClose) {
-                    Log.e(TAG, "Can't close input stream: ", eClose);
-                }
-            }
-            throw e;
-        }
-
-        return transcodeOnlyVideo(drawableTransition, isFadeActivated, fileInputStream,
-            inFileDescriptor, outPath, outFormatStrategy);
-    }
-
-    private ListenableFuture<Void> transcodeOnlyVideo(final Drawable drawableTransition,
-                                                      final boolean isFadeActivated,
-                                                      final FileInputStream fileInputStream,
-                                                      final FileDescriptor inFileDescriptor,
-                                                      final String outPath,
-                                                      final MediaFormatStrategy outFormatStrategy) {
+        final InputFileProcessor inputFileProcessor = new InputFileProcessor(inPath)
+                .processInputFile();
         final MediaTranscoderEngine engine =  new MediaTranscoderEngine();
+
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                engine.setDataSource(inFileDescriptor);
+                engine.setDataSource(inputFileProcessor.getInFileDescriptor());
                 engine.transcodeOnlyVideo(drawableTransition, isFadeActivated,
-                    outPath, outFormatStrategy);
+                        outPath, outFormatStrategy);
                 return null;
             }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode success " + result);
-                closeStream(fileInputStream);
-            }
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task", t.getCause());
-                closeStream(fileInputStream);
-                engine.interruptTranscoding();
-                FileUtils.removeFile(outPath);
-            }
-        });
-
+        Futures.addCallback(transcodingJob, new LoggerAndCleanerCallback(
+                engine, inputFileProcessor.getFileInputStream(), outPath));
         return transcodingJob;
     }
 
@@ -147,60 +106,22 @@ public class MediaTranscoder {
                                               final MediaFormatStrategy outFormatStrategy,
                                               final int startTimeUs, final int endTimeUs)
                                                 throws IOException {
-        FileInputStream fileInputStream = null;
-        FileDescriptor inFileDescriptor;
-        try {
-            fileInputStream = new FileInputStream(inPath);
-            inFileDescriptor = fileInputStream.getFD();
-        } catch (IOException e) {
-            if (fileInputStream != null) {
-                try {
-                    fileInputStream.close();
-                } catch (IOException eClose) {
-                    Log.e(TAG, "Can't close input stream: ", eClose);
-                }
-            }
-            throw e;
-        }
-
-        return transcodeAndTrimVideo(drawableTransition, isFadeActivated, fileInputStream,
-            inFileDescriptor,outPath,outFormatStrategy, startTimeUs, endTimeUs);
-    }
-
-    private ListenableFuture<Void>
-    transcodeAndTrimVideo(final Drawable drawableTransition, final boolean isFadeActivated,
-                          final FileInputStream fileInputStream,
-                          final FileDescriptor inFileDescriptor, final String outPath,
-                          final MediaFormatStrategy outFormatStrategy, final int startTimeUs,
-                          final int endTimeUs) {
+        final InputFileProcessor inputFileProcessor = new InputFileProcessor(inPath)
+                .processInputFile();
         final MediaTranscoderEngine engine = new MediaTranscoderEngine();
+
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                engine.setDataSource(inFileDescriptor);
+                engine.setDataSource(inputFileProcessor.getInFileDescriptor());
                 engine.transcodeAndTrimVideo(drawableTransition, isFadeActivated, outPath,
-                    outFormatStrategy, startTimeUs, endTimeUs);
+                        outFormatStrategy, startTimeUs, endTimeUs);
                 return null;
             }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode success " + result);
-                closeStream(fileInputStream);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task", t.getCause());
-                closeStream(fileInputStream);
-                engine.interruptTranscoding();
-                FileUtils.removeFile(outPath);
-            }
-        });
-
+        Futures.addCallback(transcodingJob, new LoggerAndCleanerCallback(
+                engine, inputFileProcessor.getFileInputStream(), outPath));
         return transcodingJob;
     }
 
@@ -218,61 +139,22 @@ public class MediaTranscoder {
                                                         final String outPath,
                                                         final MediaFormatStrategy outFormatStrategy,
                                                         final Overlay overlay) throws IOException {
-            FileInputStream fileInputStream = null;
-            FileDescriptor inFileDescriptor;
-            try {
-                fileInputStream = new FileInputStream(inPath);
-                inFileDescriptor = fileInputStream.getFD();
-            } catch (IOException e) {
-                if (fileInputStream != null) {
-                    try {
-                        fileInputStream.close();
-                    } catch (IOException eClose) {
-                        Log.e(TAG, "Can't close input stream: ", eClose);
-                    }
-                }
-                throw e;
-            }
-        return transcodeAndOverlayImageToVideo(drawableTransition, isFadeActivated, fileInputStream,
-            inFileDescriptor, outPath, outFormatStrategy, overlay);
-    }
-
-    private ListenableFuture<Void>
-    transcodeAndOverlayImageToVideo(final Drawable drawableTransition,
-                                    final boolean isFadeActivated,
-                                    final FileInputStream fileInputStream,
-                                    final FileDescriptor inFileDescriptor,
-                                    final String outPath,
-                                    final MediaFormatStrategy outFormatStrategy,
-                                    final Overlay overlay) {
+        final InputFileProcessor inputFileProcessor = new InputFileProcessor(inPath)
+                .processInputFile();
         final MediaTranscoderEngine engine = new MediaTranscoderEngine();
+
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                engine.setDataSource(inFileDescriptor);
+                engine.setDataSource(inputFileProcessor.getInFileDescriptor());
                 engine.transcodeAndOverlayImageVideo(drawableTransition, isFadeActivated,
-                    outPath, outFormatStrategy, overlay);
+                        outPath, outFormatStrategy, overlay);
                 return null;
             }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode success " + result);
-                closeStream(fileInputStream);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task", t.getCause());
-                closeStream(fileInputStream);
-                engine.interruptTranscoding();
-                FileUtils.removeFile(outPath);
-            }
-        });
-
+        Futures.addCallback(transcodingJob, new LoggerAndCleanerCallback(
+                engine, inputFileProcessor.getFileInputStream(), outPath));
         return transcodingJob;
     }
 
@@ -295,76 +177,46 @@ public class MediaTranscoder {
                                                         final Overlay overlay,
                                                         final int startTimeUs,
                                                         final int endTimeUs) throws IOException {
-        FileInputStream fileInputStream = null;
-        FileDescriptor inFileDescriptor;
-        try {
-            fileInputStream = new FileInputStream(inPath);
-            inFileDescriptor = fileInputStream.getFD();
-        } catch (IOException e) {
-            if (fileInputStream != null) {
-                try {
-                    fileInputStream.close();
-                } catch (IOException eClose) {
-                    Log.e(TAG, "Can't close input stream: ", eClose);
-                }
-            }
-            throw e;
-        }
-
-        return transcodeTrimAndOverlayImageToVideo(drawableTransition, isFadeActivated,
-            fileInputStream,inFileDescriptor, outPath, outFormatStrategy, overlay,
-            startTimeUs, endTimeUs);
-    }
-
-    private ListenableFuture<Void> transcodeTrimAndOverlayImageToVideo(
-            final Drawable drawableTransition,
-            final boolean isFadeTransition,
-            final FileInputStream fileInputStream,
-            final FileDescriptor inFileDescriptor,
-            final String outPath,
-            final MediaFormatStrategy outFormatStrategy,
-            final Overlay overlay, final int startTimeUs,
-            final int endTimeUs) {
+        final InputFileProcessor inputFileProcessor = new InputFileProcessor(inPath)
+                .processInputFile();
         final MediaTranscoderEngine engine = new MediaTranscoderEngine();
+
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                engine.setDataSource(inFileDescriptor);
-                engine.transcodeTrimAndOverlayImageVideo(drawableTransition, isFadeTransition,
-                    outPath, outFormatStrategy, overlay, startTimeUs, endTimeUs);
+                engine.setDataSource(inputFileProcessor.getInFileDescriptor());
+                engine.transcodeTrimAndOverlayImageVideo(drawableTransition, isFadeActivated,
+                        outPath, outFormatStrategy, overlay, startTimeUs, endTimeUs);
                 return null;
             }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode success " + result);
-                closeStream(fileInputStream);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task ", t.getCause());
-                closeStream(fileInputStream);
-                if(t.getMessage().compareTo("cancelled") == 0) {
-                    engine.interruptTranscoding();
-                    FileUtils.removeFile(outPath);
-                    Log.d(TAG, "clean, remove temp file ");
-                }
-            }
-        });
-
+        Futures.addCallback(transcodingJob, new LoggerAndCleanerCallback(
+                engine, inputFileProcessor.getFileInputStream(), outPath));
         return transcodingJob;
     }
 
-    private void closeStream(FileInputStream fileInputStream) {
-        try {
-            fileInputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+    public ListenableFuture<Void>
+    transcodeVideoToDefaultFormat(final String origVideoPath,
+                                  final MediaFormatStrategy outFormatStrategy,
+                                  final String destVideoPath) throws IOException {
+        final InputFileProcessor inputFileProcessor = new InputFileProcessor(origVideoPath)
+                .processInputFile();
+        final MediaTranscoderEngine engine = new MediaTranscoderEngine();
+
+        final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
+            @Override
+            public Void call() throws Exception {
+                engine.setDataSource(inputFileProcessor.getInFileDescriptor());
+                engine.adaptMediaToFormatStrategy(destVideoPath,
+                        outFormatStrategy);
+                return null;
+            }
+        });
+
+        Futures.addCallback(transcodingJob, new LoggerAndCleanerCallback(
+                engine, inputFileProcessor.getFileInputStream(), destVideoPath));
+        return transcodingJob;
     }
 
     public ListenableFuture<Void> mixAudioTwoFiles(final String inputFile1,
@@ -373,7 +225,7 @@ public class MediaTranscoder {
                                                    final String tempDirectory,
                                                    final String outputFile,
                                                    final long durationOutputFile,
-                                                   final OnAudioMixerListener listener) {
+                                                   final MediaTranscoderListener listener) {
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
@@ -385,24 +237,8 @@ public class MediaTranscoder {
             }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode success " + result);
-                listener.onAudioMixerSuccess(outputFile);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task", t.getCause());
-                if (transcodingJob != null && transcodingJob.isCancelled()) {
-                    listener.onAudioMixerCanceled();
-                } else {
-                    listener.onAudioMixerError(t.getMessage());
-                }
-            }
-        });
+        Futures.addCallback(transcodingJob,
+                new LoggerAndListenerNotifierCallback(listener, outputFile, transcodingJob));
         return transcodingJob;
     }
 
@@ -411,36 +247,167 @@ public class MediaTranscoder {
                                                            final int timeFadeOut,
                                                            final String tempDirectory,
                                                            final String outputFile,
-                                                           final OnAudioEffectListener listener) {
+                                                           final MediaTranscoderListener listener) {
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
            @Override
            public Void call() throws Exception {
                AudioEffect audioEffect = new AudioEffect(inputFile, timeFadeIn, timeFadeOut,
                    tempDirectory, outputFile);
-               // audioEffect.setOnAudioEffectListener(listener);
+               // TODO(jliarte): 18/04/17 why do we have commented this out?
+               // audioEffect.setMediaTranscoderListener(listener);
                audioEffect.transitionFadeInOut();
                return null;
            }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-            @Override
-            public void onSuccess(Void result) {
-                Log.d(TAG, "Transcode success " + result);
-                listener.onAudioEffectSuccess(outputFile);
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-                Log.d(TAG, "onFailure " + t.getMessage());
-                Log.e(TAG, "Exception in task", t.getCause());
-                if (transcodingJob != null && transcodingJob.isCancelled()) {
-                    listener.onAudioEffectCanceled();
-                } else {
-                    listener.onAudioEffectError(t.getMessage());
-                }
-            }
-        });
+        Futures.addCallback(transcodingJob,
+                new LoggerAndListenerNotifierCallback(listener, outputFile, transcodingJob));
         return transcodingJob;
+    }
+
+    /**
+     * New helper classes, mainly listenableFutures callbacks and delegates
+     */
+
+    public static class LoggerDelegate {
+        public void onSuccess(Void result) {
+            Log.d(TAG, "Transcode success " + result);
+        }
+
+        public void onFailure(Throwable t) {
+            Log.d(TAG, "onFailure " + t.getMessage());
+            Log.e(TAG, "Exception in task ", t.getCause());
+        }
+    }
+
+    // TODO(jliarte): 18/04/17 Inspect the three different types of callbacks to see wether to unifiy all callbacks in one or not
+    private static class LoggerCallback implements FutureCallback<Void> {
+        private final LoggerDelegate loggerDelegate = new LoggerDelegate();
+
+        @Override
+        public void onSuccess(Void result) {
+            loggerDelegate.onSuccess(result);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            loggerDelegate.onFailure(t);
+        }
+    }
+
+    private static class LoggerAndListenerNotifierCallback extends LoggerCallback {
+        private final MediaTranscoderListener listener;
+        private final String outputFile;
+        private final ListenableFuture<Void> transcodingJob;
+
+        public LoggerAndListenerNotifierCallback(MediaTranscoderListener listener,
+                                                 String outputFile,
+                                                 ListenableFuture<Void> transcodingJob) {
+            this.listener = listener;
+            this.outputFile = outputFile;
+            this.transcodingJob = transcodingJob;
+        }
+
+        @Override
+        public void onSuccess(Void result) {
+            // TODO(jliarte): 18/04/17 use delegate also here?
+            super.onSuccess(result);
+            listener.onTranscodeSuccess(outputFile);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            super.onFailure(t);
+            if (transcodingJob != null && transcodingJob.isCancelled()) {
+                listener.onTranscodeCanceled();
+            } else {
+                listener.onTranscodeError(t.getMessage());
+            }
+        }
+    }
+
+    private static class LoggerAndCleanerCallback implements FutureCallback<Void> {
+        private final MediaTranscoderEngine engine;
+        private final String outPath;
+        private final FileInputStream fileInputStream;
+        private final LoggerDelegate loggerDelegate = new LoggerDelegate();
+
+        public LoggerAndCleanerCallback(MediaTranscoderEngine engine,
+                                        FileInputStream fileInputStream, String outPath) {
+            this.engine = engine;
+            this.fileInputStream = fileInputStream;
+            this.outPath = outPath;
+        }
+
+        @Override
+        public void onSuccess(Void result) {
+            loggerDelegate.onSuccess(result);
+            closeStream(fileInputStream);
+        }
+
+        @Override
+        public void onFailure(Throwable t) {
+            loggerDelegate.onFailure(t);
+            closeStream(fileInputStream);
+            if (t.getMessage().compareTo("cancelled") == 0) {
+                engine.interruptTranscoding();
+                FileUtils.removeFile(outPath);
+                Log.d(TAG, "clean, remove temp file ");
+            }
+        }
+
+        private void closeStream(FileInputStream fileInputStream) {
+            try {
+                fileInputStream.close();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+    
+    public interface MediaTranscoderListener {
+        void onTranscodeSuccess(String outputFile);
+
+        void onTranscodeProgress(String progress);
+
+        void onTranscodeError(String error);
+
+        void onTranscodeCanceled();
+    }
+
+    private class InputFileProcessor {
+        private String inPath;
+        private FileInputStream fileInputStream;
+        private FileDescriptor inFileDescriptor;
+
+        public InputFileProcessor(String inPath) {
+            this.inPath = inPath;
+        }
+
+        public FileInputStream getFileInputStream() {
+            return fileInputStream;
+        }
+
+        public FileDescriptor getInFileDescriptor() {
+            return inFileDescriptor;
+        }
+
+        public InputFileProcessor processInputFile() throws IOException {
+            try {
+                fileInputStream = new FileInputStream(inPath);
+                inFileDescriptor = fileInputStream.getFD();
+            } catch (IOException e) {
+                if (fileInputStream != null) {
+                    try {
+                        fileInputStream.close();
+                    } catch (IOException eClose) {
+                        Log.e(TAG, "Can't close input stream: ", eClose);
+                    }
+                }
+                throw e;
+            }
+            return this;
+        }
     }
 }

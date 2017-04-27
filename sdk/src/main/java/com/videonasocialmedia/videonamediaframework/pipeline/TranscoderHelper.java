@@ -5,11 +5,12 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
+import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
@@ -46,7 +47,6 @@ public class TranscoderHelper {
                                                    final VideonaFormat format,
                                                    final String intermediatesTempAudioFadeDirectory,
                                                    final TranscoderHelperListener listener) {
-
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -167,7 +167,6 @@ public class TranscoderHelper {
                                                     final VideonaFormat format,
                                                     final Image watermark)
       throws IOException  {
-
     ListenableFuture<Void> transcodingJobWatermark = null;
     Drawable fakeDrawable = Drawable.createFromPath("");
     try {
@@ -215,6 +214,35 @@ public class TranscoderHelper {
     }).start();
   }
 
+  public void adaptVideoToDefaultFormat(final Video videoToAdapt, final VideonaFormat format,
+                                        final String destVideoPath,
+                                        final TranscoderHelperListener listener) throws IOException {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        ListenableFuture<Void> transcodingJob = null;
+        try {
+          transcodingJob = mediaTranscoder.transcodeVideoToDefaultFormat(
+                  videoToAdapt.getMediaPath(), format, destVideoPath);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        videoToAdapt.setTranscodingTask(transcodingJob);
+        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(Void result) {
+            listener.onSuccessTranscoding(videoToAdapt);
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+
+          }
+        });
+      }
+    }).start();
+  }
+
   public Image getImageFromTextAndPosition(String text, String textPosition) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
             Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
@@ -225,7 +253,7 @@ public class TranscoderHelper {
                                                  final int timeFadeOutMs,
                                                  final String tempDirectory,
                                                  final String outputFile,
-                                                 final OnAudioEffectListener listener) {
+                                                 final MediaTranscoderListener listener) {
     new Thread(new Runnable() {
       @Override
       public void run() {
