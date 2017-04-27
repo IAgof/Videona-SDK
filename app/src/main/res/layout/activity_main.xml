@@ -49,7 +49,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"
         android:layout_margin="16dp"
-        android:src="@drawable/common_icon_play"
+        android:src="@drawable/common_icon_play_normal"
         app:backgroundTint="@color/colorAccent"
         app:borderWidth="0dp"
         android:visibility="invisible"/>
