@@ -471,7 +471,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       player.setPlayWhenReady(true);
     }
     // TODO(jliarte): 31/08/16 else??? - player should not ever be null!!
-    hidePlayButton();
+    showPauseButton();
     seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
   }
 
@@ -731,7 +731,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         pausePreview();
       }
       if (playerHasVideos()) {
-        hidePlayButton();
+        showPauseButton();
         seekTo(progress);
         notifyNewClipPlayed();
       } else {
@@ -749,11 +749,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   private void showPlayButton() {
-    playButton.setVisibility(View.VISIBLE);
+    //playButton.setVisibility(View.VISIBLE);
+    playButton.setImageResource(R.drawable.common_icon_play_normal);
   }
 
-  public void hidePlayButton() {
-    playButton.setVisibility(View.INVISIBLE);
+  public void showPauseButton() {
+    //playButton.setVisibility(View.INVISIBLE);
+    playButton.setImageResource(R.drawable.common_icon_pause_normal);
   }
 
   @Override
