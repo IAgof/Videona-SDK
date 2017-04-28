@@ -48,7 +48,6 @@ public class VideoDuplicateTest {
         assertThat("copy save duration time", copyVideo.getDuration(), CoreMatchers.is(fakeVideo.getDuration()));
         assertThat("copy save fileDuration time", copyVideo.getFileDuration(), CoreMatchers.is(fakeVideo.getFileDuration()));
         assertThat("copy save is video trimmed", copyVideo.isTrimmedVideo(), CoreMatchers.is(fakeVideo.isTrimmedVideo()));
-        assertThat("copy save is temp path finished", copyVideo.outputVideoIsFinished(), CoreMatchers.is(fakeVideo.outputVideoIsFinished()));
         assertThat("copy save is tempPath, video edited", copyVideo.isEdited(), CoreMatchers.is(fakeVideo.isEdited()));
     }
 
@@ -60,7 +59,6 @@ public class VideoDuplicateTest {
         assertThat("copy save text added", copyVideo.getClipText(), CoreMatchers.is(fakeVideo.getClipText()));
         assertThat("copy save position selected", copyVideo.getClipTextPosition(), CoreMatchers.is(fakeVideo.getClipTextPosition()));
         assertThat("copy save is video text added", copyVideo.hasText(), CoreMatchers.is(fakeVideo.hasText()));
-        assertThat("copy save is temp path finished", copyVideo.outputVideoIsFinished(), CoreMatchers.is(fakeVideo.outputVideoIsFinished()));
         assertThat("copy save is tempPath, video edited", copyVideo.isEdited(), CoreMatchers.is(fakeVideo.isEdited()));
     }
 
@@ -72,7 +70,6 @@ public class VideoDuplicateTest {
         video.setStopTime(10);
         video.setDuration(10);
         video.setTrimmedVideo(true);
-        video.setTempPathFinished(true);
         return video;
     }
 
@@ -82,7 +79,6 @@ public class VideoDuplicateTest {
         video.setTempPath("newTempPath");
         video.setClipText("blablabla");
         video.setClipTextPosition("CENTER");
-        video.setTempPathFinished(true);
         return video;
     }
 }

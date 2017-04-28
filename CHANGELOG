@@ -1,3 +1,9 @@
+v0.2.7
+   Update player preview. Added new icons and adjust design, margins.
+
+v0.2.6
+   TranscoderHelper, add new feature adaptVideo to format.
+
 v0.2.5
 - Updated duration audio, video fade transitions.
 - TranscoderHelper, created new methods to transcoder video, only apply to audio, video transitions.
