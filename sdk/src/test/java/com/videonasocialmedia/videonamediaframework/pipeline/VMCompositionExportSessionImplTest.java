@@ -1,6 +1,7 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
@@ -16,10 +17,15 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResol
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
 
+import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.net.URL;
@@ -41,16 +47,23 @@ import static org.mockito.Mockito.verify;
 /**
  * Created by jliarte on 19/12/16.
  */
-@RunWith(MockitoJUnitRunner.class)
+@RunWith(PowerMockRunner.class)
+@PrepareForTest({Log.class})
+//@RunWith(MockitoJUnitRunner.class)
 public class VMCompositionExportSessionImplTest {
   @Mock private VMCompositionExportSession.OnExportEndedListener mockedExportEndedListener;
   @Mock private Trimmer mockedAudioTrimmer;
   private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
-  @Mock
-  private Image mockedWatermark;
+  @Mock private Image mockedWatermark;
 
+
+  @Before
+  public void setup() {
+    MockitoAnnotations.initMocks(this);
+    PowerMockito.mockStatic(Log.class);
+  }
 //  @Test
 //  public void addAudioAppendsNewTrackToMovie() throws Exception {
 //    VMComposition vmComposition = new VMComposition();
