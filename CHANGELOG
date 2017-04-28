@@ -1,3 +1,6 @@
+v0.2.8
+    Update Video and TranscoderHelper to improve how to detect errors generating transcoding files
+
 v0.2.7
    Update player preview. Added new icons and adjust design, margins.
 

@@ -1,2 +1,2 @@
--v0.2.8
-    Update Video and TranscoderHelper to improve how to detect errors generating transcoding files
+-v0.2.9
+    Update VMCompositionExportSessionImpl and review exporting process.
