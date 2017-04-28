@@ -19,6 +19,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 
 public class TranscoderHelper {
 
@@ -57,6 +58,7 @@ public class TranscoderHelper {
           transcodingJob = mediaTranscoder.transcodeOnlyVideo(fadeTransition, isVideoFadeActivated,
               videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format);
         } catch (IOException e) {
+          listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
         }
 
@@ -70,6 +72,7 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
   }
@@ -107,6 +110,7 @@ public class TranscoderHelper {
               videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, imageText,
               videoToEdit.getStartTime(), videoToEdit.getStopTime());
         } catch (IOException e) {
+          listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
         }
 
@@ -120,6 +124,7 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
   }
@@ -158,6 +163,7 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
   }
@@ -210,6 +216,7 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
   }
@@ -241,6 +248,22 @@ public class TranscoderHelper {
         });
       }
     }).start();
+  }
+
+  private void waitTranscodingJobAndCheckState(ListenableFuture<Void> chainedTranscodingJob,
+                                             TranscoderHelperListener listener, Video videoToEdit) {
+    try {
+      chainedTranscodingJob.get();
+    } catch (InterruptedException e) {
+      listener.onErrorTranscoding(videoToEdit, e.getMessage());
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      listener.onErrorTranscoding(videoToEdit, e.getMessage());
+      e.printStackTrace();
+    } finally {
+      if(!chainedTranscodingJob.isDone())
+        listener.onErrorTranscoding(videoToEdit, "generateOutputVideoWithAVTransitions");
+    }
   }
 
   public Image getImageFromTextAndPosition(String text, String textPosition) {
@@ -312,17 +335,14 @@ public class TranscoderHelper {
 
   private void successVideoTranscoded(Video videoToEdit, TranscoderHelperListener listener) {
     Log.d(TAG, "successVideoTranscoded");
-    videoToEdit.setTempPathFinished(true);
     listener.onSuccessTranscoding(videoToEdit);
   }
 
   private void cancelPendingTranscodingTasks(Video videoToEdit) {
-    if (!videoToEdit.outputVideoIsFinished()) {
-      ListenableFuture<Void> transcodingTask = videoToEdit.getTranscodingTask();
-      if (transcodingTask != null && !transcodingTask.isDone()) {
-        Log.d(TAG, "Cancel transcoding task " + transcodingTask.toString());
-        transcodingTask.cancel(true);
-      }
+    ListenableFuture<Void> transcodingTask = videoToEdit.getTranscodingTask();
+    if (transcodingTask != null && !transcodingTask.isDone()) {
+      Log.d(TAG, "Cancel transcoding task " + transcodingTask.toString());
+      transcodingTask.cancel(true);
     }
   }
 
