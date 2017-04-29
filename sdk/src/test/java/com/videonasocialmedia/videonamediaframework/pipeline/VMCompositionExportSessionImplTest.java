@@ -22,7 +22,6 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
-import org.mockito.runners.MockitoJUnitRunner;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -51,7 +50,7 @@ import static org.mockito.Mockito.verify;
 @PrepareForTest({Log.class})
 //@RunWith(MockitoJUnitRunner.class)
 public class VMCompositionExportSessionImplTest {
-  @Mock private VMCompositionExportSession.OnExportEndedListener mockedExportEndedListener;
+  @Mock private VMCompositionExportSession.ExportListener mockedExportEndedListener;
   @Mock private Trimmer mockedAudioTrimmer;
   private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
