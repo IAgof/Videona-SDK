@@ -73,6 +73,8 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
                     volume, tempMixAudio);
         } catch (IOException e) {
             e.printStackTrace();
+            if(listener!=null)
+                listener.onTranscodeError(e.getMessage());
         }
 
         if (DEBUG) {
@@ -120,6 +122,8 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     @Override
     public void OnFileDecodedError(String error) {
         //listener.onAudioMixerError(error);
+        if(listener!=null)
+            listener.onTranscodeError(error);
     }
 
     @Override
