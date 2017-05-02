@@ -97,7 +97,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     public void OnFileDecodedSuccess(String inputFile) {
         if (inputFile.compareTo(inputFile1) == 0) {
             isInputFile1Decoded = true;
-            if(listener!= null) listener.onTranscodeProgress("Decoded file 1");
+            if(listener!= null) listener.onTranscodeProgress("Decoded 1st audio track");
 
             if (DEBUG) {
                 String tempFileOneWav = tempDirectory + File.separator + "tempFile1.wav";
@@ -107,7 +107,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
         if (inputFile.compareTo(inputFile2) == 0) {
             isInputFile2Decoded = true;
-            if(listener!= null) listener.onTranscodeProgress("Decoded file 2");
+            if(listener!= null) listener.onTranscodeProgress("Decoded 2nd audio track");
 
             if (DEBUG) {
                 String tempFileTwoWav = tempDirectory + File.separator + "tempFile2.wav";

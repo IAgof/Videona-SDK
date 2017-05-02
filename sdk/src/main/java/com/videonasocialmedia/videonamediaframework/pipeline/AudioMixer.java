@@ -53,7 +53,7 @@ public class AudioMixer {
 
                             @Override
                             public void onTranscodeProgress(String progress) {
-
+                              listener.onMixAudioProgress(progress);
                             }
 
                             @Override
@@ -74,7 +74,10 @@ public class AudioMixer {
      * Created by alvaro on 22/09/16.
      */
     public interface OnMixAudioListener {
-        void onMixAudioSuccess(String path);
-        void onMixAudioError();
+      void onMixAudioSuccess(String path);
+
+      void onMixAudioError();
+
+      void onMixAudioProgress(String progress);
     }
 }

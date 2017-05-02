@@ -243,7 +243,7 @@ public class TranscoderHelper {
 
           @Override
           public void onFailure(Throwable t) {
-
+            // TODO(jliarte): 2/05/17 error is not cached here!!!
           }
         });
       }

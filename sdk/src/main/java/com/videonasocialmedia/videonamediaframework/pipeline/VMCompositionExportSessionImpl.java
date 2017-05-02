@@ -137,6 +137,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Log.d(TAG, "export, video shared created, success");
             Video videoExported = new Video(exportedVideoFilePath);
             exportListener.onExportSuccess(videoExported);
+            Log.d(TAG, "addMusicOrFinishExport: sent success to listener");
         }
     }
 
@@ -321,8 +322,9 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         final String videoExportedWithVoiceOverPath = outputFilesDirectory
                 + getNewExportedVideoFileName();
         Music voiceOver = vmComposition.getMusic();
+        long durationVideoFile = FileUtils.getDurationFile(exportedVideoFilePath);
         audioMixer.mixAudio(exportedVideoFilePath, voiceOver.getMediaPath(), voiceOver.getVolume(),
-                tempAudioPath, FileUtils.getDurationFile(exportedVideoFilePath),
+                tempAudioPath, durationVideoFile,
                 new AudioMixer.OnMixAudioListener() {
                     @Override
                     public void onMixAudioSuccess(String path) {
@@ -334,6 +336,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                                 new ExporterVideoSwapAudio.VideoAudioSwapperListener() {
                                     @Override
                                     public void onExportError(String error) {
+                                        exportListener.onExportProgress("error Mixing audio", EXPORT_STAGE_MIX_AUDIO);
                                         exportListener.onExportError("error mixing audio");
                                     }
 
@@ -351,6 +354,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     @Override
                     public void onMixAudioError() {
                         exportListener.onExportError("Error mixing audio");
+                    }
+
+                    @Override
+                    public void onMixAudioProgress(String progress) {
+                        exportListener.onExportProgress(progress, EXPORT_STAGE_MIX_AUDIO);
                     }
                 });
     }

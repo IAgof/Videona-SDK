@@ -75,3 +75,5 @@
 
 
 -keepattributes Exceptions, InnerClasses
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable
