@@ -349,7 +349,7 @@ public class MediaTranscoder {
         public void onFailure(Throwable t) {
             loggerDelegate.onFailure(t);
             closeStream(fileInputStream);
-            if (t.getMessage().compareTo("cancelled") == 0) {
+            if ((t.getMessage() != null) && (t.getMessage().compareTo("cancelled") == 0)) {
                 engine.interruptTranscoding();
                 FileUtils.removeFile(outPath);
                 Log.d(TAG, "clean, remove temp file ");
