@@ -41,9 +41,9 @@ public class Appender {
         List<Movie> movieList = new ArrayList<>();
 
         for (String videoPath : videoPaths) {
-           long start=System.currentTimeMillis();
-            Movie movie= MovieCreator.build(videoPath);
-            long spent=System.currentTimeMillis()-start;
+           long start = System.currentTimeMillis();
+            Movie movie = MovieCreator.build(videoPath);
+            long spent = System.currentTimeMillis()-start;
             Log.d("BUILDING MOVIE", "time spent in millis: " + spent);
             movieList.add(movie);
         }

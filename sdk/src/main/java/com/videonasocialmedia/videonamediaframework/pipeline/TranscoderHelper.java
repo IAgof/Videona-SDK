@@ -5,11 +5,12 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
+import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
@@ -19,6 +20,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.IOException;
+import java.util.concurrent.ExecutionException;
 import java.util.List;
 
 public class TranscoderHelper {
@@ -48,7 +50,6 @@ public class TranscoderHelper {
                                                    final VideonaFormat format,
                                                    final String intermediatesTempAudioFadeDirectory,
                                                    final TranscoderHelperListener listener) {
-
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -59,6 +60,7 @@ public class TranscoderHelper {
           transcodingJob = mediaTranscoder.transcodeOnlyVideo(fadeTransition, isVideoFadeActivated,
               videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format);
         } catch (IOException e) {
+          listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
         }
 
@@ -72,6 +74,7 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
   }
@@ -109,6 +112,7 @@ public class TranscoderHelper {
               videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, imageText,
               videoToEdit.getStartTime(), videoToEdit.getStopTime());
         } catch (IOException e) {
+          listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
         }
 
@@ -122,6 +126,7 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
   }
@@ -160,6 +165,7 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
   }
@@ -225,8 +231,54 @@ public class TranscoderHelper {
               updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
       }
     }).start();
+  }
+
+  public void adaptVideoToDefaultFormat(final Video videoToAdapt, final VideonaFormat format,
+                                        final String destVideoPath,
+                                        final TranscoderHelperListener listener) throws IOException {
+    new Thread(new Runnable() {
+      @Override
+      public void run() {
+        ListenableFuture<Void> transcodingJob = null;
+        try {
+          transcodingJob = mediaTranscoder.transcodeVideoToDefaultFormat(
+                  videoToAdapt.getMediaPath(), format, destVideoPath);
+        } catch (IOException e) {
+          e.printStackTrace();
+        }
+        videoToAdapt.setTranscodingTask(transcodingJob);
+        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
+          @Override
+          public void onSuccess(Void result) {
+            listener.onSuccessTranscoding(videoToAdapt);
+          }
+
+          @Override
+          public void onFailure(Throwable t) {
+            // TODO(jliarte): 2/05/17 error is not cached here!!!
+          }
+        });
+      }
+    }).start();
+  }
+
+  private void waitTranscodingJobAndCheckState(ListenableFuture<Void> chainedTranscodingJob,
+                                             TranscoderHelperListener listener, Video videoToEdit) {
+    try {
+      chainedTranscodingJob.get();
+    } catch (InterruptedException e) {
+      listener.onErrorTranscoding(videoToEdit, e.getMessage());
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      listener.onErrorTranscoding(videoToEdit, e.getMessage());
+      e.printStackTrace();
+    } finally {
+      if(!chainedTranscodingJob.isDone())
+        listener.onErrorTranscoding(videoToEdit, "generateOutputVideoWithAVTransitions");
+    }
   }
 
   public Image getImageFromTextAndPosition(String text, String textPosition) {
@@ -239,7 +291,7 @@ public class TranscoderHelper {
                                                  final int timeFadeOutMs,
                                                  final String tempDirectory,
                                                  final String outputFile,
-                                                 final OnAudioEffectListener listener) {
+                                                 final MediaTranscoderListener listener) {
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -298,17 +350,14 @@ public class TranscoderHelper {
 
   private void successVideoTranscoded(Video videoToEdit, TranscoderHelperListener listener) {
     Log.d(TAG, "successVideoTranscoded");
-    videoToEdit.setTempPathFinished(true);
     listener.onSuccessTranscoding(videoToEdit);
   }
 
   private void cancelPendingTranscodingTasks(Video videoToEdit) {
-    if (!videoToEdit.outputVideoIsFinished()) {
-      ListenableFuture<Void> transcodingTask = videoToEdit.getTranscodingTask();
-      if (transcodingTask != null && !transcodingTask.isDone()) {
-        Log.d(TAG, "Cancel transcoding task " + transcodingTask.toString());
-        transcodingTask.cancel(true);
-      }
+    ListenableFuture<Void> transcodingTask = videoToEdit.getTranscodingTask();
+    if (transcodingTask != null && !transcodingTask.isDone()) {
+      Log.d(TAG, "Cancel transcoding task " + transcodingTask.toString());
+      transcodingTask.cancel(true);
     }
   }
 

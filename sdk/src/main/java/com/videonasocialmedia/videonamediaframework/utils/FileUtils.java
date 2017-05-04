@@ -39,7 +39,7 @@ public class FileUtils {
     return !dir.exists() && dir.mkdirs();
   }
 
-  public static long getDurationFile(String filePath){
+  public static long getDurationFile(String filePath) {
     /**
      * Other solution to get duration, continue dependency with MediaRetriever, Android.
      Video exportedVideo = new Video(filePath);

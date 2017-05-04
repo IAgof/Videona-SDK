@@ -63,9 +63,8 @@
 -keep class com.videonasocialmedia.transcoder.MediaTranscoder { public <methods>;}
 -keep interface com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy { public <methods>; }
 -keep class com.videonasocialmedia.transcoder.video.overlay.Overlay { public <methods>; }
--keep interface com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener { public <methods>; }
--keep interface com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener { public <methods>; }
--keep interface com.videonasocialmedia.transcoder.MediaTranscoderListener { public <methods>;}
+#-keep interface com.videonasocialmedia.transcoder.MediaTranscoderListener { public <methods>;} // fixme: seems to not exist
+-keep interface com.videonasocialmedia.transcoder.MediaTranscoder$MediaTranscoderListener { public <methods>; }
 -keep class com.videonasocialmedia.transcoder.video.format.VideonaFormat { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.video.overlay.Image { public <methods>;}
 
@@ -74,3 +73,5 @@
 
 
 -keepattributes Exceptions, InnerClasses
+-renamesourcefileattribute SourceFile
+-keepattributes SourceFile,LineNumberTable

@@ -1,8 +1,11 @@
 package com.videonasocialmedia.transcoder.audio;
 
+import android.support.annotation.NonNull;
+
+
+import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -42,7 +45,7 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
         cleanTempDirectory();
     }
 
-    public void setOnAudioMixerListener(OnAudioMixerListener listener) {
+    public void setOnAudioMixerListener(MediaTranscoder.MediaTranscoderListener listener) {
         this.listener = listener;
     }
 
@@ -62,6 +65,8 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
             mixSound.mixAudio(mediaList, outputTempMixAudioPath);
         } catch (IOException e) {
             e.printStackTrace();
+            if(listener!=null)
+                listener.onTranscodeError(e.getMessage());
         }
     }
 
@@ -75,22 +80,36 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     @Override
-    public void onFileDecodedError(String error) {
-        // do something
-    }
+    public void OnFileDecodedSuccess(String inputFile) {
+        if (inputFile.compareTo(inputFile1) == 0) {
+            isInputFile1Decoded = true;
+            if(listener!= null) listener.onTranscodeProgress("Decoded 1st audio track");
+          mediaListDecoded.add(new Video(outputFile, media.getVolume()));
+            if (DEBUG) {
+                String tempFileOneWav = tempDirectory + File.separator + "tempFile1.wav";
+                UtilsAudio.copyWaveFile(tempFileOne, tempFileOneWav);
+            }
+        }
 
-    @Override
-    public void onFileDecodedMediaSuccess(Media media, String outputFile) {
-        mediaListDecoded.add(new Video(outputFile, media.getVolume()));
-        if (DEBUG) {
-            String fileDecoded = tempDirectory + File.separator + new File(outputFile).getName() + ".wav";
-            UtilsAudio.copyWaveFile(outputFile, fileDecoded);
+        if (inputFile.compareTo(inputFile2) == 0) {
+            isInputFile2Decoded = true;
+            if(listener!= null) listener.onTranscodeProgress("Decoded 2nd audio track");
+
+            if (DEBUG) {
+                String tempFileTwoWav = tempDirectory + File.separator + "tempFile2.wav";
+                UtilsAudio.copyWaveFile(tempFileTwo, tempFileTwoWav);
+            }
+        }
+        if (isInputFile1Decoded && isInputFile2Decoded) {
+            mixTwoSounds();
         }
     }
 
     @Override
-    public void OnFileDecodedSuccess(String outputFile) {
-
+    public void OnFileDecodedError(String error) {
+        //listener.onAudioMixerError(error);
+        if(listener!=null)
+            listener.onTranscodeError(error);
     }
 
     @Override
@@ -103,22 +122,22 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
         encodeAudio(outputFile);
 
         if (listener!= null) {
-            listener.onAudioMixerProgress("Audio files mixed");
+            listener.onTranscodeProgress("Audio files mixed");
         }
     }
 
     @Override
     public void OnMixSoundError(String error) {
         if (listener!= null) {
-            listener.onAudioMixerError(error);
+            listener.onTranscodeError(error);
         }
     }
 
     @Override
     public void OnFileEncodedSuccess(String outputFile) {
         if (listener != null) {
-            listener.onAudioMixerProgress("Transcoding completed");
-            listener.onAudioMixerSuccess(outputFile);
+            listener.onTranscodeProgress("Transcoded completed");
+            listener.onTranscodeSuccess(outputFile);
         }
         if (!DEBUG) {
             cleanTempDirectory();
@@ -127,6 +146,6 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     @Override
     public void OnFileEncodedError(String error) {
-        if(listener!= null)  listener.onAudioMixerError(error);
+        if(listener!= null)  listener.onTranscodeError(error);
     }
 }

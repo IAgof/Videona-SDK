@@ -24,20 +24,19 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 
 
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
+import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
+
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
+
 import com.videonasocialmedia.transcoder.video.overlay.Filter;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
-import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffect;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener;
 import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
@@ -65,8 +64,7 @@ import static com.videonasocialmedia.sample.MainActivity.tempDir;
  * Use the {@link TranscoderFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class TranscoderFragment extends Fragment implements OnAudioMixerListener,
-    OnAudioEffectListener {
+public class TranscoderFragment extends Fragment {
   // TODO: Rename parameter arguments, choose names that match
   // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
   private static final String ARG_PARAM1 = "param1";
@@ -86,7 +84,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
   private static final int REQUEST_CODE_OVERLAY_VIDEO = 3;
   private static final int REQUEST_CODE_FADE_INOUT_AUDIO = 4;
   private static final int PROGRESS_BAR_MAX = 1000;
-  private ListenableFuture listenableFuture;
+  private ListenableFuture<Void> listenableFuture;
 
 
   @BindView(R.id.btnMixAudio) Button mixAudio;
@@ -267,7 +265,6 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       e.printStackTrace();
     }
 
-
   }
 
   public static long getDurationFile(String filePath){
@@ -349,7 +346,28 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
         case REQUEST_CODE_FADE_INOUT_AUDIO: {
 
           listenableFuture = MediaTranscoder.getInstance().audioFadeInFadeOutToFile(inPath, 500, 500,
-              tempDir, outputAudioFadeInOut, this);
+                  tempDir, outputAudioFadeInOut, new MediaTranscoderListener() {
+                    @Override
+                    public void onTranscodeSuccess(String outputFile) {
+                      textViewInfoProgress.setText("Success " + outputFile);
+                      textViewInfoProgress.setTextColor(Color.GREEN);
+                    }
+
+                    @Override
+                    public void onTranscodeProgress(String progress) {
+
+                    }
+
+                    @Override
+                    public void onTranscodeError(String error) {
+
+                    }
+
+                    @Override
+                    public void onTranscodeCanceled() {
+
+                    }
+                  });
           break;
         }
         default:
@@ -507,50 +525,6 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
     mixAudio.setEnabled(!isProgress);
     fadeInOutVideo.setEnabled(!isProgress);
     cancelButton.setEnabled(isProgress);
-  }
-
-  @Override
-  public void onAudioMixerSuccess(String outputFile) {
-    textViewInfoProgress.setText("Success " + outputFile);
-    textViewInfoProgress.setTextColor(Color.GREEN);
-  }
-
-  @Override
-  public void onAudioMixerProgress(String progress) {
-    textViewInfoProgress.setText(progress);
-    textViewInfoProgress.setTextColor(Color.BLUE);
-  }
-
-  @Override
-  public void onAudioMixerError(String error) {
-    textViewInfoProgress.setText(error);
-    textViewInfoProgress.setTextColor(Color.RED);
-  }
-
-  @Override
-  public void onAudioMixerCanceled() {
-
-  }
-
-  @Override
-  public void onAudioEffectSuccess(String outputFile) {
-    textViewInfoProgress.setText("Success " + outputFile);
-    textViewInfoProgress.setTextColor(Color.GREEN);
-  }
-
-  @Override
-  public void onAudioEffectProgress(String progress) {
-
-  }
-
-  @Override
-  public void onAudioEffectError(String error) {
-
-  }
-
-  @Override
-  public void onAudioEffectCanceled() {
-
   }
 
   /**

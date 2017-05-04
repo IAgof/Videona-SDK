@@ -2,6 +2,7 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import android.media.MediaMetadataRetriever;
 import android.support.annotation.NonNull;
+import android.util.Log;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.googlecode.mp4parser.authoring.Movie;
@@ -29,6 +30,10 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
+import org.mockito.MockitoAnnotations;
+import org.powermock.api.mockito.PowerMockito;
+import org.powermock.core.classloader.annotations.PrepareForTest;
+import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.net.URL;
@@ -51,15 +56,16 @@ import static org.mockito.Mockito.verify;
 /**
  * Created by jliarte on 19/12/16.
  */
+@RunWith(PowerMockRunner.class)
 //@RunWith(MockitoJUnitRunner.class)
-  @RunWith(PowerMockRunner.class)
-  @PrepareForTest({FileUtils.class, TranscoderHelper.class})
+  @PrepareForTest({FileUtils.class, TranscoderHelper.class, Log.class})
 public class VMCompositionExportSessionImplTest {
-  @Mock private VMCompositionExportSession.OnExportEndedListener mockedExportEndedListener;
+  @Mock private VMCompositionExportSession.ExportListener mockedExportEndedListener;
   @Mock private Trimmer mockedAudioTrimmer;
   private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
+  @Mock private Image mockedWatermark;
   @Mock private Image mockedWatermark;
   @Mock private List<Media> mockedMediaList;
 
@@ -73,6 +79,7 @@ public class VMCompositionExportSessionImplTest {
   @Before
   public void init(){
     MockitoAnnotations.initMocks(this);
+    PowerMockito.mockStatic(Log.class);
   }
 
 //  @Test

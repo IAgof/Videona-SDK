@@ -40,7 +40,7 @@ public class Video extends Media {
     public String tempPath;
     private String clipText;
     private String clipTextPosition;
-    private boolean isTempPathFinished = false;
+
     private boolean isTrimmedVideo = false;
 
     // TODO(jliarte): 14/06/16 this entity should not depend on MediaMetadataRetriever as it is part of android
@@ -51,6 +51,11 @@ public class Video extends Media {
     private int numTriesToExportVideo = 0;
     private String uuid = UUID.randomUUID().toString();
     private ListenableFuture<Void> transcodingTask;
+
+    private String videoError;
+
+    private boolean isTranscodingTempFileFinished = true;
+
 
     /**
      * protected default empty constructor, trying to get injectMocks working
@@ -94,8 +99,8 @@ public class Video extends Media {
         if(video.isEdited()) {
             tempPath = video.getTempPath();
         }
-        isTempPathFinished = video.outputVideoIsFinished();
         isTrimmedVideo = video.isTrimmedVideo();
+        isTranscodingTempFileFinished = video.isTranscodingTempFileFinished();
     }
 
     public int getFileDuration() {
@@ -118,26 +123,6 @@ public class Video extends Media {
 //        String tempDirectory = Constants.PATH_APP_TEMP_INTERMEDIATE_FILES;
         tempPath = tempDirectory + File.separator
             + INTERMEDIATE_FILE_PREFIX + identifier + "_" + System.currentTimeMillis() + ".mp4";
-    }
-
-    public void setTempPathToPreviousEdition(String tempPath){
-        this.tempPath = tempPath;
-    }
-
-    public boolean outputVideoIsFinished() {
-        return isTempPathFinished;
-    }
-
-    public void setTempPathFinished(boolean tempPathFinished) {
-        isTempPathFinished = tempPathFinished;
-    }
-
-    public void deleteTempVideo() {
-        if (tempPath != null) {
-            File f = new File(tempPath);
-            f.delete();
-            tempPath = null;
-        }
     }
 
     public void createIdentifier() {
@@ -208,5 +193,25 @@ public class Video extends Media {
 
     public ListenableFuture<Void> getTranscodingTask() {
         return transcodingTask;
+    }
+
+    public void setVideoError(String videoError) {
+        this.videoError = videoError;
+    }
+
+    public String getVideoError(){
+        return videoError;
+    }
+
+    public void resetNumTriesToExportVideo() {
+        numTriesToExportVideo = 0;
+    }
+
+    public boolean isTranscodingTempFileFinished() {
+        return isTranscodingTempFileFinished;
+    }
+
+    public void setTranscodingTempFileFinished(boolean transcodingTempFileFinished) {
+        isTranscodingTempFileFinished = transcodingTempFileFinished;
     }
 }

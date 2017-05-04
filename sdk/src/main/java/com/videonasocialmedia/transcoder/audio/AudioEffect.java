@@ -1,8 +1,8 @@
 package com.videonasocialmedia.transcoder.audio;
 
 
+import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
@@ -38,7 +38,7 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   private AudioDecoder audioDecoder;
 
   private byte[] output;
-  private OnAudioEffectListener listener;
+  private MediaTranscoderListener listener;
   private long maxSizeOutput;
 
 
@@ -55,7 +55,7 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     this.outputFile = outputFile;
   }
 
-  public void setOnAudioEffectListener(OnAudioEffectListener listener) {
+  public void setMediaTranscoderListener(MediaTranscoderListener listener) {
     this.listener = listener;
   }
 
@@ -82,7 +82,7 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   @Override
   public void onFileDecodedError(String error) {
     if (listener != null) {
-      listener.onAudioEffectError(error);
+      listener.onTranscodeError(error);
     }
   }
 
@@ -95,8 +95,8 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   public void OnFileEncodedSuccess(String outputFile) {
     deleteTempFiles();
     if (listener != null) {
-      listener.onAudioEffectProgress("Transcoded completed");
-      listener.onAudioEffectSuccess(outputFile);
+      listener.onTranscodeProgress("Transcoded completed");
+      listener.onTranscodeSuccess(outputFile);
     }
   }
 
@@ -108,7 +108,7 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   @Override
   public void OnFileEncodedError(String error) {
     if (listener != null) {
-      listener.onAudioEffectError(error);
+      listener.onTranscodeError(error);
     }
   }
 
