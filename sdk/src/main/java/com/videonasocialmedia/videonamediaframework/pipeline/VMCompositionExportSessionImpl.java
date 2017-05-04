@@ -119,13 +119,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     private void applyWatermarkToVideoAndWaitForFinish() {
         if (vmComposition.hasWatermark()) {
           Log.d(TAG, "export, adding watermark to video appended");
-            // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
-            //    vmComposition.getResourceWatermarkFilePath()
-            ListenableFuture watermarkingJob = addWatermark(vmComposition.getWatermark(),
-                exportedVideoFilePath);
-    private void applyWatermarkToVideoAndWaitForFinish() {
-        if (vmComposition.hasWatermark()) {
-          Log.d(TAG, "export, adding watermark to video appended");
           // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
             ListenableFuture watermarkingJob = addWatermark(vmComposition.getWatermark(),
                 exportedVideoFilePath);
@@ -146,10 +139,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
           Log.d(TAG, "export, mixing audio");
           mixAudio(getMediasAndVolumesToMixFromProjectTracks(exportedVideoFilePath), durationMovie);
         } else {
-            Video videoExported = new Video(exportedVideoFilePath, 1f);
-            onExportEndedListener.onExportSuccess(videoExported);
             Log.d(TAG, "export, video shared created, success");
-            Video videoExported = new Video(exportedVideoFilePath);
+            Video videoExported = new Video(exportedVideoFilePath, Video.DEFAULT_VOLUME);
             exportListener.onExportSuccess(videoExported);
             Log.d(TAG, "addMusicOrFinishExport: sent success to listener");
         }
@@ -335,8 +326,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     video.getTranscodingTask().get();
                 } catch (InterruptedException e) {
                     e.printStackTrace();
+                    exportListener.onExportError(e.getMessage());
                 } catch (ExecutionException e) {
                     e.printStackTrace();
+                    exportListener.onExportError(e.getMessage());
                 }
             }
         }
@@ -390,8 +383,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             mixAudioJob.get();
         } catch (InterruptedException e) {
             e.printStackTrace();
+            exportListener.onExportError(e.getMessage());
         } catch (ExecutionException e) {
             e.printStackTrace();
+            exportListener.onExportError(e.getMessage());
         }
     }
 
@@ -411,6 +406,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     vmComposition.getVideoFormat(), imageWatermark);
         } catch (IOException e) {
             e.printStackTrace();
+            exportListener.onExportError(e.getMessage());
         }
         return watermarkFuture;
     }

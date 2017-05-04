@@ -66,7 +66,6 @@ public class VMCompositionExportSessionImplTest {
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
   @Mock private Image mockedWatermark;
-  @Mock private Image mockedWatermark;
   @Mock private List<Media> mockedMediaList;
 
   @Mock MediaMetadataRetriever mockedMediaMetadataRetriever;

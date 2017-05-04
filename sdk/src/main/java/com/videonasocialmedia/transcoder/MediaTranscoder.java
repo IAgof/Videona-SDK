@@ -198,8 +198,7 @@ public class MediaTranscoder {
         return transcodingJob;
     }
 
-    public ListenableFuture<Void>
-    transcodeVideoToDefaultFormat(final String origVideoPath,
+    public ListenableFuture<Void> transcodeVideoToDefaultFormat(final String origVideoPath,
                                   final MediaFormatStrategy outFormatStrategy,
                                   final String destVideoPath) throws IOException {
         final InputFileProcessor inputFileProcessor = new InputFileProcessor(origVideoPath)
@@ -235,8 +234,6 @@ public class MediaTranscoder {
             }
         });
 
-        Futures.addCallback(transcodingJob,
-                new LoggerAndListenerNotifierCallback(listener, outputFile, transcodingJob));
         return transcodingJob;
     }
 
