@@ -233,19 +233,10 @@ public class TranscoderHelper {
                   videoToAdapt.getMediaPath(), format, destVideoPath);
         } catch (IOException e) {
           e.printStackTrace();
+          listener.onErrorTranscoding(videoToAdapt, e.getMessage());
         }
         videoToAdapt.setTranscodingTask(transcodingJob);
-        Futures.addCallback(transcodingJob, new FutureCallback<Void>() {
-          @Override
-          public void onSuccess(Void result) {
-            listener.onSuccessTranscoding(videoToAdapt);
-          }
-
-          @Override
-          public void onFailure(Throwable t) {
-            // TODO(jliarte): 2/05/17 error is not cached here!!!
-          }
-        });
+        waitTranscodingJobAndCheckState(transcodingJob, listener, videoToAdapt);
       }
     }).start();
   }
