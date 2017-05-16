@@ -235,8 +235,12 @@ public class TranscoderHelper {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToAdapt, e.getMessage());
         }
-        videoToAdapt.setTranscodingTask(transcodingJob);
-        waitTranscodingJobAndCheckState(transcodingJob, listener, videoToAdapt);
+        ListenableFuture<Void> chainedTranscodingJob;
+        chainedTranscodingJob = Futures.transform(transcodingJob,
+        updateVideo(videoToAdapt, listener), MoreExecutors.newDirectExecutorService());
+
+        videoToAdapt.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToAdapt);
       }
     }).start();
   }
