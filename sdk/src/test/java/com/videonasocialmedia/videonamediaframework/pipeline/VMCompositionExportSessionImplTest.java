@@ -30,10 +30,6 @@ import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
-import org.mockito.MockitoAnnotations;
-import org.powermock.api.mockito.PowerMockito;
-import org.powermock.core.classloader.annotations.PrepareForTest;
-import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.net.URL;
@@ -125,7 +121,7 @@ public class VMCompositionExportSessionImplTest {
           throws IOException, IllegalItemOnTrack {
     VMComposition vmComposition = new VMComposition();
     Music music = new Music("music/path", 1f, 0);
-    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACKS_MUSIC).insertItem(music);
+    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(music);
     VMCompositionExportSessionImpl exporter = getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(exporter);
     exportSessionSpy.appender = mockedAppender;
@@ -215,7 +211,7 @@ public class VMCompositionExportSessionImplTest {
     Music music = new Music("music/path", 0);
     assert music.getVolume() == 0.5f; // default music volume 0.5f
     music.setVolume(1f);
-    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACKS_MUSIC).insertItem(music);
+    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(music);
     assert vmComposition.hasMusic();
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -235,7 +231,7 @@ public class VMCompositionExportSessionImplTest {
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
     Music voiceOver = new Music("voice/over/path", 0.9f, 0);
-    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACKS_MUSIC).insertItem(voiceOver);
+    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(voiceOver);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
     vmCompositionExportSession.appender = mockedAppender;

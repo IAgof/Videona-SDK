@@ -186,9 +186,9 @@ public class TranscoderHelper {
     return transcodingJobWatermark;
   }
 
-  public ListenableFuture<Void> generateTempFileMixAudio(List<Media> mediaList, String tempAudioPath,
+  public ListenableFuture<Boolean> generateTempFileMixAudio(List<Media> mediaList, String tempAudioPath,
                                          String outputFilePath, long durationAudioFile) {
-    ListenableFuture<Void> transcodingJob = null;
+    ListenableFuture<Boolean> transcodingJob = null;
     try {
       transcodingJob = mediaTranscoder.mixAudioFiles(mediaList,
           tempAudioPath, outputFilePath, durationAudioFile);

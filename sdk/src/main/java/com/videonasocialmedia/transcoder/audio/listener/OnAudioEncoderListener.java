@@ -6,5 +6,4 @@ package com.videonasocialmedia.transcoder.audio.listener;
 public interface OnAudioEncoderListener {
     void OnFileEncodedSuccess(String outputFile);
     void OnFileEncodedError(String error);
-    void OnFileDecodedSuccess(String outputFile);
 }

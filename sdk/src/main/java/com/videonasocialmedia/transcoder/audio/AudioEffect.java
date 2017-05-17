@@ -65,7 +65,14 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   @Override
-  public void OnFileDecodedSuccess(String outputFile) {
+  public void onFileDecodedError(String error) {
+    if (listener != null) {
+      listener.onTranscodeError(error);
+    }
+  }
+
+  @Override
+  public void onFileDecodedMediaSuccess(Media media, String outputFile) {
     if (DEBUG) {
       String tempFileWav = tempDirectory + File.separator + "tempFilePcm_" +
           System.currentTimeMillis() + ".wav";
@@ -77,18 +84,6 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     } catch (IOException e) {
       e.printStackTrace();
     }
-  }
-
-  @Override
-  public void onFileDecodedError(String error) {
-    if (listener != null) {
-      listener.onTranscodeError(error);
-    }
-  }
-
-  @Override
-  public void onFileDecodedMediaSuccess(Media media, String outputFile) {
-
   }
 
   @Override

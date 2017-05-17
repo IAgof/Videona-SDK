@@ -13,8 +13,8 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResol
 
 import java.util.ArrayList;
 
-import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACKS_MUSIC;
-import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACKS_VOICE_OVER;
+import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_MUSIC;
+import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_VOICE_OVER;
 
 /**
  * Videona Media Composition class for representing a media composition with audio and video
@@ -63,8 +63,8 @@ public class VMComposition {
   public VMComposition(String resourceWatermarkFilePath, Profile profile) {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_MUSIC));
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_VOICE_OVER));
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_MUSIC));
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
     this.watermark = new Watermark(resourceWatermarkFilePath);
     this.profile = profile;
   }
@@ -72,8 +72,8 @@ public class VMComposition {
   public VMComposition() {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_MUSIC));
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACKS_VOICE_OVER));
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_MUSIC));
+    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
   }
 
   /**
@@ -112,7 +112,7 @@ public class VMComposition {
    */
   public Music getMusic() {
     try {
-      return  (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_MUSIC).getItems().get(0);
+      return  (Music) getAudioTracks().get(INDEX_AUDIO_TRACK_MUSIC).getItems().get(0);
     } catch (Exception exception) {
       return null;
     }
@@ -125,7 +125,7 @@ public class VMComposition {
    */
   public Music getVoiceOver() {
     try {
-      return (Music) getAudioTracks().get(INDEX_AUDIO_TRACKS_VOICE_OVER).getItems().get(0);
+      return (Music) getAudioTracks().get(INDEX_AUDIO_TRACK_VOICE_OVER).getItems().get(0);
     } catch (Exception exception) {
       return null;
     }

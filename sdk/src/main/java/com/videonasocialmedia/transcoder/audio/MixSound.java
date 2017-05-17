@@ -84,8 +84,12 @@ public class MixSound {
     output = new byte[(int) maxSizeOutput];
 
     float normalizeVolume = 0;
-    for (Media media : mediaList) {
-      normalizeVolume = normalizeVolume + media.getVolume();
+    if(sizeMediaList == 1){
+      normalizeVolume = 1;
+    } else {
+      for (Media media : mediaList) {
+        normalizeVolume = normalizeVolume + media.getVolume();
+      }
     }
     Log.d(LOG_TAG, "normalize volume " + normalizeVolume);
 

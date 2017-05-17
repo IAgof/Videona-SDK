@@ -220,17 +220,28 @@ public class MediaTranscoder {
         return transcodingJob;
     }
 
-    public ListenableFuture<Void> mixAudioFiles(final List<Media> mediaList,
+    public ListenableFuture<Boolean> mixAudioFiles(final List<Media> mediaList,
                                                    final String tempDirectory,
                                                    final String outputFile,
                                                    final long durationOutputFile) throws IOException  {
-        final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
+        final ListenableFuture<Boolean> transcodingJob = executorPool.submit(new Callable<Boolean>() {
             @Override
-            public Void call() throws Exception {
+            public Boolean call() throws Exception {
                 AudioMixer mixer = new AudioMixer(mediaList, tempDirectory,
                         outputFile, durationOutputFile);
-                mixer.export();
-                return null;
+                return mixer.export();
+            }
+        });
+
+        Futures.addCallback(transcodingJob, new FutureCallback<Boolean>() {
+            @Override
+            public void onSuccess(Boolean result) {
+
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+
             }
         });
 
