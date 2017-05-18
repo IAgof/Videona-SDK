@@ -131,7 +131,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     private List<Media> getMediasAndVolumesToMixFromProjectTracks(String exportedVideoFilePath) {
 
         List<Media> mediaList = new ArrayList<>();
-        
+
         if(vmComposition.hasVideos()) {
             float videoVolume;
             if (vmComposition.getMediaTrack().isMute()) {

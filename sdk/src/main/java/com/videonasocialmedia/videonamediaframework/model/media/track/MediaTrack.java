@@ -41,6 +41,7 @@ public class MediaTrack extends Track {
      */
     public MediaTrack() {
         super(Constants.INDEX_MEDIA_TRACK);
+        super.setVolume(1f);
     }
 
     /**
@@ -61,6 +62,7 @@ public class MediaTrack extends Track {
    */
   public MediaTrack(MediaTrack mediaTrack) throws IllegalItemOnTrack {
         super(Constants.INDEX_MEDIA_TRACK);
+        super.setVolume(mediaTrack.getVolume());
       for (Media media : mediaTrack.getItems()) {
           if (media instanceof Video) {
               this.insertItem(new Video((Video) media));

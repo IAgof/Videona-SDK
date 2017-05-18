@@ -233,18 +233,6 @@ public class MediaTranscoder {
             }
         });
 
-        Futures.addCallback(transcodingJob, new FutureCallback<Boolean>() {
-            @Override
-            public void onSuccess(Boolean result) {
-
-            }
-
-            @Override
-            public void onFailure(Throwable t) {
-
-            }
-        });
-
         return transcodingJob;
     }
 
