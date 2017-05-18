@@ -60,6 +60,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -112,6 +113,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -151,6 +153,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -204,6 +207,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -234,6 +238,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToAdapt, e.getMessage());
+          return;
         }
         ListenableFuture<Void> chainedTranscodingJob;
         chainedTranscodingJob = Futures.transform(transcodingJob,
