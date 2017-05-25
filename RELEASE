@@ -1,4 +1,2 @@
--v0.2.9
-    Update VMCompositionExportSessionImpl and review exporting process.
-    Sending export session progress messages back to listener.
-    Added exportAsyncronously method to export session impl
+v0.2.10
+    Improved adaptVideoToFormat job. Included support for rotate video if needed.

@@ -42,6 +42,7 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     private final Muxer mMuxer;
     private final MediaCodec.BufferInfo mBufferInfo = new MediaCodec.BufferInfo();
   private final boolean isFadeActivated;
+  private int rotationDegrees = -1;
   private Drawable fadeTransition;
     private MediaCodec mDecoder;
     private MediaCodec mEncoder;
@@ -95,6 +96,19 @@ public class VideoTrackTranscoder implements TrackTranscoder {
     this.overlay = overlay;
   }
 
+  public VideoTrackTranscoder(Drawable fadeTransition, boolean isFadeActivated, long durationFileUs,
+                              MediaExtractor extractor, int trackIndex, MediaFormat outputFormat,
+                              Muxer muxer, int rotationDegrees) {
+    this.fadeTransition = fadeTransition;
+    this.isFadeActivated = isFadeActivated;
+    this.durationFileUs = durationFileUs;
+    mExtractor = extractor;
+    mTrackIndex = trackIndex;
+    mOutputFormat = outputFormat;
+    mMuxer = muxer;
+    this.rotationDegrees = rotationDegrees;
+  }
+
 
     @Override
     public void setup() {
@@ -119,7 +133,12 @@ public class VideoTrackTranscoder implements TrackTranscoder {
             // Decoded video is rotated automatically in Android 5.0 lollipop.
             // Turn off here because we don't want to encode rotated one.
             // refer: https://android.googlesource.com/platform/frameworks/av/+blame/lollipop-release/media/libstagefright/Utils.cpp
+          Log.d(TAG, "rotation_degress " + rotationDegrees);
+          if(rotationDegrees == -1) {
             inputFormat.setInteger(MediaFormatExtraConstants.KEY_ROTATION_DEGREES, 0);
+          }else{
+            inputFormat.setInteger(MediaFormatExtraConstants.KEY_ROTATION_DEGREES, rotationDegrees);
+          }
         }
 
         int videoWidth = mOutputFormat.getInteger(MediaFormat.KEY_WIDTH);

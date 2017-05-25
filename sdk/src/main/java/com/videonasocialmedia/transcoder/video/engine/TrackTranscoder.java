@@ -66,4 +66,5 @@ public interface TrackTranscoder {
     boolean isEncodedFinished();
 
     void setTrackFinished();
+
 }

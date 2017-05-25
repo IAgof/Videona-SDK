@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable;
 import android.util.Log;
 
 import com.google.common.base.Function;
-import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -60,6 +59,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -112,6 +112,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
           e.printStackTrace();
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -151,6 +152,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -204,6 +206,7 @@ public class TranscoderHelper {
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToEdit, e.getMessage());
+          return;
         }
 
         ListenableFuture<Void> chainedTranscodingJob;
@@ -221,22 +224,29 @@ public class TranscoderHelper {
     }).start();
   }
 
-  public void adaptVideoToDefaultFormat(final Video videoToAdapt, final VideonaFormat format,
-                                        final String destVideoPath,
-                                        final TranscoderHelperListener listener) throws IOException {
+  public void adaptVideoWithRotationToDefaultFormat(final Video videoToAdapt, final VideonaFormat format,
+                                                    final String destVideoPath, final int rotation,
+                                                    final Drawable fadeTransition, final boolean isFadeActivated,
+                                                    final TranscoderHelperListener listener) throws IOException {
     new Thread(new Runnable() {
       @Override
       public void run() {
         ListenableFuture<Void> transcodingJob = null;
         try {
-          transcodingJob = mediaTranscoder.transcodeVideoToDefaultFormat(
-                  videoToAdapt.getMediaPath(), format, destVideoPath);
+          transcodingJob = mediaTranscoder.transcodeVideoWithRotationToDefaultFormat(
+                  videoToAdapt.getMediaPath(), format, destVideoPath, rotation, fadeTransition,
+              isFadeActivated);
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToAdapt, e.getMessage());
+          return;
         }
-        videoToAdapt.setTranscodingTask(transcodingJob);
-        waitTranscodingJobAndCheckState(transcodingJob, listener, videoToAdapt);
+        ListenableFuture<Void> chainedTranscodingJob;
+        chainedTranscodingJob = Futures.transform(transcodingJob,
+        updateVideo(videoToAdapt, listener), MoreExecutors.newDirectExecutorService());
+
+        videoToAdapt.setTranscodingTask(chainedTranscodingJob);
+        waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToAdapt);
       }
     }).start();
   }

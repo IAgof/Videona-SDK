@@ -94,8 +94,8 @@ public class TranscoderFragment extends Fragment {
 
   Drawable fadeTransition;
   boolean isVideoFadeActivated;
-
   boolean isAudioFadeActivated = false;
+  int rotation;
 
   public TranscoderFragment() {
     // Required empty public constructor
@@ -287,7 +287,7 @@ public class TranscoderFragment extends Fragment {
       final Video videoToEdit = new Video(inPath);
       videoToEdit.setTempPath(externalDir);
       final String exportedPath = videoToEdit.getTempPath();
-      progressBar.setMax(PROGRESS_BAR_MAX);
+     // progressBar.setMax(PROGRESS_BAR_MAX);
       final long startTime = SystemClock.uptimeMillis();
       final TranscoderHelperListener listener = new TranscoderHelperListener() {
         @Override
@@ -324,9 +324,15 @@ public class TranscoderFragment extends Fragment {
           break;
         }
         case REQUEST_CODE_TRANSCODE_VIDEO: {
-          // TODO:(alvaro.martinez) 2/03/17 create new API task, transcode only video
-          transcoderHelper.generateOutputVideoWithTrimming(fadeTransition, isVideoFadeActivated,
-              isAudioFadeActivated, videoToEdit, new VideonaFormat(), "", listener);
+          //Example adapt video to format
+          String destFinalPath = new File(videoToEdit.getMediaPath()).getParent() + File.separator
+              + "videoAdapted.mp4";
+          try {
+            transcoderHelper.adaptVideoWithRotationToDefaultFormat(videoToEdit, new VideonaFormat(),
+                destFinalPath, rotation, fadeTransition, isVideoFadeActivated, listener);
+          } catch (IOException e) {
+            e.printStackTrace();
+          }
 
           break;
         }
@@ -510,8 +516,8 @@ public class TranscoderFragment extends Fragment {
 
 
   private void onTranscodeFinished(boolean isSuccess, String toastMessage) {
-    progressBar.setIndeterminate(false);
-    progressBar.setProgress(isSuccess ? PROGRESS_BAR_MAX : 0);
+   // progressBar.setIndeterminate(false);
+   // progressBar.setProgress(isSuccess ? PROGRESS_BAR_MAX : 0);
     switchButtonEnabled(false);
     //Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
   }
