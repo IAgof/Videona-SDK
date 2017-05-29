@@ -234,5 +234,6 @@ public class AudioTrackTranscoder implements TrackTranscoder {
     public void setTrackFinished() {
         mIsEncoderEOS = true;
     }
+
 }
 

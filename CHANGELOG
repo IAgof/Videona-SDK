@@ -1,3 +1,8 @@
+v0.2.9
+    Update VMCompositionExportSessionImpl and review exporting process.
+    Sending export session progress messages back to listener.
+    Added exportAsyncronously method to export session impl
+
 v0.2.8
     Update Video and TranscoderHelper to improve how to detect errors generating transcoding files
 

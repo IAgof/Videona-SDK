@@ -198,19 +198,22 @@ public class MediaTranscoder {
         return transcodingJob;
     }
 
-    public ListenableFuture<Void> transcodeVideoToDefaultFormat(final String origVideoPath,
-                                  final MediaFormatStrategy outFormatStrategy,
-                                  final String destVideoPath) throws IOException {
+    public ListenableFuture<Void>
+    transcodeVideoWithRotationToDefaultFormat(final String origVideoPath,
+                                              final MediaFormatStrategy outFormatStrategy,
+                                              final String destVideoPath, final int rotation,
+                                              final Drawable drawableTransition,
+                                              final boolean isFadeActivated) throws IOException {
         final InputFileProcessor inputFileProcessor = new InputFileProcessor(origVideoPath)
                 .processInputFile();
-        final MediaTranscoderEngine engine = new MediaTranscoderEngine();
+        final MediaTranscoderEngine engine = new MediaTranscoderEngine("0");
 
         final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
                 engine.setDataSource(inputFileProcessor.getInFileDescriptor());
-                engine.adaptMediaToFormatStrategy(destVideoPath,
-                        outFormatStrategy);
+                engine.adaptMediaToFormatStrategyAndRotation(destVideoPath, outFormatStrategy,
+                    rotation, drawableTransition, isFadeActivated);
                 return null;
             }
         });

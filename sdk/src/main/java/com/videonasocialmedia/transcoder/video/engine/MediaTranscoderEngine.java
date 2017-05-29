@@ -41,6 +41,7 @@ public class MediaTranscoderEngine {
     private static final double PROGRESS_UNKNOWN = -1.0;
     private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
     private static final long PROGRESS_INTERVAL_STEPS = 10;
+    private String rotation;
     private FileDescriptor mInputFileDescriptor;
     private TrackTranscoder mVideoTrackTranscoder;
     private TrackTranscoder mAudioTrackTranscoder;
@@ -59,6 +60,10 @@ public class MediaTranscoderEngine {
      * Do not use this constructor unless you know what you are doing.
      */
     public MediaTranscoderEngine() {
+    }
+
+    public MediaTranscoderEngine(String rotation){
+        this.rotation = rotation;
     }
 
     public void setDataSource(FileDescriptor fileDescriptor) {
@@ -312,9 +317,14 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
 
-    private void setupVideoTranscoder() {
-        mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
+    private void setupVideoTranscoder(int degrees, Drawable fadeTransition, boolean isFadeActivated) {
+        if (videoOutputFormat == null) {
+            mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
+        } else {
+            mVideoTrackTranscoder = new VideoTrackTranscoder(fadeTransition, isFadeActivated,
+                mDurationUs, mExtractor, trackResult.mVideoTrackIndex,videoOutputFormat, muxer, degrees);
+        }
         mVideoTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
@@ -337,11 +347,18 @@ public class MediaTranscoderEngine {
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(mInputFileDescriptor);
 
-        String rotationString = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-        try {
-            mMuxer.setOrientationHint(Integer.parseInt(rotationString));
-        } catch (NumberFormatException e) {
-            // skip
+        String rotationString = mediaMetadataRetriever
+            .extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+        Log.d(TAG, " rotationString setupMetadata " + rotationString);
+        Log.d(TAG, " rotation setupMetadata " + rotation);
+        if(rotation == null){
+            try {
+                mMuxer.setOrientationHint(Integer.parseInt(rotationString));
+            } catch (NumberFormatException e) {
+                // skip
+            }
+        }else {
+            mMuxer.setOrientationHint(Integer.parseInt(rotation));
         }
 
         // TODO: parse ISO 6709
@@ -389,7 +406,9 @@ public class MediaTranscoderEngine {
         }
     }
 
-    public void adaptMediaToFormatStrategy(String outputPath, MediaFormatStrategy formatStrategy)
+    public void adaptMediaToFormatStrategyAndRotation(String outputPath, MediaFormatStrategy formatStrategy,
+                                                      int rotation, Drawable fadeTransition,
+                                                      boolean isFadeActivated)
         throws IOException, InterruptedException {
 
         if (outputPath == null) {
@@ -406,7 +425,7 @@ public class MediaTranscoderEngine {
             setupMetadata();
             setupOutputFormat(formatStrategy);
             setupAudioTranscoder();
-            setupVideoTranscoder();
+            setupVideoTranscoder(rotation, fadeTransition, isFadeActivated);
             //setupTrackTranscoders(formatStrategy);
             runPipelines();
             mMuxer.stop();
