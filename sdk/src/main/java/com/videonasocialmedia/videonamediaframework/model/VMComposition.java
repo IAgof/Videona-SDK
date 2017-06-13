@@ -8,10 +8,12 @@ import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.MediaTrack;
+import com.videonasocialmedia.videonamediaframework.model.media.track.Track;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResolution;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_MUSIC;
 import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_VOICE_OVER;
@@ -54,17 +56,32 @@ public class VMComposition {
    */
   private ArrayList<AudioTrack> audioTracks;
 
+  private AudioTrack musicTrack;
+  private AudioTrack voiceOverTrack;
+
   private boolean isWatermarkActivated;
 
   private Watermark watermark;
 
   private Profile profile;
 
-  public VMComposition(String resourceWatermarkFilePath, Profile profile) {
-    this.mediaTrack = new MediaTrack();
-    this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_MUSIC));
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
+  public VMComposition(String resourceWatermarkFilePath, Profile profile, List<Track> trackList) {
+
+    for(Track track: trackList){
+      if(track.getId()==Constants.INDEX_MEDIA_TRACK){
+        this.mediaTrack = (MediaTrack) trackList.get(0);
+        break;
+      }
+      if(track.getId()==Constants.INDEX_AUDIO_TRACK_MUSIC){
+        this.musicTrack = ((AudioTrack) trackList.get(1));
+        audioTracks.add(musicTrack);
+        break;
+      }
+      if(track.getId()==Constants.INDEX_AUDIO_TRACK_VOICE_OVER){
+        this.voiceOverTrack = ((AudioTrack) trackList.get(2));
+        audioTracks.add(voiceOverTrack);
+      }
+    }
     this.watermark = new Watermark(resourceWatermarkFilePath);
     this.profile = profile;
   }

@@ -35,6 +35,7 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
       result = getFinalMovie(videoFilePath, newAudioFilePath);
     } catch (IOException e) {
       e.printStackTrace();
+      videoAudioSwapperListener.onExportError(String.valueOf(e));
     }
     if (result != null) {
       saveFinalVideo(result, outputFilePath);

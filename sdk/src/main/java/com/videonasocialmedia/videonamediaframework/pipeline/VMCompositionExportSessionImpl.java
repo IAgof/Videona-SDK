@@ -45,13 +45,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     private final String outputAudioMixedFile;
     private String tempAudioPath;
     private String tempVideoExportedPath;
-    private String exportedVideoFilePath;
 
     private ExportListener exportListener;
     private final VMComposition vmComposition;
     private boolean trimCorrect = true;
     protected Trimmer audioTrimmer;
     protected Appender appender;
+    private String tempExportFilePath;
+    private String tempExportFileWatermark;
 
     public VMCompositionExportSessionImpl(VMComposition vmComposition, String outputFilesDirectory,
                                           String tempFilesDirectory,
@@ -93,15 +94,18 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             exportListener.onExportProgress("Joining the videos", EXPORT_STAGE_JOIN_VIDEOS);
             Movie result = createMovieFromComposition(videoTrimmedPaths);
             if (result != null) {
-                exportedVideoFilePath = outputFilesDirectory + getNewExportedVideoFileName();
-                saveFinalVideo(result, exportedVideoFilePath);
-                long durationMovie = FileUtils.getDurationFile(exportedVideoFilePath);
+                tempExportFilePath = outputFilesDirectory + File.separator
+                    + "V_Appended.mp4";
+                saveFinalVideo(result, tempExportFilePath);
+                long durationMovie = FileUtils.getDurationFile(tempExportFilePath);
                 if(vmComposition.hasWatermark()){
-                    applyWatermarkToVideoAndWaitForFinish();
+                    String tempFileAppended = tempExportFilePath;
+                    applyWatermarkToVideoAndWaitForFinish(tempExportFilePath);
+                    FileUtils.removeFile(tempFileAppended);
+
                 }
-                mixAudio(getMediasAndVolumesToMixFromProjectTracks(exportedVideoFilePath), durationMovie);
-                // TODO(jliarte): 29/12/16 is this generating errors for async processing of audio mixing?
-//                FileUtils.cleanDirectory(new File(tempVideoExportedPath));
+                mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
+                    tempExportFilePath, durationMovie);
             }
         } catch (IOException e) {
             exportListener.onExportError(String.valueOf(e));
@@ -112,12 +116,12 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
-    private void applyWatermarkToVideoAndWaitForFinish() {
+    private void applyWatermarkToVideoAndWaitForFinish(String tempExportFilePath) {
         if (vmComposition.hasWatermark()) {
           Log.d(TAG, "export, adding watermark to video appended");
           // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
             ListenableFuture watermarkingJob = addWatermark(vmComposition.getWatermark(),
-                exportedVideoFilePath);
+                tempExportFilePath);
             try {
                 watermarkingJob.get();
             } catch (InterruptedException e) {
@@ -128,7 +132,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
-    private List<Media> getMediasAndVolumesToMixFromProjectTracks(String exportedVideoFilePath) {
+    private List<Media> getMediasAndVolumesToMixFromProjectTracks(String exportedVideoAppendedPath) {
 
         List<Media> mediaList = new ArrayList<>();
 
@@ -139,7 +143,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             } else {
                 videoVolume = vmComposition.getMediaTrack().getVolume();
             }
-            Video video = new Video(exportedVideoFilePath, videoVolume);
+            Video video = new Video(exportedVideoAppendedPath, videoVolume);
             mediaList.add(video);
         }
 
@@ -324,12 +328,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     @NonNull
     private String getNewExportedVideoFileName() {
         return File.separator + "V_EDIT_"
-                + new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date()) + ".mp4";
+                + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date()) + ".mp4";
     }
 
-    protected void mixAudio(List<Media> mediaList, long durationMovie) {
+    protected void mixAudio(List<Media> mediaList, final String tempVideoAppendedPath,
+                            long durationMovie) {
       exportListener.onExportProgress("Mixing audio", EXPORT_STAGE_MIX_AUDIO);
-      final String videoExportedWithAudioMixed = outputFilesDirectory
+      final String finalVideoExportedFilePath = outputFilesDirectory
                 + getNewExportedVideoFileName();
 
       boolean resultMixAudioFiles = applyMixAudioAndWaitForFinish(mediaList, durationMovie);
@@ -344,8 +349,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
       Log.d(TAG, "export, swapping audio mixed in video appended");
         // TODO:(alvaro.martinez) 19/04/17 Implement ListenableFuture in VideoAudioSwapper and remove listener
         VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
-        videoAudioSwapper.export(exportedVideoFilePath, outputAudioMixedFile,
-            videoExportedWithAudioMixed,
+        videoAudioSwapper.export(tempVideoAppendedPath, outputAudioMixedFile,
+            finalVideoExportedFilePath,
             new ExporterVideoSwapAudio.VideoAudioSwapperListener() {
                 @Override
                 public void onExportError(String error) {
@@ -357,10 +362,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 public void onExportSuccess() {
                   // TODO(jliarte): 23/12/16 too many callbacks??
                   // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
-                  Log.d(TAG, "export, video with music/voiceOver exported, success");
-                  FileUtils.removeFile(exportedVideoFilePath);
+                  Log.d(TAG, "export, video with music/voiceOver exported, success "
+                      + finalVideoExportedFilePath);
+                  FileUtils.removeFile(tempVideoAppendedPath);
+                    Log.d(TAG, "export, video appended, removed "
+                        + tempVideoAppendedPath);
+                  FileUtils.cleanDirectoryFiles(new File(tempAudioPath));
                   exportListener.onExportSuccess(
-                      new Video(videoExportedWithAudioMixed, Video.DEFAULT_VOLUME));
+                      new Video(finalVideoExportedFilePath, Video.DEFAULT_VOLUME));
                 }
             });
     }
@@ -392,13 +401,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         Image imageWatermark = new Image(watermark.getResourceWatermarkFilePath(),
             Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
         ListenableFuture watermarkFuture = null;
-        final String outputFilePath = outputFilesDirectory + getNewExportedVideoFileName();
-        exportedVideoFilePath = outputFilePath;
+        tempExportFileWatermark = outputFilesDirectory + File.separator + "V_with_wm.mp4";
+        tempExportFilePath = tempExportFileWatermark;
         try {
             exportListener.onExportProgress("Applying watermark", EXPORT_STAGE_APPLY_WATERMARK);
 
             watermarkFuture = transcoderHelper
-                .generateOutputVideoWithWatermarkImage(inFilePath, outputFilePath,
+                .generateOutputVideoWithWatermarkImage(inFilePath, tempExportFileWatermark,
                     vmComposition.getVideoFormat(), imageWatermark);
         } catch (IOException e) {
             e.printStackTrace();
