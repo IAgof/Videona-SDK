@@ -12,6 +12,7 @@ import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrameRate;
@@ -146,26 +147,6 @@ public class VMCompositionExportSessionImplTest {
     exportSessionSpy.export();
 
     verify(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
-  }
-
-  @Test
-  public void exportCallsMixAudio() throws IOException, IllegalItemOnTrack {
-    VMComposition vmComposition = new VMComposition();
-    ArrayList<Media> mediaList = new ArrayList<>();
-    VMCompositionExportSessionImpl vmCompositionExportSession =
-    getVmCompositionExportSession(vmComposition);
-    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
-    PowerMockito.mockStatic(FileUtils.class);
-    long durationMovie = 55;
-    String tempExportFilePath ="temp/path";
-    PowerMockito.when(FileUtils.getDurationFile(Mockito.anyString())).thenReturn(durationMovie);
-    doReturn(mockedMovie).when(exportSessionSpy)
-        .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
-    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
-
-    exportSessionSpy.export();
-
-    verify(exportSessionSpy).mixAudio(mediaList, tempExportFilePath, durationMovie);
   }
 
   @Test

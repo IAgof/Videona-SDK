@@ -40,8 +40,7 @@ public class MediaTrack extends Track {
      * @see com.videonasocialmedia.videonamediaframework.model.media.track.Track
      */
     public MediaTrack() {
-        super(Constants.INDEX_MEDIA_TRACK);
-        super.setVolume(1f);
+        super(Constants.INDEX_MEDIA_TRACK, 1f, false, 0);
     }
 
     /**
@@ -71,9 +70,9 @@ public class MediaTrack extends Track {
               throw new IllegalItemOnTrack("Unused media subtype");
           }
       }
-    }
+  }
 
-    /**
+  /**
      * Ensure there are only Media items on items list.
      */
     private void checkItems() {

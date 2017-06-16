@@ -8,12 +8,10 @@ import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.track.MediaTrack;
-import com.videonasocialmedia.videonamediaframework.model.media.track.Track;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResolution;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_MUSIC;
 import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_VOICE_OVER;
@@ -54,10 +52,7 @@ public class VMComposition {
    * Audio tracks to form the final audio track. One by default, could be maximum defined on
    * project profile.
    */
-  private ArrayList<AudioTrack> audioTracks;
-
-  private AudioTrack musicTrack;
-  private AudioTrack voiceOverTrack;
+  private ArrayList<AudioTrack> audioTracks = new ArrayList<>();
 
   private boolean isWatermarkActivated;
 
@@ -65,23 +60,10 @@ public class VMComposition {
 
   private Profile profile;
 
-  public VMComposition(String resourceWatermarkFilePath, Profile profile, List<Track> trackList) {
-
-    for(Track track: trackList){
-      if(track.getId()==Constants.INDEX_MEDIA_TRACK){
-        this.mediaTrack = (MediaTrack) trackList.get(0);
-        break;
-      }
-      if(track.getId()==Constants.INDEX_AUDIO_TRACK_MUSIC){
-        this.musicTrack = ((AudioTrack) trackList.get(1));
-        audioTracks.add(musicTrack);
-        break;
-      }
-      if(track.getId()==Constants.INDEX_AUDIO_TRACK_VOICE_OVER){
-        this.voiceOverTrack = ((AudioTrack) trackList.get(2));
-        audioTracks.add(voiceOverTrack);
-      }
-    }
+  public VMComposition(String resourceWatermarkFilePath, Profile profile) {
+    this.mediaTrack = new MediaTrack();
+    this.audioTracks = new ArrayList<>();
+    audioTracks.add(0, new AudioTrack(INDEX_AUDIO_TRACK_MUSIC));
     this.watermark = new Watermark(resourceWatermarkFilePath);
     this.profile = profile;
   }
@@ -89,17 +71,9 @@ public class VMComposition {
   public VMComposition() {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_MUSIC));
-    audioTracks.add(new AudioTrack(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
+    audioTracks.add(0, new AudioTrack(INDEX_AUDIO_TRACK_MUSIC));
   }
 
-  /**
-   * Copy constructor.
-   *
-   * @param vmComposition The VM composition to be copied from.
-   * @throws IllegalItemOnTrack if any of MediaTrack items is not of type Video, or any item from
-   *     AudioTrack is not of type Audio
-   */
   public VMComposition(VMComposition vmComposition) throws IllegalItemOnTrack {
     this.mediaTrack = new MediaTrack(vmComposition.getMediaTrack());
     this.audioTracks = new ArrayList<>();

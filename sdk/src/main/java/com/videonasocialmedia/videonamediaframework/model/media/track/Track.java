@@ -11,6 +11,9 @@
  */
 package com.videonasocialmedia.videonamediaframework.model.media.track;
 
+import com.videonasocialmedia.videonamediaframework.model.Constants;
+import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.effects.Effect;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalOrphanTransitionOnTrack;
@@ -54,7 +57,6 @@ public class Track {
 
     private float volume = DEFAULT_TRACK_VOLUME;
     private boolean mute = false;
-    private boolean solo = false;
     private int position;
 
     private int id;
@@ -72,14 +74,13 @@ public class Track {
         this.id = id;
     }
 
-    public Track(int id, float volume, boolean mute, boolean solo, int position) {
+    public Track(int id, float volume, boolean mute, int position) {
         this.items = new LinkedList<Media>();
         this.effects = new HashMap<Integer, LinkedList<Effect>>();
         this.transitions = new HashMap<String, Transition>();
         this.id = id;
         this.volume = volume;
         this.mute = mute;
-        this.solo = solo;
         this.position = position;
     }
 
@@ -403,14 +404,6 @@ public class Track {
         this.mute = mute;
     }
 
-    public boolean isSolo() {
-        return solo;
-    }
-
-    public void setSolo(boolean solo) {
-        this.solo = solo;
-    }
-
     public int getId() {
         return id;
     }
@@ -420,5 +413,9 @@ public class Track {
     }
     public int getPosition(){
         return position;
+    }
+
+    public int getNumItemsInTrack() {
+        return this.getItems().size();
     }
 }

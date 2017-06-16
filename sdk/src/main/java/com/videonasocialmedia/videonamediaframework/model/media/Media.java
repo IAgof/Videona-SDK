@@ -139,12 +139,6 @@ public abstract class Media extends MediaElement {
         this.license = license;
     }
 
-    protected Media(String mediaPath, float volume){
-        super(-1, null);
-        this.mediaPath = mediaPath;
-        this.volume = volume;
-    }
-
     /**
      * protected default empty constructor, trying to get injectMocks working
      */

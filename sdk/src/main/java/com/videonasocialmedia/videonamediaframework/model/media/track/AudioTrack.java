@@ -58,8 +58,7 @@ public class AudioTrack extends Track {
    * @param audioTrack the AudioTrack to copy from.
    */
   public AudioTrack(AudioTrack audioTrack) throws IllegalItemOnTrack {
-    super(audioTrack.getId(), audioTrack.getVolume(), audioTrack.isMute(), audioTrack.isSolo(),
-        audioTrack.getPosition());
+    super(audioTrack.getId(), audioTrack.getVolume(), audioTrack.isMute(), audioTrack.getPosition());
     for (Media item : audioTrack.getItems()) {
       // TODO:(alvaro.martinez) 3/01/17 review modelling and this copy constructor as we assume here we only have Music items
       this.insertItem(new Music((Music) item));
