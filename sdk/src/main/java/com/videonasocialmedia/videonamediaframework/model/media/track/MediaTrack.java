@@ -72,6 +72,10 @@ public class MediaTrack extends Track {
       }
   }
 
+  public MediaTrack(int id, float volume, boolean mute, int position) {
+    super(id,volume,mute,position);
+  }
+
   /**
      * Ensure there are only Media items on items list.
      */

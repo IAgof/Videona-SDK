@@ -65,6 +65,10 @@ public class AudioTrack extends Track {
     }
   }
 
+  public AudioTrack(int id, float volume, boolean mute, int position) {
+    super(id, volume, mute, position);
+  }
+
   /**
      * Ensure there are only Audio items on items list.
      */
