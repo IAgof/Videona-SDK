@@ -256,7 +256,7 @@ public class TranscoderFragment extends Fragment {
     mediaList.add(audio1);
     mediaList.add(audio2);
     mediaList.add(audio3);
-
+    ListenableFuture<Boolean> listenableFuture;
 
     try {
       listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
