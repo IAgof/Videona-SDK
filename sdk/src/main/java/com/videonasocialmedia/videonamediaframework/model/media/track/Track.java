@@ -11,9 +11,6 @@
  */
 package com.videonasocialmedia.videonamediaframework.model.media.track;
 
-import com.videonasocialmedia.videonamediaframework.model.Constants;
-import com.videonasocialmedia.videonamediaframework.model.media.Music;
-import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.effects.Effect;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalOrphanTransitionOnTrack;
@@ -49,11 +46,6 @@ public class Track {
      * Key = beforeEditorElementIdentifier+afterEditorElementIdentifier
      */
     protected HashMap<String, Transition> transitions;
-
-    /**
-     * TODO eliminar, creoq ue aquí no tiene sentido IMHO. O pensarselo para no tener que calcularlo cada vez, por ejemplo que se calcule siempre que se añada un item al track.
-     */
-    private long duration;
 
     private float volume = DEFAULT_TRACK_VOLUME;
     private boolean mute = false;

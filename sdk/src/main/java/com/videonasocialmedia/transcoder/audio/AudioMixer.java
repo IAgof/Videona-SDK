@@ -1,9 +1,7 @@
 package com.videonasocialmedia.transcoder.audio;
 
-import android.support.annotation.NonNull;
 
 
-import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
