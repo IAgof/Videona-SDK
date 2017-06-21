@@ -42,8 +42,8 @@ public class Image extends Media {
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.Media
      */
-    public Image(String iconPath, String mediaPath, License license) {
-        super(-1, iconPath, mediaPath, 0, Image.DEFAULT_IMAGE_DURATION, license);
+    public Image(String iconPath, String mediaPath, float volume, License license) {
+        super(-1, iconPath, mediaPath, volume, 0, Image.DEFAULT_IMAGE_DURATION, license);
     }
 
     /**
@@ -51,8 +51,8 @@ public class Image extends Media {
      *
      * @param mediaPath
      */
-    public Image(String mediaPath) {
-        super(-1, null, mediaPath, 0, Image.DEFAULT_IMAGE_DURATION, null);
+    public Image(String mediaPath, float volume) {
+        super(-1, null, mediaPath, volume, 0, Image.DEFAULT_IMAGE_DURATION, null);
         //check if the mediapath is an image.
 
         //get the iconpath
@@ -68,9 +68,9 @@ public class Image extends Media {
      * @see com.videonasocialmedia.videonamediaframework.model.media.Media
      */
     public Image(int identifier, String iconPath, String selectedIconPath, String title, String
-            mediaPath, int duration, Transition opening, Transition ending,
+            mediaPath, float volume, int duration, Transition opening, Transition ending,
                  MediaMetadata metadata, License license) {
-        super(identifier, iconPath, selectedIconPath, title, mediaPath, 0, duration,
+        super(identifier, iconPath, selectedIconPath, title, mediaPath,volume, 0, duration,
                 opening, ending, metadata, license);
     }
 

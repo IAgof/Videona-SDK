@@ -29,6 +29,7 @@ import static com.videonasocialmedia.videonamediaframework.model.Constants.*;
  */
 public class Video extends Media {
 
+    public static float DEFAULT_VOLUME = 1f;
     private static final AtomicInteger count = new AtomicInteger(0);
 
     /**
@@ -68,8 +69,8 @@ public class Video extends Media {
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.Media
      */
-    public Video(String mediaPath) {
-        super(-1, null, mediaPath, 0, 0, null);
+    public Video(String mediaPath, float volume) {
+        super(-1, null, mediaPath, volume, 0, 0, null);
         try {
             retriever.setDataSource(mediaPath);
 
@@ -83,13 +84,13 @@ public class Video extends Media {
         }
     }
 
-    public Video(String mediaPath, int fileStartTime, int duration) {
-        super(-1, null, mediaPath, fileStartTime, duration, null);
+    public Video(String mediaPath, float volume, int fileStartTime, int duration) {
+        super(-1, null, mediaPath, volume, fileStartTime, duration, null);
         fileDuration = getFileDuration(mediaPath);
     }
 
     public Video(Video video) {
-        super(-1, null, video.getMediaPath(), video.getStartTime(),
+        super(-1, null, video.getMediaPath(), video.getVolume(), video.getStartTime(),
                 video.getDuration(), null);
         fileDuration = video.getFileDuration();
         stopTime = video.getStopTime();

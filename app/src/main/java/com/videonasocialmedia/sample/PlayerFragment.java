@@ -7,6 +7,8 @@ import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.playback.VideonaPlayerExo;
 
@@ -41,6 +43,7 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
   private OnFragmentInteractionListener mListener;
 
   @BindView(R.id.videona_player) VideonaPlayerExo videonaPlayer;
+
 
   public PlayerFragment() {
     // Required empty public constructor
@@ -94,8 +97,8 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
   public void onResume(){
     super.onResume();
     videonaPlayer.onShown(getActivity());
-    showPreview();
-
+    showPreviewWithVideoMusicAndVoiceOver();
+    //showPreviewWithVideo();
   }
 
   @Override
@@ -133,7 +136,51 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
 
   }
 
-  public void showPreview() {
+  public void showPreviewWithVideoMusicAndVoiceOver() {
+
+    List<Video> movieList = new ArrayList<Video>();
+    String videoPath = externalDir + File.separator + "video2min.mp4";
+    File inputFile = new File(videoPath);
+    if (!inputFile.exists()) {
+      try {
+        Utils.copyResourceToTemp(getActivity(), externalDir, "inputvideo", R.raw.inputvideo, ".mp4");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    String audioTest = externalDir + File.separator + "audio_test_one.m4a";
+    File audioFile = new File(audioTest);
+    if(!audioFile.exists()){
+      try{
+        Utils.copyResourceToTemp(getActivity(), externalDir, "audio_test_one", R.raw.audio_test_one, ".m4a");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    String audioTest2 = externalDir + File.separator + "audio_test_two.m4a";
+    File audioFile2 = new File(audioTest2);
+    if(!audioFile2.exists()){
+      try{
+        Utils.copyResourceToTemp(getActivity(), externalDir, "audio_test_two", R.raw.audio_test_two, ".m4a");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    Video videoShare = new Video(videoPath, 0.6f);
+    movieList.add(videoShare);
+
+
+
+
+    videonaPlayer.setVoiceOver(new Music(audioTest2, 0.4f, 0));
+    videonaPlayer.bindVideoList(movieList);
+    videonaPlayer.setMusic(new Music(audioTest, 0.3f, 0));
+
+  }
+
+  public void showPreviewWithVideo() {
 
     List<Video> movieList = new ArrayList<Video>();
     String videoPath = externalDir + File.separator + "inputvideo.mp4";
@@ -146,14 +193,12 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
       }
     }
 
-    String videoTest = externalDir + File.separator + "6segundos.mp4";
-
-    Video videoShare = new Video(videoPath);
+    Video videoShare = new Video(videoPath, 1f);
     movieList.add(videoShare);
 
-    videonaPlayer.initPreviewLists(movieList);
-    videonaPlayer.initPreview(0);
-    //videonaPlayer.setTransitionFade();
+    videonaPlayer.bindVideoList(movieList);
+    videonaPlayer.seekTo(0);
+
   }
 
   /**

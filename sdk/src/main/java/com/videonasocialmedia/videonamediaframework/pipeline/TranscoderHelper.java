@@ -13,12 +13,14 @@ import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
 import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.IOException;
 import java.util.concurrent.ExecutionException;
+import java.util.List;
 
 public class TranscoderHelper {
 
@@ -184,6 +186,19 @@ public class TranscoderHelper {
       e.printStackTrace();
     }
     return transcodingJobWatermark;
+  }
+
+  public ListenableFuture<Boolean> generateTempFileMixAudio(List<Media> mediaList, String tempAudioPath,
+                                         String outputFilePath, long durationAudioFile) {
+    ListenableFuture<Boolean> transcodingJob = null;
+    try {
+      transcodingJob = mediaTranscoder.mixAudioFiles(mediaList,
+          tempAudioPath, outputFilePath, durationAudioFile);
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+
+    return transcodingJob;
   }
 
   public void generateOutputVideoWithTrimming(final Drawable fadeTransition,

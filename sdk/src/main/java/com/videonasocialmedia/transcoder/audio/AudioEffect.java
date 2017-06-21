@@ -4,6 +4,8 @@ package com.videonasocialmedia.transcoder.audio;
 import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
+import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import java.io.BufferedOutputStream;
 import java.io.ByteArrayOutputStream;
@@ -63,7 +65,14 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   @Override
-  public void OnFileDecodedSuccess(String outputFile) {
+  public void onFileDecodedError(String error) {
+    if (listener != null) {
+      listener.onTranscodeError(error);
+    }
+  }
+
+  @Override
+  public void onFileDecodedMediaSuccess(Media media, String outputFile) {
     if (DEBUG) {
       String tempFileWav = tempDirectory + File.separator + "tempFilePcm_" +
           System.currentTimeMillis() + ".wav";
@@ -78,13 +87,6 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   @Override
-  public void OnFileDecodedError(String error) {
-    if (listener != null) {
-      listener.onTranscodeError(error);
-    }
-  }
-
-  @Override
   public void OnFileEncodedSuccess(String outputFile) {
     deleteTempFiles();
     if (listener != null) {
@@ -94,14 +96,8 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   private void deleteTempFiles() {
-    File f = new File(tempFilePcm);
-    File f2 = new File(tempFileFadeInOut);
-    if (f.exists()) {
-      f.delete();
-    }
-    if (f2.exists()) {
-      f2.delete();
-    }
+    FileUtils.removeFile(tempFilePcm);
+    FileUtils.removeFile(tempFileFadeInOut);
   }
 
   @Override
@@ -113,11 +109,8 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
 
   private void setFadeInFadeOut(String tempFilePcm, int timeFadeInMs, int timeFadeOutMs)
       throws IOException {
-
     File inputFile = new File(tempFilePcm);
-
     FileInputStream fis = new FileInputStream(inputFile);
-
     byte[] arrayAudio = createByteArray(fis);
     fis.close();
 
@@ -125,11 +118,9 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     convertByteToFile(output, tempFileFadeInOut);
 
     encodeAudio(tempFileFadeInOut);
-
   }
 
   private void setFadeInFadeOutBigSizeFiles(String tempFilePcm) throws IOException {
-
     File inputFile1 = new File(tempFilePcm);
 
     RandomAccessFile accessFileOne = new RandomAccessFile(inputFile1, "r");
@@ -161,11 +152,9 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     convertByteToFile(output, tempFileFadeInOut);
 
     encodeAudio(tempFileFadeInOut);
-
   }
 
   public byte[] createByteArray(FileInputStream is) throws IOException {
-
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     //byte[] buff = new byte[lenght_array_music];
     byte[] buff = new byte[10240];
@@ -175,11 +164,9 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     }
 
     return baos.toByteArray(); // be sure to close InputStream in calling function
-
   }
 
   private void encodeAudio(String tempFileFadeInOut) {
-
     AudioEncoder encoder = new AudioEncoder(tempFileFadeInOut, outputFile, this);
     encoder.run();
   }
@@ -199,7 +186,6 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   private byte[] manipulateFadeInOut(byte[] data, int timeFadeInMs, int timeFadeOutMs) {
-
     // valores en un segundo 96000 = 48000muestras * 16bit / 8 (bytes)
     int fadeIn = (int) (96000 * timeFadeInMs * 0.001);
     int fadeOut = (int) (96000 * timeFadeOutMs * 0.001);
@@ -250,11 +236,9 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     byte[] dataOutput = buffer.array();
 
     return dataOutput;
-
   }
 
   private byte[] manipulateFadeInOut2(byte[] data, int indexOutput) {
-
     int fadeIn = 96000 * 4;
     int fadeOut = 96000 * 4;
 
@@ -295,7 +279,6 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     byte[] dataOutput = buffer.array();
 
     return dataOutput;
-
   }
 
   private float[] getAudioFloatFadeIn(int fadeIn, short[] audioShorts1, float gain,

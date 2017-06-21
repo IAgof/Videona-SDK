@@ -29,10 +29,12 @@ import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 
@@ -221,26 +223,19 @@ public class MediaTranscoder {
         return transcodingJob;
     }
 
-    public ListenableFuture<Void> mixAudioTwoFiles(final String inputFile1,
-                                                   final String inputFile2,
-                                                   final float volume,
+    public ListenableFuture<Boolean> mixAudioFiles(final List<Media> mediaList,
                                                    final String tempDirectory,
                                                    final String outputFile,
-                                                   final long durationOutputFile,
-                                                   final MediaTranscoderListener listener) {
-        final ListenableFuture<Void> transcodingJob = executorPool.submit(new Callable<Void>() {
+                                                   final long durationOutputFile) throws IOException  {
+        final ListenableFuture<Boolean> transcodingJob = executorPool.submit(new Callable<Boolean>() {
             @Override
-            public Void call() throws Exception {
-                AudioMixer mixer = new AudioMixer(inputFile1, inputFile2, volume, tempDirectory,
+            public Boolean call() throws Exception {
+                AudioMixer mixer = new AudioMixer(mediaList, tempDirectory,
                         outputFile, durationOutputFile);
-                mixer.setOnAudioMixerListener(listener);
-                mixer.export();
-                return null;
+                return mixer.export();
             }
         });
 
-        Futures.addCallback(transcodingJob,
-                new LoggerAndListenerNotifierCallback(listener, outputFile, transcodingJob));
         return transcodingJob;
     }
 
@@ -367,7 +362,7 @@ public class MediaTranscoder {
         }
 
     }
-    
+
     public interface MediaTranscoderListener {
         void onTranscodeSuccess(String outputFile);
 

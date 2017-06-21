@@ -11,6 +11,7 @@
  */
 package com.videonasocialmedia.videonamediaframework.model.media.track;
 
+import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.effects.Effect;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
@@ -39,7 +40,7 @@ public class MediaTrack extends Track {
      * @see com.videonasocialmedia.videonamediaframework.model.media.track.Track
      */
     public MediaTrack() {
-        super();
+        super(Constants.INDEX_MEDIA_TRACK, 1f, false, 0);
     }
 
     /**
@@ -49,7 +50,7 @@ public class MediaTrack extends Track {
      */
     public MediaTrack(LinkedList<Media> items, HashMap<Integer, LinkedList<Effect>> effects,
                       HashMap<String, Transition> transitions) {
-        super(items, effects, transitions);
+        super(Constants.INDEX_MEDIA_TRACK, items, effects, transitions);
         this.checkItems();
     }
 
@@ -59,7 +60,8 @@ public class MediaTrack extends Track {
    * @param mediaTrack mediaTrack object to copy from
    */
   public MediaTrack(MediaTrack mediaTrack) throws IllegalItemOnTrack {
-        super();
+        super(Constants.INDEX_MEDIA_TRACK);
+        super.setVolume(mediaTrack.getVolume());
       for (Media media : mediaTrack.getItems()) {
           if (media instanceof Video) {
               this.insertItem(new Video((Video) media));
@@ -68,9 +70,13 @@ public class MediaTrack extends Track {
               throw new IllegalItemOnTrack("Unused media subtype");
           }
       }
-    }
+  }
 
-    /**
+  public MediaTrack(int id, float volume, boolean mute, int position) {
+    super(id,volume,mute,position);
+  }
+
+  /**
      * Ensure there are only Media items on items list.
      */
     private void checkItems() {

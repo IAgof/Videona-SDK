@@ -1,6 +1,5 @@
 package com.videonasocialmedia.videonamediaframework.model;
 
-
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
@@ -14,6 +13,9 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResol
 
 import java.util.ArrayList;
 
+import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_MUSIC;
+import static com.videonasocialmedia.videonamediaframework.model.Constants.INDEX_AUDIO_TRACK_VOICE_OVER;
+
 /**
  * Videona Media Composition class for representing a media composition with audio and video
  * tracks, effects and transformations.
@@ -21,7 +23,7 @@ import java.util.ArrayList;
 public class VMComposition {
 
   /**
-   * Lenght of the VMComposition
+   * Lenght of the VMComposition.
    */
   private int duration = 0;
 
@@ -34,7 +36,7 @@ public class VMComposition {
   }
 
   /**
-   * Track of Video and Image objects
+   * Track of Video and Image objects.
    */
   private MediaTrack mediaTrack;
 
@@ -50,7 +52,7 @@ public class VMComposition {
    * Audio tracks to form the final audio track. One by default, could be maximum defined on
    * project profile.
    */
-  private ArrayList<AudioTrack> audioTracks;
+  private ArrayList<AudioTrack> audioTracks = new ArrayList<>();
 
   private boolean isWatermarkActivated;
 
@@ -61,7 +63,7 @@ public class VMComposition {
   public VMComposition(String resourceWatermarkFilePath, Profile profile) {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack());
+    audioTracks.add(0, new AudioTrack(INDEX_AUDIO_TRACK_MUSIC));
     this.watermark = new Watermark(resourceWatermarkFilePath);
     this.profile = profile;
   }
@@ -69,7 +71,7 @@ public class VMComposition {
   public VMComposition() {
     this.mediaTrack = new MediaTrack();
     this.audioTracks = new ArrayList<>();
-    audioTracks.add(new AudioTrack());
+    audioTracks.add(0, new AudioTrack(INDEX_AUDIO_TRACK_MUSIC));
   }
 
   public VMComposition(VMComposition vmComposition) throws IllegalItemOnTrack {
@@ -94,18 +96,34 @@ public class VMComposition {
     }
   }
 
+  /**
+   * Returns the music of the composition.
+   *
+   * @return the first element in the music track of the composition.
+   */
   public Music getMusic() {
-    /**
-     * TODO(jliarte): review this method and matching use case
-     * @see com.videonasocialmedia.vimojo.domain.editor.GetMusicFromProjectUseCase
-     */
-    Music result = null;
     try {
-      result = (Music) getAudioTracks().get(0).getItems().get(0);
+      return  (Music) getAudioTracks().get(INDEX_AUDIO_TRACK_MUSIC).getItems().get(0);
     } catch (Exception exception) {
-      // exception retrieving music, we'll return null
+      return null;
     }
-    return result;
+  }
+
+  /**
+   * Returns the voiceover of the VM composition.
+   *
+   * @return the first element of the voiceover track
+   */
+  public Music getVoiceOver() {
+    try {
+      return (Music) getAudioTracks().get(INDEX_AUDIO_TRACK_VOICE_OVER).getItems().get(0);
+    } catch (Exception exception) {
+      return null;
+    }
+  }
+
+  public boolean hasVoiceOver() {
+    return (getVoiceOver() != null);
   }
 
   public boolean hasMusic() {
@@ -113,14 +131,14 @@ public class VMComposition {
   }
 
   public boolean hasVideos() {
-    return getMediaTrack().getItems().size() >0;
+    return getMediaTrack().getItems().size() > 0;
   }
 
-  public boolean hasWatermark(){
+  public boolean hasWatermark() {
     return isWatermarkActivated;
   }
 
-  public void setWatermarkActivated(boolean isWatermarkActivated){
+  public void setWatermarkActivated(boolean isWatermarkActivated) {
     this.isWatermarkActivated = isWatermarkActivated;
   }
 
@@ -132,7 +150,7 @@ public class VMComposition {
     VideoResolution resolution =  profile.getVideoResolution();
     VideoQuality quality = profile.getVideoQuality();
     VideonaFormat videonaFormat;
-    if(resolution!=null && quality!=null) {
+    if (resolution != null && quality != null) {
       videonaFormat = new VideonaFormat(quality.getVideoBitRate(), resolution.getWidth(),
           resolution.getHeight());
     } else {

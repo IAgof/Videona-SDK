@@ -20,13 +20,15 @@ import com.videonasocialmedia.videonamediaframework.model.media.transitions.Tran
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.NoSuchElementException;
+import java.util.UUID;
 
 /**
  * A track is ordered container of Media elements that can be moved, resized, or modified with the
  * editor tools.
  */
-public abstract class Track {
+public class Track {
 
+    private static final float DEFAULT_TRACK_VOLUME = 0.5f;
     /**
      * List of elements that conforms the track in order of sequence.
      */
@@ -45,19 +47,33 @@ public abstract class Track {
      */
     protected HashMap<String, Transition> transitions;
 
-    /**
-     * TODO eliminar, creoq ue aquí no tiene sentido IMHO. O pensarselo para no tener que calcularlo cada vez, por ejemplo que se calcule siempre que se añada un item al track.
-     */
-    private long duration;
+    private float volume = DEFAULT_TRACK_VOLUME;
+    private boolean mute = false;
+    private int position;
+
+    private int id;
+
+    private String uuid = UUID.randomUUID().toString();
 
     /**
      * Constructor of minimum number of parameters. Default constructor. Called when a new project
      * is created.
      */
-    protected Track() {
+    protected Track(int id) {
         this.items = new LinkedList<Media>();
         this.effects = new HashMap<Integer, LinkedList<Effect>>();
         this.transitions = new HashMap<String, Transition>();
+        this.id = id;
+    }
+
+    public Track(int id, float volume, boolean mute, int position) {
+        this.items = new LinkedList<Media>();
+        this.effects = new HashMap<Integer, LinkedList<Effect>>();
+        this.transitions = new HashMap<String, Transition>();
+        this.id = id;
+        this.volume = volume;
+        this.mute = mute;
+        this.position = position;
     }
 
     /**
@@ -67,11 +83,12 @@ public abstract class Track {
      * @param effects     - List of effects to be applied.
      * @param transitions - Collection of transitions between media elements.
      */
-    protected Track(LinkedList<Media> items, HashMap<Integer, LinkedList<Effect>> effects,
+    protected Track(int id, LinkedList<Media> items, HashMap<Integer, LinkedList<Effect>> effects,
                     HashMap<String, Transition> transitions) {
         this.items = items;
         this.effects = effects;
         this.transitions = transitions;
+        this.id = id;
     }
 
     //Media Items
@@ -353,5 +370,44 @@ public abstract class Track {
             trackDuration += item.getDuration();
         }
         return trackDuration;
+    }
+
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
+
+    public float getVolume() {
+        return volume;
+    }
+
+    public void setVolume(float volume) {
+        this.volume = volume;
+    }
+
+    public boolean isMute() {
+        return mute;
+    }
+
+    public void setMute(boolean mute) {
+        this.mute = mute;
+    }
+
+    public int getId() {
+        return id;
+    }
+
+    public void setPosition(int position) {
+        this.position = position;
+    }
+    public int getPosition(){
+        return position;
+    }
+
+    public int getNumItemsInTrack() {
+        return this.getItems().size();
     }
 }
