@@ -14,7 +14,7 @@ import static org.hamcrest.MatcherAssert.assertThat;
 public class VideoTest {
   @Test
   public void testVideoHasUUID() {
-    Video video = new Video("media/path");
+    Video video = new Video("media/path", 1f);
 
     assertThat(video.getUuid(), notNullValue());
   }

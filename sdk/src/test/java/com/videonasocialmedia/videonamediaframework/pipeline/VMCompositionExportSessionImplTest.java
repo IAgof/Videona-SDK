@@ -1,11 +1,13 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
+import android.media.MediaMetadataRetriever;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import com.googlecode.mp4parser.authoring.Movie;
-import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
+import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
@@ -16,11 +18,13 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuali
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResolution;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
+import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
@@ -47,8 +51,8 @@ import static org.mockito.Mockito.verify;
  * Created by jliarte on 19/12/16.
  */
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({Log.class})
 //@RunWith(MockitoJUnitRunner.class)
+  @PrepareForTest({FileUtils.class, TranscoderHelper.class, Log.class})
 public class VMCompositionExportSessionImplTest {
   @Mock private VMCompositionExportSession.ExportListener mockedExportEndedListener;
   @Mock private Trimmer mockedAudioTrimmer;
@@ -57,12 +61,18 @@ public class VMCompositionExportSessionImplTest {
   @Mock private Appender mockedAppender;
   @Mock private Image mockedWatermark;
 
+  @Mock MediaMetadataRetriever mockedMediaMetadataRetriever;
+  @Mock
+  private Movie mockedMovie;
+  @Mock
+  private ListenableFuture mockedListenableFuture;
 
   @Before
-  public void setup() {
+  public void init(){
     MockitoAnnotations.initMocks(this);
     PowerMockito.mockStatic(Log.class);
   }
+
 //  @Test
 //  public void addAudioAppendsNewTrackToMovie() throws Exception {
 //    VMComposition vmComposition = new VMComposition();
@@ -103,28 +113,21 @@ public class VMCompositionExportSessionImplTest {
   }
 
   @Test
-  public void createMovieFromCompositionCallsAppenderWithoutAudioIfMusicIsSet()
+  public void createMovieFromCompositionNeverCallsAppenderWithoutAudioIfMusicIsSet()
           throws IOException, IllegalItemOnTrack {
     VMComposition vmComposition = new VMComposition();
     Music music = new Music("music/path", 1f, 0);
-    vmComposition.getAudioTracks().get(0).insertItem(music);
+    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(music);
     VMCompositionExportSessionImpl exporter = getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(exporter);
     exportSessionSpy.appender = mockedAppender;
     URL url = Thread.currentThread().getContextClassLoader().getResource("test-pod.m4a");
     ArrayList<String> videoList = new ArrayList<>(Arrays.asList(url.getPath()));
-    Movie appendedMovie = MovieCreator.build(url.getPath());
-    doReturn(appendedMovie).when(mockedAppender).appendVideos(videoList, false);
-    doReturn(appendedMovie).when(exportSessionSpy)
-            .addAudio(any(Movie.class), anyString(), anyByte());
-    int originalNumberOfTracks = appendedMovie.getTracks().size();
 
-    Movie resultMovie = exportSessionSpy.createMovieFromComposition(videoList);
+    verify(mockedAppender, never()).appendVideos(videoList, false);
 
-    verify(mockedAppender).appendVideos(videoList, false);
-    assertThat(resultMovie, is(appendedMovie));
-    assertThat(resultMovie.getTracks().size(), is(originalNumberOfTracks));
   }
+
 
   @Test
   public void exportCallsCreateMovieFromComposition() throws IOException {
@@ -132,6 +135,8 @@ public class VMCompositionExportSessionImplTest {
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
+    PowerMockito.mockStatic(FileUtils.class);
+    PowerMockito.when(FileUtils.getDurationFile(Mockito.anyString())).thenReturn((long) 55);
     doCallRealMethod().when(exportSessionSpy).export();
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
@@ -141,63 +146,11 @@ public class VMCompositionExportSessionImplTest {
   }
 
   @Test
-  public void exportDoesNotCallMixAudioIfNoMusicInComposition() throws IOException {
-    VMComposition vmComposition = new VMComposition();
-    assert ! vmComposition.hasMusic();
-    VMCompositionExportSessionImpl vmCompositionExportSession =
-            getVmCompositionExportSession(vmComposition);
-    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
-    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
-    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
-
-    exportSessionSpy.export();
-
-    verify(exportSessionSpy, never()).mixAudio();
-  }
-
-  @Test
-  public void exportCallsMixAudioIfMusicVolumeIsLowerThan1()
-          throws IOException, IllegalItemOnTrack {
-    VMComposition vmComposition = new VMComposition();
-    Music voiceOver = new Music("music/path", 0.8f, 0);
-    vmComposition.getAudioTracks().get(0).insertItem(voiceOver);
-    VMCompositionExportSessionImpl vmCompositionExportSession =
-            getVmCompositionExportSession(vmComposition);
-    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
-    doReturn(new Movie()).when(exportSessionSpy)
-            .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
-    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
-    doNothing().when(exportSessionSpy).mixAudio();
-    doCallRealMethod().when(exportSessionSpy).export();
-
-    exportSessionSpy.export();
-
-    verify(exportSessionSpy).mixAudio();
-  }
-
-  @Test
-  public void exportDoesNotCallMixAudioIfMusicVolumeIs1()
-          throws IllegalItemOnTrack, IOException {
-    VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path", 1f, 0);
-    vmComposition.getAudioTracks().get(0).insertItem(music);
-    VMCompositionExportSessionImpl vmCompositionExportSession =
-            getVmCompositionExportSession(vmComposition);
-    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
-    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition(any(ArrayList.class));
-    doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
-    doNothing().when(exportSessionSpy).mixAudio();
-
-    exportSessionSpy.export();
-
-    verify(exportSessionSpy, never()).mixAudio();
-  }
-
-  @Test
-  public void createMovieFromCompositionCallsAppenderWithOriginalVideoMusicIfCompositionHasNotMusic()
+  public void createMovieFromCompositionCallsAppenderWithOriginalVideoIfCompositionHasNotMusicAndHasNotVoiceOver()
           throws IOException {
     VMComposition vmComposition = new VMComposition();
     assert ! vmComposition.hasMusic();
+    assert ! vmComposition.hasVoiceOver();
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
     vmCompositionExportSession.appender = mockedAppender;
@@ -209,26 +162,25 @@ public class VMCompositionExportSessionImplTest {
   }
 
   @Test
-  public void createMovieFromCompositionAppenderWithoutOriginalVideoMusicIfCompositionHasMusic()
+  public void createMovieFromCompositionAppenderWithOriginalVideoIfCompositionHasMusic()
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
     Music music = new Music("music/path", 0);
     assert music.getVolume() == 0.5f; // default music volume 0.5f
-    // set music to 1f, exporter swap audio, not mixed
     music.setVolume(1f);
-    vmComposition.getAudioTracks().get(0).insertItem(music);
+    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(music);
     assert vmComposition.hasMusic();
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
     exportSessionSpy.appender = mockedAppender;
     doReturn(2.0).when(exportSessionSpy).getMovieDuration(any(Movie.class));
-    doReturn(new Movie()).when(exportSessionSpy).addAudio(any(Movie.class), anyString(), anyByte());
+    doReturn(mockedMovie).when(exportSessionSpy).addAudio(any(Movie.class), anyString(), anyByte());
     ArrayList<String> videoPaths = new ArrayList<>();
 
     exportSessionSpy.createMovieFromComposition(videoPaths);
 
-    verify(mockedAppender).appendVideos(videoPaths, false);
+    verify(mockedAppender).appendVideos(videoPaths, true);
   }
 
   @Test
@@ -236,7 +188,7 @@ public class VMCompositionExportSessionImplTest {
           throws IllegalItemOnTrack, IOException {
     VMComposition vmComposition = new VMComposition();
     Music voiceOver = new Music("voice/over/path", 0.9f, 0);
-    vmComposition.getAudioTracks().get(0).insertItem(voiceOver);
+    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(voiceOver);
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
     vmCompositionExportSession.appender = mockedAppender;
@@ -257,7 +209,10 @@ public class VMCompositionExportSessionImplTest {
     VMCompositionExportSessionImpl vmCompositionExportSession =
         getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
-    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
+    PowerMockito.mockStatic(FileUtils.class);
+    PowerMockito.when(FileUtils.getDurationFile(Mockito.anyString())).thenReturn((long) 55);
+    doReturn(mockedMovie).when(exportSessionSpy)
+        .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
     exportSessionSpy.export();
@@ -275,7 +230,10 @@ public class VMCompositionExportSessionImplTest {
     VMCompositionExportSessionImpl vmCompositionExportSession =
         getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
-    doReturn(new Movie()).when(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
+    PowerMockito.mockStatic(FileUtils.class);
+    PowerMockito.when(FileUtils.getDurationFile(Mockito.anyString())).thenReturn((long) 55);
+    doReturn(mockedMovie).when(exportSessionSpy)
+        .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
     exportSessionSpy.export();

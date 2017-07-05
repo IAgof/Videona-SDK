@@ -33,6 +33,9 @@ import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener
 
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 
+import com.videonasocialmedia.transcoder.video.overlay.Filter;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
+import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener;
@@ -40,6 +43,11 @@ import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.File;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
+import java.util.concurrent.Future;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -239,31 +247,24 @@ public class TranscoderFragment extends Fragment {
       }
     }
 
-    listenableFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputVideo, inputVideo2, 0.90f,
-            tempDir, outputAudio, getDurationFile(inputVideo), new MediaTranscoderListener() {
-              @Override
-              public void onTranscodeSuccess(String outputFile) {
-                textViewInfoProgress.setText("Success " + outputFile);
-                textViewInfoProgress.setTextColor(Color.GREEN);
-              }
+    // Modo rápido de pruebas
+    Video audio1 = new Video(inputVideo, 0.5f);
+    Video audio2 = new Video(inputVideo2, 0.5f);
+    String inputFile3 = new File(inputVideo).getParent() + File.separator + "input_video_3.mp4";
+    Video audio3 = new Video(inputFile3, 0.9f);
+    List<Media> mediaList = new ArrayList<>();
+    mediaList.add(audio1);
+    mediaList.add(audio2);
+    mediaList.add(audio3);
+    ListenableFuture<Boolean> listenableFuture;
 
-              @Override
-              public void onTranscodeProgress(String progress) {
-                textViewInfoProgress.setText(progress);
-                textViewInfoProgress.setTextColor(Color.BLUE);
-              }
+    try {
+      listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
+          tempDir, outputAudio, getDurationFile(inputVideo));
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
 
-              @Override
-              public void onTranscodeError(String error) {
-                textViewInfoProgress.setText(error);
-                textViewInfoProgress.setTextColor(Color.RED);
-              }
-
-              @Override
-              public void onTranscodeCanceled() {
-
-              }
-            });
   }
 
   public static long getDurationFile(String filePath){
@@ -284,7 +285,7 @@ public class TranscoderFragment extends Fragment {
           Environment.DIRECTORY_MOVIES));
 
       final String inPath = getPath(getActivity(), data.getData());
-      final Video videoToEdit = new Video(inPath);
+      final Video videoToEdit = new Video(inPath, 1f);
       videoToEdit.setTempPath(externalDir);
       final String exportedPath = videoToEdit.getTempPath();
      // progressBar.setMax(PROGRESS_BAR_MAX);

@@ -1,2 +1,3 @@
-v0.2.10
-    Improved adaptVideoToFormat job. Included support for rotate video if needed.
+v0.2.11
+- Added new player for audio files.
+- Update generate mixAudio, supporting more than two files.

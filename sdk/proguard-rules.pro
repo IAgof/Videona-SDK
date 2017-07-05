@@ -52,8 +52,6 @@
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.ApplyAudioFadeInFadeOutToVideo$* { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioCompositionExportSession { public *;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioCompositionExportSession$* { public *;}
--keep class com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer { public <methods>;}
--keep interface com.videonasocialmedia.videonamediaframework.pipeline.AudioMixer$OnMixAudioListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener { public <methods>;}
 -keep class com.videonasocialmedia.videonamediaframework.pipeline.VMCompositionExportSessionImpl { public <methods>;}
@@ -75,5 +73,12 @@
 
 
 -keepattributes Exceptions, InnerClasses
--renamesourcefileattribute SourceFile
+
+## setup for improving crashlytics reports
+-keepattributes *Annotation* # already present below!
 -keepattributes SourceFile,LineNumberTable
+# If you are using custom exceptions, add this line so that custom exception types are skipped during obfuscation:
+-keep public class * extends java.lang.Exception
+# -printmapping mapping.txt # ensure this is NOT present!!!
+-keep class com.crashlytics.** { *; }
+-dontwarn com.crashlytics.**

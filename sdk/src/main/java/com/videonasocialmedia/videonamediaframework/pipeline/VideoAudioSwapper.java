@@ -21,7 +21,6 @@ import java.util.List;
 
 public class VideoAudioSwapper implements ExporterVideoSwapAudio {
   private VideoAudioSwapperListener videoAudioSwapperListener;
-  private String audioFilePath;
 
   public VideoAudioSwapper() {
   }
@@ -29,7 +28,6 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
   @Override
   public void export(String videoFilePath, String newAudioFilePath, String outputFilePath,
                      VideoAudioSwapperListener videoAudioSwapperListener) {
-    this.audioFilePath = newAudioFilePath;
     this.videoAudioSwapperListener = videoAudioSwapperListener;
 
     Movie result = null;
@@ -37,10 +35,10 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
       result = getFinalMovie(videoFilePath, newAudioFilePath);
     } catch (IOException e) {
       e.printStackTrace();
+      videoAudioSwapperListener.onExportError(String.valueOf(e));
     }
     if (result != null) {
       saveFinalVideo(result, outputFilePath);
-      //tils.cleanDirectory(new File(videoExportedTempPath));
     }
   }
 
@@ -54,13 +52,12 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
     }
     ArrayList<String> audio = new ArrayList<>();
     audio.add(musicFile.getPath());
-    double movieDuration = getMovieDuration(movie);
-    result = swapAudio(movie, newAudioFilePath, movieDuration);
+    result = swapAudio(movie, newAudioFilePath);
 
     return result;
   }
 
-  private Movie swapAudio(Movie originalMovie, String audioPath, double movieDuration)
+  private Movie swapAudio(Movie originalMovie, String audioPath)
           throws IOException {
     Movie finalMovie = new Movie();
     List<Track> videoTrack = extractVideoTracks(originalMovie);
@@ -94,13 +91,6 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
     return videoTrack;
   }
 
-  private double getMovieDuration(Movie movie) {
-    double movieDuration = movie.getTracks().get(0).getDuration();
-    double timeScale = movie.getTimescale();
-    movieDuration = movieDuration / timeScale * 1000;
-    return movieDuration;
-  }
-
   private void saveFinalVideo(Movie result, String outputFilePath) {
     try {
       long start = System.currentTimeMillis();
@@ -108,13 +98,9 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
       long spent = System.currentTimeMillis() - start;
       Log.d("WRITING VIDEO FILE", "time spent in millis: " + spent);
       videoAudioSwapperListener.onExportSuccess();
-     // deleteAudioTempFile();
     } catch (IOException | NullPointerException e) {
       videoAudioSwapperListener.onExportError(String.valueOf(e));
     }
   }
 
-  private void deleteAudioTempFile() {
-    new File(audioFilePath).deleteOnExit();
-  }
 }
