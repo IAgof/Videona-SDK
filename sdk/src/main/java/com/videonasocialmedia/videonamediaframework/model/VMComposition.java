@@ -54,7 +54,7 @@ public class VMComposition {
    */
   private ArrayList<AudioTrack> audioTracks = new ArrayList<>();
 
-  private boolean isWatermarkActivated = true;
+  private boolean isWatermarkActivated;
 
   private Watermark watermark;
 
