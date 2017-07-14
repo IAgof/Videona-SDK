@@ -58,4 +58,10 @@ public class FileUtils {
     f.delete();
   }
 
+  public static void moveFile(String origPath, String dstPath) {
+    File orig = new File(origPath);
+    File dest = new File(dstPath);
+    orig.renameTo(dest);
+  }
+
 }

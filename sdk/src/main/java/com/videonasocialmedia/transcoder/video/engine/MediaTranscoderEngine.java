@@ -406,11 +406,10 @@ public class MediaTranscoderEngine {
         }
     }
 
-    public void adaptMediaToFormatStrategyAndRotation(String outputPath, MediaFormatStrategy formatStrategy,
-                                                      int rotation, Drawable fadeTransition,
-                                                      boolean isFadeActivated)
-        throws IOException, InterruptedException {
-
+    public void adaptMediaToFormatStrategyAndRotation(
+            String outputPath, MediaFormatStrategy formatStrategy, int rotation,
+            Drawable fadeTransition, boolean isFadeActivated)
+            throws IOException, InterruptedException {
         if (outputPath == null) {
             throw new NullPointerException("Output path cannot be null.");
         }

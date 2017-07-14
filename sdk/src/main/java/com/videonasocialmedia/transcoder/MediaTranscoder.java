@@ -213,7 +213,7 @@ public class MediaTranscoder {
             public Void call() throws Exception {
                 engine.setDataSource(inputFileProcessor.getInFileDescriptor());
                 engine.adaptMediaToFormatStrategyAndRotation(destVideoPath, outFormatStrategy,
-                    rotation, drawableTransition, isFadeActivated);
+                        rotation, drawableTransition, isFadeActivated);
                 return null;
             }
         });
@@ -223,19 +223,17 @@ public class MediaTranscoder {
         return transcodingJob;
     }
 
-    public ListenableFuture<Boolean> mixAudioFiles(final List<Media> mediaList,
-                                                   final String tempDirectory,
-                                                   final String outputFile,
-                                                   final long durationOutputFile) throws IOException  {
+    public ListenableFuture<Boolean> mixAudioFiles(
+            final List<Media> mediaList, final String tempDirectory, final String outputFile,
+            final long outputFileDuration) throws IOException  {
         final ListenableFuture<Boolean> transcodingJob = executorPool.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 AudioMixer mixer = new AudioMixer(mediaList, tempDirectory,
-                        outputFile, durationOutputFile);
+                        outputFile, outputFileDuration);
                 return mixer.export();
             }
         });
-
         return transcodingJob;
     }
 

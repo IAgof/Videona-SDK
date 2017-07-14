@@ -94,18 +94,12 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             exportListener.onExportProgress("Joining the videos", EXPORT_STAGE_JOIN_VIDEOS);
             Movie result = createMovieFromComposition(videoTrimmedPaths);
             if (result != null) {
-                tempExportFilePath = outputFilesDirectory + File.separator
-                    + "V_Appended.mp4";
+                tempExportFilePath = outputFilesDirectory + File.separator + "V_Appended.mp4";
                 saveFinalVideo(result, tempExportFilePath);
-                long durationMovie = FileUtils.getDurationFile(tempExportFilePath);
-                if(vmComposition.hasWatermark()){
-                    String tempFileAppended = tempExportFilePath;
-                    applyWatermarkToVideoAndWaitForFinish(tempExportFilePath);
-                    FileUtils.removeFile(tempFileAppended);
-
-                }
+                long movieDuration = FileUtils.getDurationFile(tempExportFilePath);
+                applyWatermark();
                 mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
-                    tempExportFilePath, durationMovie);
+                    tempExportFilePath, movieDuration);
             }
         } catch (IOException e) {
             exportListener.onExportError(String.valueOf(e));
@@ -113,6 +107,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         } catch (NullPointerException npe) {
             exportListener.onExportError(String.valueOf(npe));
             npe.printStackTrace(); 
+        }
+    }
+
+    private void applyWatermark() {
+        if (vmComposition.hasWatermark()) {
+            String tempFileAppended = tempExportFilePath;
+            applyWatermarkToVideoAndWaitForFinish(tempExportFilePath);
+            FileUtils.removeFile(tempFileAppended);
         }
     }
 
@@ -132,13 +134,12 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
-    private List<Media> getMediasAndVolumesToMixFromProjectTracks(String exportedVideoAppendedPath) {
-
+    private List<Media> getMediasAndVolumesToMixFromProjectTracks(
+            String exportedVideoAppendedPath) {
         List<Media> mediaList = new ArrayList<>();
-
-        if(vmComposition.hasVideos()) {
+        if (vmComposition.hasVideos()) {
             float videoVolume;
-            if (vmComposition.getMediaTrack().isMute()) {
+            if (vmComposition.getMediaTrack().isMuted()) {
                 videoVolume = 0f;
             } else {
                 videoVolume = vmComposition.getMediaTrack().getVolume();
@@ -146,30 +147,28 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Video video = new Video(exportedVideoAppendedPath, videoVolume);
             mediaList.add(video);
         }
-
-        if(vmComposition.hasMusic()) {
+        if (vmComposition.hasMusic()) {
             Music music = vmComposition.getMusic();
             AudioTrack musicTrack = vmComposition.getAudioTracks()
                 .get(Constants.INDEX_AUDIO_TRACK_MUSIC);
-            if(musicTrack.isMute()){
+            if (musicTrack.isMuted()) {
                 music.setVolume(0f);
             } else {
                 music.setVolume(musicTrack.getVolume());
             }
             mediaList.add(music);
         }
-        if(vmComposition.hasVoiceOver()) {
+        if (vmComposition.hasVoiceOver()) {
             Music voiceOver = vmComposition.getVoiceOver();
             AudioTrack voiceOverTrack = vmComposition.getAudioTracks()
                 .get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER);
-            if(voiceOverTrack.isMute()){
+            if(voiceOverTrack.isMuted()){
                 voiceOver.setVolume(0f);
             } else {
                 voiceOver.setVolume(voiceOverTrack.getVolume());
             }
             mediaList.add(voiceOver);
         }
-
         return mediaList;
     }
 
@@ -331,25 +330,25 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date()) + ".mp4";
     }
 
-    protected void mixAudio(List<Media> mediaList, final String tempVideoAppendedPath,
-                            long durationMovie) {
-      exportListener.onExportProgress("Mixing audio", EXPORT_STAGE_MIX_AUDIO);
-      final String finalVideoExportedFilePath = outputFilesDirectory
+    protected void mixAudio(List<Media> mediaList, final String videoPath,
+                            long movieDuration) {
+        exportListener.onExportProgress("Mixing audio", EXPORT_STAGE_MIX_AUDIO);
+        final String finalVideoExportedFilePath = outputFilesDirectory
                 + getNewExportedVideoFileName();
 
-      boolean resultMixAudioFiles = applyMixAudioAndWaitForFinish(mediaList, durationMovie);
-      if(!resultMixAudioFiles){
+        boolean resultMixAudioFiles = applyMixAudioAndWaitForFinish(mediaList, movieDuration);
+        if (!resultMixAudioFiles) {
           Log.d(TAG, "error mixing audio, applyMixAudioAndWaitForFinish");
           exportListener.onExportProgress("error Mixing audio", EXPORT_STAGE_MIX_AUDIO);
           exportListener.onExportError("error mixing audio");
           return;
-      }
+        }
 
-      exportListener.onExportProgress("Applying mixed audio", EXPORT_STAGE_APPLY_AUDIO_MIXED);
-      Log.d(TAG, "export, swapping audio mixed in video appended");
+        exportListener.onExportProgress("Applying mixed audio", EXPORT_STAGE_APPLY_AUDIO_MIXED);
+        Log.d(TAG, "export, swapping audio mixed in video appended");
         // TODO:(alvaro.martinez) 19/04/17 Implement ListenableFuture in VideoAudioSwapper and remove listener
         VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
-        videoAudioSwapper.export(tempVideoAppendedPath, outputAudioMixedFile,
+        videoAudioSwapper.export(videoPath, outputAudioMixedFile,
             finalVideoExportedFilePath,
             new ExporterVideoSwapAudio.VideoAudioSwapperListener() {
                 @Override
@@ -364,9 +363,9 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                   // TODO(jliarte): 23/12/16 onSuccess will be called twice in this case!
                   Log.d(TAG, "export, video with music/voiceOver exported, success "
                       + finalVideoExportedFilePath);
-                  FileUtils.removeFile(tempVideoAppendedPath);
+                  FileUtils.removeFile(videoPath);
                     Log.d(TAG, "export, video appended, removed "
-                        + tempVideoAppendedPath);
+                        + videoPath);
                   FileUtils.cleanDirectoryFiles(new File(tempAudioPath));
                   exportListener.onExportSuccess(
                       new Video(finalVideoExportedFilePath, Video.DEFAULT_VOLUME));
@@ -374,13 +373,12 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             });
     }
 
-    public boolean applyMixAudioAndWaitForFinish(List<Media> mediaList, long durationMovie) {
-
+    public boolean applyMixAudioAndWaitForFinish(List<Media> mediaList, long movieDuration) {
         MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
         TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
         ListenableFuture<Boolean> mixAudioJob =
-            transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath, outputAudioMixedFile,
-                durationMovie);
+            transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath,
+                    outputAudioMixedFile, movieDuration);
         boolean result = false;
         try {
             result = mixAudioJob.get();
