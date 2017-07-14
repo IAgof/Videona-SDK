@@ -241,9 +241,12 @@ public class TranscoderHelper {
       @Override
       public void run() {
         ListenableFuture<Void> transcodingJob = null;
+        String tempPath;
         try {
+          tempPath = videoToAdapt.getVolume() != Video.DEFAULT_VOLUME
+                  ? videoToAdapt.getTempPath() : destVideoPath;
           transcodingJob = mediaTranscoder.transcodeVideoWithRotationToDefaultFormat(
-                  videoToAdapt.getMediaPath(), format, videoToAdapt.getTempPath(), rotation,
+                  videoToAdapt.getMediaPath(), format, tempPath, rotation,
                   fadeTransition, isFadeActivated);
         } catch (IOException e) {
           e.printStackTrace();
@@ -254,7 +257,7 @@ public class TranscoderHelper {
         if (videoToAdapt.getVolume() != Video.DEFAULT_VOLUME) {
           transcodingJob = Futures.transform(transcodingJob, getAudioGainApplierFunction());
         } else {
-          FileUtils.moveFile(videoToAdapt.getTempPath(), destVideoPath);
+//          FileUtils.moveFile(videoToAdapt.getTempPath(), destVideoPath);
           Log.d(TAG, "Moving file " + videoToAdapt.getTempPath() + " to " + destVideoPath);
           // (jliarte): 14/07/17 seems that application expects the mediapath to be the temp file
 //          videoToAdapt.setMediaPath(destVideoPath);
@@ -391,7 +394,7 @@ public class TranscoderHelper {
 
   private void notifySuccessVideoTranscodedToListener(Video videoToEdit,
                                                       TranscoderHelperListener listener) {
-    Log.d(TAG, "notifySuccessVideoTranscodedToListener");
+    Log.d(TAG, "notifySuccessVideoTranscodedToListener " + videoToEdit.getMediaPath());
     listener.onSuccessTranscoding(videoToEdit);
   }
 
