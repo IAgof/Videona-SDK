@@ -81,6 +81,7 @@ public class VMComposition {
       audioTracks.add(new AudioTrack(audioTrack));
     }
     this.watermark = new Watermark(vmComposition.getWatermark().getResourceWatermarkFilePath());
+    this.isWatermarkActivated = vmComposition.hasWatermark();
     this.profile = new Profile(vmComposition.getProfile());
   }
 
