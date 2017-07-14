@@ -319,7 +319,7 @@ public class TranscoderFragment extends Fragment {
             videoToEdit.setStartTime(5000);
             videoToEdit.setStopTime(10000);
 
-            transcoderHelper.generateOutputVideoWithTrimming(fadeTransition,
+            transcoderHelper.generateOutputVideoWithTrimmingAsync(fadeTransition,
                 isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"", listener);
 
           break;
@@ -329,8 +329,8 @@ public class TranscoderFragment extends Fragment {
           String destFinalPath = new File(videoToEdit.getMediaPath()).getParent() + File.separator
               + "videoAdapted.mp4";
           try {
-            transcoderHelper.adaptVideoWithRotationToDefaultFormat(videoToEdit, new VideonaFormat(),
-                destFinalPath, rotation, fadeTransition, isVideoFadeActivated, listener);
+            transcoderHelper.adaptVideoWithRotationToDefaultFormatAsync(videoToEdit, new VideonaFormat(),
+                destFinalPath, rotation, fadeTransition, isVideoFadeActivated, listener, videoToEdit.getTempPath());
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -343,8 +343,9 @@ public class TranscoderFragment extends Fragment {
           videoToEdit.setClipTextPosition("CENTER");
           //videoToEdit.setClipTextPosition(TextEffect.TextPosition.TOP.name());
 
-          transcoderHelper.generateOutputVideoWithOverlayImage(fadeTransition, isVideoFadeActivated,
-              isAudioFadeActivated, videoToEdit, new VideonaFormat(), "", listener);
+          transcoderHelper.generateOutputVideoWithOverlayImageAsync(fadeTransition,
+                  isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "",
+                  listener);
 
           break;
         }
