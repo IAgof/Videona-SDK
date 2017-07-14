@@ -31,7 +31,7 @@ public class VideoAudioFadeGenerator {
 
   public void getAudioFadeInFadeOutFromVideo(String videoToEditPath, int timeFadeInMs,
                                              int timeFadeOutMs) throws IOException {
-    transcoderHelper.generateFileWithAudioFadeInFadeOut(videoToEditPath, timeFadeInMs,
+    transcoderHelper.generateFileWithAudioFadeInFadeOutAsync(videoToEditPath, timeFadeInMs,
             timeFadeOutMs, tempDirectoryFilesAudio, tempFileAudio, new MediaTranscoderListener() {
               @Override
               public void onTranscodeSuccess(String outputFile) {

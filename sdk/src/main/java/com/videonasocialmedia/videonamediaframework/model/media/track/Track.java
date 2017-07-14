@@ -388,7 +388,7 @@ public class Track {
         this.volume = volume;
     }
 
-    public boolean isMute() {
+    public boolean isMuted() {
         return mute;
     }
 
