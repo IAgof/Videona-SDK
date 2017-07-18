@@ -407,8 +407,7 @@ public class MediaTranscoderEngine {
     }
 
     public void adaptMediaToFormatStrategyAndRotation(
-            String outputPath, MediaFormatStrategy formatStrategy, int rotation,
-            Drawable fadeTransition, boolean isFadeActivated)
+            String outputPath, MediaFormatStrategy formatStrategy, int rotation)
             throws IOException, InterruptedException {
         if (outputPath == null) {
             throw new NullPointerException("Output path cannot be null.");
@@ -424,7 +423,7 @@ public class MediaTranscoderEngine {
             setupMetadata();
             setupOutputFormat(formatStrategy);
             setupAudioTranscoder();
-            setupVideoTranscoder(rotation, fadeTransition, isFadeActivated);
+            setupVideoTranscoder(rotation, null, false);
             //setupTrackTranscoders(formatStrategy);
             runPipelines();
             mMuxer.stop();

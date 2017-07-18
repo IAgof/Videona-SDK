@@ -117,6 +117,10 @@ public class Video extends Media {
         return tempPath;
     }
 
+    public void resetTempPath() {
+        tempPath = null;
+    }
+
     public void setTempPath(String tempDirectory) {
         // TODO(jliarte): 18/11/16 tmp path should not be a constant depending on Android SDK but
         //                taken from Project path or VMComposition path and passed to constructor

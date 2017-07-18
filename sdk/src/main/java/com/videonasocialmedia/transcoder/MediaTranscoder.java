@@ -201,9 +201,8 @@ public class MediaTranscoder {
     public ListenableFuture<Void>
     transcodeVideoWithRotationToDefaultFormat(final String origVideoPath,
                                               final MediaFormatStrategy outFormatStrategy,
-                                              final String destVideoPath, final int rotation,
-                                              final Drawable drawableTransition,
-                                              final boolean isFadeActivated) throws IOException {
+                                              final String destVideoPath, final int rotation)
+            throws IOException {
         final InputFileProcessor inputFileProcessor = new InputFileProcessor(origVideoPath)
                 .processInputFile();
         final MediaTranscoderEngine engine = new MediaTranscoderEngine("0");
@@ -213,7 +212,7 @@ public class MediaTranscoder {
             public Void call() throws Exception {
                 engine.setDataSource(inputFileProcessor.getInFileDescriptor());
                 engine.adaptMediaToFormatStrategyAndRotation(destVideoPath, outFormatStrategy,
-                        rotation, drawableTransition, isFadeActivated);
+                        rotation);
                 return null;
             }
         });

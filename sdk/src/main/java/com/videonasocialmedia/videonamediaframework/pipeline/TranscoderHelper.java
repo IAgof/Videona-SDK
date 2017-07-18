@@ -235,8 +235,8 @@ public class TranscoderHelper {
 
   public void adaptVideoWithRotationToDefaultFormatAsync(
           final Video videoToAdapt, final VideonaFormat format, final String destVideoPath,
-          final int rotation, final Drawable fadeTransition, final boolean isFadeActivated,
-          final TranscoderHelperListener listener, final String tempDirectory) throws IOException {
+          final int rotation, final TranscoderHelperListener listener, final String tempDirectory)
+          throws IOException {
     new Thread(new Runnable() {
       @Override
       public void run() {
@@ -246,8 +246,7 @@ public class TranscoderHelper {
           tempPath = videoToAdapt.getVolume() != Video.DEFAULT_VOLUME
                   ? videoToAdapt.getTempPath() : destVideoPath;
           transcodingJob = mediaTranscoder.transcodeVideoWithRotationToDefaultFormat(
-                  videoToAdapt.getMediaPath(), format, tempPath, rotation,
-                  fadeTransition, isFadeActivated);
+                  videoToAdapt.getMediaPath(), format, tempPath, rotation);
         } catch (IOException e) {
           e.printStackTrace();
           listener.onErrorTranscoding(videoToAdapt, e.getMessage());
