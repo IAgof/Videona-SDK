@@ -231,7 +231,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
           // detect end of trimming and play next clip or stop
           if (isCurrentClipEnded()) {
-            playNextClip();
+            if (player != null) {
+              player.stop();
+            }
+            // (jliarte): 18/07/17 if a clip duration is reported greater than actual, next clip
+            // was never been played
+//            playNextClip();
           }
         }
       } catch (Exception exception) {
@@ -239,6 +244,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
         Log.d(TAG, String.valueOf(exception));
       }
 
+      if (seekBar.getProgress() >= (int) clipTimesRanges.get(clipTimesRanges.size()-1).getUpper()) {
+        pausePreview();
+      }
       if (isPlaying()) {
         seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
       }
@@ -861,14 +869,17 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
           // (jliarte): 14/10/16 as playNextClip() was called from both here and
           // updateSeekbarProgress thread, sometimes it's called twice in a clip end, causing
           // a double currentClipIndex++ and thus skipping a clip
-          //          playNextClip();
+          // (jliarte): 18/07/17 recovered again playNextClip here as some clips duration is
+          // reported less than actual causing VideonaPlayer not reaching end of clips, now we stop
+          // the player if end of clip is detected and in both cases we end up here!
+                    playNextClip();
         }
         break;
       case ExoPlayer.STATE_IDLE:
         break;
       case ExoPlayer.STATE_PREPARING:
         break;
-      case ExoPlayer.STATE_READY:
+      case ExoPlayer.STATE_READY: // state 4
         updateClipTextPreview();
         if (playWhenReady) {
           // player.seekAudioTo(getClipPositionFromTimeLineTime());
