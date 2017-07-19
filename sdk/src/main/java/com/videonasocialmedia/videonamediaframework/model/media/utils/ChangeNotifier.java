@@ -28,7 +28,9 @@ public class ChangeNotifier {
   public void notifyChanges() {
     for (WeakReference<ElementChangedListener> listenerRef : changeListeners) {
       ElementChangedListener listener = listenerRef.get();
-      listener.onObjectUpdated();
+      if (listener != null) {
+        listener.onObjectUpdated();
+      }
     }
   }
 
