@@ -16,6 +16,8 @@ import android.media.MediaMetadata;
 import com.videonasocialmedia.videonamediaframework.model.media.transitions.Transition;
 import com.videonasocialmedia.videonamediaframework.model.licensing.License;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
+import com.videonasocialmedia.videonamediaframework.model.media.utils.ChangeNotifier;
+import com.videonasocialmedia.videonamediaframework.model.media.utils.ElementChangedListener;
 
 import java.util.ArrayList;
 
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 
 public abstract class Media extends MediaElement {
 
+    private final ChangeNotifier changeNotifier = new ChangeNotifier();
     /**
      * Title of the media. Should be the video name in the social network
      */
@@ -267,4 +270,17 @@ public abstract class Media extends MediaElement {
     public void setVolume(float volume){
         this.volume = volume;
     }
+
+    public void addListener(ElementChangedListener listener) {
+        changeNotifier.addListener(listener);
+    }
+
+    public void removeListener(ElementChangedListener listener) {
+        changeNotifier.removeListener(listener);
+    }
+
+    public void notifyChanges() {
+        changeNotifier.notifyChanges();
+    }
+
 }

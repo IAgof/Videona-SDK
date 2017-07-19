@@ -231,9 +231,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
           // detect end of trimming and play next clip or stop
           if (isCurrentClipEnded()) {
-            if (player != null) {
-              player.stop();
-            }
+            stopPlayer();
             // (jliarte): 18/07/17 if a clip duration is reported greater than actual, next clip
             // was never been played
 //            playNextClip();
@@ -359,7 +357,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
   private void initClipPreview(Video clipToPlay) {
     if (rendererBuildingState == RENDERER_BUILDING_STATE_BUILT) {
-      player.stop();
+      stopPlayer();
     }
     rendererBuilder.cancel();
     videoFormat = null;
@@ -371,6 +369,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
             this.getMainHandler());
     } else {
       onRenderers(nextClipRenderers, (DefaultBandwidthMeter) bandwidthMeter);
+    }
+  }
+
+  private void stopPlayer() {
+    if (player != null) {
+      player.stop();
     }
   }
 

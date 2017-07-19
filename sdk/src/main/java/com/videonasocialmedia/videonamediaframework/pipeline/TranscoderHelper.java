@@ -302,7 +302,7 @@ public class TranscoderHelper {
               listener.onErrorTranscoding(videoToAdapt, e.getMessage());
             } catch (InterruptedException e) {
               e.printStackTrace();
-              listener.onErrorTranscoding(videoToAdapt, e.getMessage());
+//              listener.onErrorTranscoding(videoToAdapt, e.getMessage());
             } catch (ExecutionException e) {
               e.printStackTrace();
             }
@@ -317,8 +317,11 @@ public class TranscoderHelper {
                                              TranscoderHelperListener listener, Video videoToEdit) {
     try {
       chainedTranscodingJob.get();
-    } catch (InterruptedException | ExecutionException e) {
+    } catch (ExecutionException e) {
       listener.onErrorTranscoding(videoToEdit, e.getMessage());
+      e.printStackTrace();
+    } catch (InterruptedException e) {
+      // TODO(jliarte): 18/07/17 seems to be also catched when the job has ended
       e.printStackTrace();
     } finally {
       if(!chainedTranscodingJob.isDone())
