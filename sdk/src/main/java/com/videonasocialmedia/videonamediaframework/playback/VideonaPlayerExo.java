@@ -1010,7 +1010,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   }
 
   private void pushSurface(boolean blockForSurfacePush) {
-    if (videoRenderer == null) {
+    if (videoRenderer == null || player == null) {
       return;
     }
 
