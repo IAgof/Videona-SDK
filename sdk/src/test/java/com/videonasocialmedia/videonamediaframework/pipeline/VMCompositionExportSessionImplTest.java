@@ -17,6 +17,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrame
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
 import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResolution;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
+import com.videonasocialmedia.videonamediaframework.muxer.IntermediateFileException;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
@@ -95,7 +96,7 @@ public class VMCompositionExportSessionImplTest {
 //  }
 
   @Test
-  public void createMovieFromCompositionCallsAppender() throws IOException {
+  public void createMovieFromCompositionCallsAppender() throws IOException, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     VMCompositionExportSessionImpl exporter = getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(exporter);
@@ -114,7 +115,7 @@ public class VMCompositionExportSessionImplTest {
 
   @Test
   public void createMovieFromCompositionNeverCallsAppenderWithoutAudioIfMusicIsSet()
-          throws IOException, IllegalItemOnTrack {
+          throws IOException, IllegalItemOnTrack, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     Music music = new Music("music/path", 1f, 0);
     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(music);
@@ -130,7 +131,7 @@ public class VMCompositionExportSessionImplTest {
 
 
   @Test
-  public void exportCallsCreateMovieFromComposition() throws IOException {
+  public void exportCallsCreateMovieFromComposition() throws IOException, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -147,7 +148,7 @@ public class VMCompositionExportSessionImplTest {
 
   @Test
   public void createMovieFromCompositionCallsAppenderWithOriginalVideoIfCompositionHasNotMusicAndHasNotVoiceOver()
-          throws IOException {
+          throws IOException, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     assert ! vmComposition.hasMusic();
     assert ! vmComposition.hasVoiceOver();
@@ -163,7 +164,7 @@ public class VMCompositionExportSessionImplTest {
 
   @Test
   public void createMovieFromCompositionAppenderWithOriginalVideoIfCompositionHasMusic()
-          throws IllegalItemOnTrack, IOException {
+          throws IllegalItemOnTrack, IOException, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     Music music = new Music("music/path", 0);
     assert music.getVolume() == 0.5f; // default music volume 0.5f
@@ -185,7 +186,7 @@ public class VMCompositionExportSessionImplTest {
 
   @Test
   public void createMovieFromCompositionCallsAppenderWithOriginalVideoMusicIfCompositionMusicVolumeLowerThan1()
-          throws IllegalItemOnTrack, IOException {
+          throws IllegalItemOnTrack, IOException, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     Music voiceOver = new Music("voice/over/path", 0.9f, 0);
     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(voiceOver);
@@ -200,7 +201,7 @@ public class VMCompositionExportSessionImplTest {
   }
 
   @Test
-  public void exportCallsAddWatermarkIfWatermarkIsSelectedInComposition() throws IOException {
+  public void exportCallsAddWatermarkIfWatermarkIsSelectedInComposition() throws IOException, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     vmComposition.setWatermarkActivated(true);
 
@@ -221,7 +222,7 @@ public class VMCompositionExportSessionImplTest {
   }
 
   @Test
-  public void exportDoesNotCallsAddWatermarkIfWatermarkIsNotSelectedInComposition() throws IOException {
+  public void exportDoesNotCallsAddWatermarkIfWatermarkIsNotSelectedInComposition() throws IOException, IntermediateFileException {
     VMComposition vmComposition = new VMComposition();
     vmComposition.setWatermarkActivated(false);
 
@@ -244,7 +245,7 @@ public class VMCompositionExportSessionImplTest {
   @NonNull
   private VMCompositionExportSessionImpl getVmCompositionExportSession(VMComposition vmComposition) {
     return new VMCompositionExportSessionImpl(vmComposition, "result/path",
-            "temp/path", mockedExportEndedListener);
+            "temp/path", "tmp/audio/path", mockedExportEndedListener);
   }
 
 }

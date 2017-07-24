@@ -78,6 +78,10 @@ dependencies {
 
     compile 'com.google.android.exoplayer:exoplayer:r1.5.10'
     compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
+//    compile 'com.googlecode.mp4parser:isoparser:1.1.22'
+    // TODO(jliarte) 20170723: try to upgrade isoparser with new package name for branch 2.x
+//    compile 'org.mp4parser:isoparser:1.9.29'
+
 
     compile 'com.google.guava:guava:19.0'
 }

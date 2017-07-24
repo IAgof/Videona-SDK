@@ -1,5 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
+import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
@@ -8,6 +9,7 @@ import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
+import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
@@ -15,6 +17,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
+import com.videonasocialmedia.videonamediaframework.muxer.IntermediateFileException;
 import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.VideoTrimmer;
 import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
@@ -40,7 +43,8 @@ import java.util.concurrent.ExecutionException;
  */
 public class VMCompositionExportSessionImpl implements VMCompositionExportSession {
     private static final int MAX_SECONDS_WAITING_FOR_TEMP_FILES = 600;
-    private static final String TAG = "VMCompositionExportSession implementation";
+    private static final String TAG = VMCompositionExportSessionImpl.class.getCanonicalName();
+    public static final int MAX_NUM_TRIES_TO_EXPORT_VIDEO = 3;
     private final String outputFilesDirectory;
     private final String outputAudioMixedFile;
     private String tempAudioPath;
@@ -53,15 +57,17 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     protected Appender appender;
     private String tempExportFilePath;
     private String tempExportFileWatermark;
+    private String intermediatesTempAudioFadeDirectory;
 
-    public VMCompositionExportSessionImpl(VMComposition vmComposition, String outputFilesDirectory,
-                                          String tempFilesDirectory,
-                                          ExportListener exportListener) {
+    public VMCompositionExportSessionImpl(
+            VMComposition vmComposition, String outputFilesDirectory, String tempFilesDirectory, 
+            String intermediatesTempAudioFadeDirectory, ExportListener exportListener) {
         // TODO(jliarte): 29/04/17 should move the parameters to export method to have them defined by the interface?
         this.exportListener = exportListener;
         this.vmComposition = vmComposition;
         this.outputFilesDirectory = outputFilesDirectory;
-        tempAudioPath = tempFilesDirectory;
+        this.tempAudioPath = tempFilesDirectory;
+        this.intermediatesTempAudioFadeDirectory = intermediatesTempAudioFadeDirectory;
         FileUtils.createDirectory(tempAudioPath);
         outputAudioMixedFile = tempFilesDirectory + File.separator + Constants.MIXED_AUDIO_FILE_NAME;
         tempVideoExportedPath = outputFilesDirectory + File.separator + "export";
@@ -106,7 +112,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             e.printStackTrace();
         } catch (NullPointerException npe) {
             exportListener.onExportError(String.valueOf(npe));
-            npe.printStackTrace(); 
+            npe.printStackTrace();
+        } catch (IntermediateFileException intermediateFileError) {
+            exportListener.onExportError(String.valueOf(intermediateFileError));
+            intermediateFileError.printStackTrace();
         }
     }
 
@@ -227,9 +236,66 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         return videoTrimmedPaths;
     }
 
-    protected Movie createMovieFromComposition(ArrayList<String> videoTranscodedPaths)
-            throws IOException {
-        return appender.appendVideos(videoTranscodedPaths, true);
+    protected Movie createMovieFromComposition(final ArrayList<String> videoTranscodedPaths)
+            throws IOException, IntermediateFileException {
+        Movie movie = null;
+        try {
+            movie = appender.appendVideos(videoTranscodedPaths, true);
+        } catch (final IntermediateFileException intermediateFileError) {
+            Log.d(TAG, "Catched intermediate files error");
+            intermediateFileError.printStackTrace();
+            final int failedVideoIndex = intermediateFileError.getVideoIndex();
+            Video videoToUpdate = (Video) vmComposition.getMediaTrack().getItems()
+                    .get(failedVideoIndex);
+            videoToUpdate.resetNumTriesToExportVideo();
+            if (videoToUpdate.getNumTriesToExportVideo() <= MAX_NUM_TRIES_TO_EXPORT_VIDEO) {
+                regenerateIntermediateFor(failedVideoIndex,
+                        intermediateFileError.getMediaPath(),
+                        new TranscoderHelperListener() {
+                            @Override
+                            public void onSuccessTranscoding(Video video) {
+                                video.notifyChanges();
+                                videoTranscodedPaths.set(failedVideoIndex, video.getTempPath());
+                            }
+
+                            @Override
+                            public void onErrorTranscoding(Video video, String message) {
+                                video.increaseNumTriesToExportVideo();
+                                Log.d(TAG, "error updating intermediate for video "
+                                        + video.getMediaPath());
+                            }
+                        });
+                waitForVideoTempFilesFinished();
+                return createMovieFromComposition(videoTranscodedPaths);
+            } else {
+                throw intermediateFileError;
+            }
+        }
+        return movie;
+    }
+
+    private void regenerateIntermediateFor(int videoIndex, String mediaPath,
+                                           TranscoderHelperListener transcoderHelperListener) {
+        MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+        TranscoderHelper transcoderHelper =
+                new TranscoderHelper(mediaTranscoder);
+
+        Video videoToEdit = (Video) vmComposition.getMediaTrack().getItems().get(videoIndex);
+        Drawable drawableFadeTransition = vmComposition.getDrawableFadeTransitionVideo();
+        boolean isVideoFadeTransitionActivated = vmComposition.isVideoFadeTransitionActivated();
+        boolean isAudioFadeTransitionActivated = vmComposition.isAudioFadeTransitionActivated();
+        // TODO(jliarte): 17/03/17 move this logic to TranscoderHelper?
+        // copied from /data/repos/videona/ViMoJo/app/src/main/java/com/videonasocialmedia/vimojo/export/domain/RelaunchTranscoderTempBackgroundUseCase.java
+        VideonaFormat videonaFormat = vmComposition.getVideoFormat();
+        if (videoToEdit.hasText()) {
+            transcoderHelper.generateOutputVideoWithOverlayImageAndTrimmingAsync(drawableFadeTransition,
+                    isVideoFadeTransitionActivated,isAudioFadeTransitionActivated, videoToEdit,
+                    videonaFormat, intermediatesTempAudioFadeDirectory, transcoderHelperListener);
+        } else {
+            transcoderHelper.generateOutputVideoWithTrimmingAsync(drawableFadeTransition,
+                    isVideoFadeTransitionActivated, isAudioFadeTransitionActivated, videoToEdit,
+                    videonaFormat, intermediatesTempAudioFadeDirectory, transcoderHelperListener);
+        }
     }
 
     protected void saveFinalVideo(Movie result, String outputFilePath) throws IOException {
