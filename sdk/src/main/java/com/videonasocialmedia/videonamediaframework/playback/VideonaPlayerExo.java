@@ -234,7 +234,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
             stopPlayer();
             // (jliarte): 18/07/17 if a clip duration is reported greater than actual, next clip
             // was never been played
-//            playNextClip();
+            playNextClip();
           }
         }
       } catch (Exception exception) {
@@ -876,7 +876,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
           // (jliarte): 18/07/17 recovered again playNextClip here as some clips duration is
           // reported less than actual causing VideonaPlayer not reaching end of clips, now we stop
           // the player if end of clip is detected and in both cases we end up here!
-                    playNextClip();
+//                    playNextClip();
         }
         break;
       case ExoPlayer.STATE_IDLE:
