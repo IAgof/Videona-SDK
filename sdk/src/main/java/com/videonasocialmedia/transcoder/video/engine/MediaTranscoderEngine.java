@@ -256,7 +256,7 @@ public class MediaTranscoderEngine {
                 mMuxer = null;
             }
         } catch (RuntimeException e) {
-            Log.e(TAG, "Failed to release muxer.", e);
+            Log.d(TAG, "Failed to release muxer.", e);
         }
     }
 

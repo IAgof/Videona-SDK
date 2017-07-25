@@ -968,10 +968,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
         : renderers[TYPE_AUDIO] instanceof MediaCodecTrackRenderer
         ? ((MediaCodecTrackRenderer) renderers[TYPE_AUDIO]).codecCounters : null;
     this.bandwidthMeter = bandwidthMeter;
-    pushSurface(false);
 
+    if (player == null) {
+      // TODO(jliarte): 25/07/17 should reinit components?
+      return;
+    }
+    pushSurface(false);
     player.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
-    //player.prepare(renderers);
     player.seekTo(getClipPositionFromTimeLineTime());
     if (videoHasMusic()) {
       seekAudioTo(currentTimePositionInList);
