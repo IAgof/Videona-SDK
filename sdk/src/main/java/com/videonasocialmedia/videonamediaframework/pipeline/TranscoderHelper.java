@@ -25,6 +25,8 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.ExecutionException;
 import java.util.List;
+import java.util.concurrent.ScheduledThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
 
 public class TranscoderHelper {
 
@@ -73,7 +75,7 @@ public class TranscoderHelper {
               MoreExecutors.newDirectExecutorService());
         } else {
           chainedTranscodingJob = Futures.transform(transcodingJob,
-              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+              getSuccessNotifierFunction(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
         waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
@@ -123,7 +125,7 @@ public class TranscoderHelper {
               MoreExecutors.newDirectExecutorService());
         } else {
           chainedTranscodingJob = Futures.transform(transcodingJob,
-              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+              getSuccessNotifierFunction(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
         waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
@@ -162,7 +164,7 @@ public class TranscoderHelper {
               MoreExecutors.newDirectExecutorService());
         } else {
           chainedTranscodingJob = Futures.transform(transcodingJob,
-              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+              getSuccessNotifierFunction(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
         waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
@@ -225,7 +227,7 @@ public class TranscoderHelper {
               MoreExecutors.newDirectExecutorService());
         } else {
           chainedTranscodingJob = Futures.transform(transcodingJob,
-              updateVideo(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
+              getSuccessNotifierFunction(videoToEdit, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToEdit.setTranscodingTask(chainedTranscodingJob);
         waitTranscodingJobAndCheckState(chainedTranscodingJob, listener, videoToEdit);
@@ -237,7 +239,7 @@ public class TranscoderHelper {
           final Video videoToAdapt, final VideonaFormat format, final String destVideoPath,
           final int rotation, final TranscoderHelperListener listener, final String tempDirectory)
           throws IOException {
-    new Thread(new Runnable() {
+    Runnable runnable = new Runnable() {
       @Override
       public void run() {
         ListenableFuture<Void> transcodingJob = null;
@@ -257,11 +259,11 @@ public class TranscoderHelper {
           transcodingJob = Futures.transform(transcodingJob, getAudioGainApplierFunction());
         } else {
 //          FileUtils.moveFile(videoToAdapt.getTempPath(), destVideoPath);
-          Log.d(TAG, "Moving file " + videoToAdapt.getTempPath() + " to " + destVideoPath);
+//          Log.d(TAG, "Moving file " + videoToAdapt.getTempPath() + " to " + destVideoPath);
           // (jliarte): 14/07/17 seems that application expects the mediapath to be the temp file
 //          videoToAdapt.setMediaPath(destVideoPath);
           transcodingJob = Futures.transform(transcodingJob,
-                  updateVideo(videoToAdapt, listener), MoreExecutors.newDirectExecutorService());
+                  getSuccessNotifierFunction(videoToAdapt, listener), MoreExecutors.newDirectExecutorService());
         }
         videoToAdapt.setTranscodingTask(transcodingJob);
         waitTranscodingJobAndCheckState(transcodingJob, listener, videoToAdapt);
@@ -310,7 +312,10 @@ public class TranscoderHelper {
           }
         };
       }
-    }).start();
+    };
+    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
+    executor.schedule(runnable, 2, TimeUnit.SECONDS);
+//    new Thread(runnable).start();
   }
 
   private void waitTranscodingJobAndCheckState(ListenableFuture<Void> chainedTranscodingJob,
@@ -349,7 +354,7 @@ public class TranscoderHelper {
     }).start();
   }
 
-  private Function<? super Void, ? extends Void> updateVideo(
+  private Function<? super Void, ? extends Void> getSuccessNotifierFunction(
           final Video videoToEdit, final TranscoderHelperListener listener) {
     return new Function<Void, Void>() {
       @Override

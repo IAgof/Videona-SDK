@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
 
@@ -90,13 +91,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         Log.d(TAG, "export, waiting for finish temporal files generation ");
         exportListener.onExportProgress("Waiting for video transcoding to finish",
                 EXPORT_STAGE_WAIT_FOR_TRANSCODING);
-        // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
-        waitForVideoTempFilesFinished();
-
-        LinkedList<Media> medias = getMediasFromComposition();
-        ArrayList<String> videoTrimmedPaths = createVideoPathList(medias);
         try {
+            // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
+            waitForVideoTempFilesFinished();
+
+            LinkedList<Media> medias = getMediasFromComposition();
+            ArrayList<String> videoTrimmedPaths = createVideoPathList(medias);
             Log.d(TAG, "export, appending temporal files");
+
             exportListener.onExportProgress("Joining the videos", EXPORT_STAGE_JOIN_VIDEOS);
             Movie result = createMovieFromComposition(videoTrimmedPaths);
             if (result != null) {
@@ -107,15 +109,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
                     tempExportFilePath, movieDuration);
             }
-        } catch (IOException e) {
-            exportListener.onExportError(String.valueOf(e));
-            e.printStackTrace();
-        } catch (NullPointerException npe) {
-            exportListener.onExportError(String.valueOf(npe));
-            npe.printStackTrace();
-        } catch (IntermediateFileException intermediateFileError) {
-            exportListener.onExportError(String.valueOf(intermediateFileError));
-            intermediateFileError.printStackTrace();
+        } catch (IOException | IntermediateFileException | NullPointerException
+                // from waitForVideoTempFilesFinished
+                | InterruptedException | ExecutionException exportError) {
+            Log.d(TAG, "Catched " +  exportError.getClass().getName() + " while exporting");
+            exportListener.onExportError(String.valueOf(exportError));
         }
     }
 
@@ -237,7 +235,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     protected Movie createMovieFromComposition(final ArrayList<String> videoTranscodedPaths)
-            throws IOException, IntermediateFileException {
+            throws IOException, IntermediateFileException, ExecutionException, InterruptedException {
         Movie movie = null;
         try {
             movie = appender.appendVideos(videoTranscodedPaths, true);
@@ -372,19 +370,20 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         return audioTracks;
     }
 
-    private void waitForVideoTempFilesFinished() {
+    private void waitForVideoTempFilesFinished() throws ExecutionException, InterruptedException {
         LinkedList<Media> medias = getMediasFromComposition();
         for (Media media : medias) {
             Video video = (Video) media;
             if (video.isEdited() && video.getTranscodingTask()!= null) {
                 try {
                     video.getTranscodingTask().get();
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                    exportListener.onExportError(e.getMessage());
-                } catch (ExecutionException e) {
-                    e.printStackTrace();
-                    exportListener.onExportError(e.getMessage());
+                } catch (InterruptedException | ExecutionException
+                        | CancellationException waitingForIntermediatesError) {
+                    Log.d(TAG, "Got " + waitingForIntermediatesError.getClass().getName()
+                            + " while waiting for intermediate generation tasks to finish: " +
+                    waitingForIntermediatesError.getMessage());
+//                    exportListener.onExportError(waitingForIntermediatesError.getMessage());
+                    throw waitingForIntermediatesError;
                 }
             }
         }
