@@ -35,6 +35,7 @@ import java.io.IOException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.concurrent.ExecutionException;
 
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
@@ -96,7 +97,8 @@ public class VMCompositionExportSessionImplTest {
 //  }
 
   @Test
-  public void createMovieFromCompositionCallsAppender() throws IOException, IntermediateFileException {
+  public void createMovieFromCompositionCallsAppender() throws IOException,
+          IntermediateFileException, ExecutionException, InterruptedException {
     VMComposition vmComposition = new VMComposition();
     VMCompositionExportSessionImpl exporter = getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(exporter);
@@ -131,7 +133,8 @@ public class VMCompositionExportSessionImplTest {
 
 
   @Test
-  public void exportCallsCreateMovieFromComposition() throws IOException, IntermediateFileException {
+  public void exportCallsCreateMovieFromComposition() throws IOException, IntermediateFileException,
+          ExecutionException, InterruptedException {
     VMComposition vmComposition = new VMComposition();
     VMCompositionExportSessionImpl vmCompositionExportSession =
             getVmCompositionExportSession(vmComposition);
@@ -148,7 +151,7 @@ public class VMCompositionExportSessionImplTest {
 
   @Test
   public void createMovieFromCompositionCallsAppenderWithOriginalVideoIfCompositionHasNotMusicAndHasNotVoiceOver()
-          throws IOException, IntermediateFileException {
+          throws IOException, IntermediateFileException, ExecutionException, InterruptedException {
     VMComposition vmComposition = new VMComposition();
     assert ! vmComposition.hasMusic();
     assert ! vmComposition.hasVoiceOver();
@@ -164,7 +167,8 @@ public class VMCompositionExportSessionImplTest {
 
   @Test
   public void createMovieFromCompositionAppenderWithOriginalVideoIfCompositionHasMusic()
-          throws IllegalItemOnTrack, IOException, IntermediateFileException {
+          throws IllegalItemOnTrack, IOException, IntermediateFileException, ExecutionException,
+          InterruptedException {
     VMComposition vmComposition = new VMComposition();
     Music music = new Music("music/path", 0);
     assert music.getVolume() == 0.5f; // default music volume 0.5f
@@ -186,7 +190,8 @@ public class VMCompositionExportSessionImplTest {
 
   @Test
   public void createMovieFromCompositionCallsAppenderWithOriginalVideoMusicIfCompositionMusicVolumeLowerThan1()
-          throws IllegalItemOnTrack, IOException, IntermediateFileException {
+          throws IllegalItemOnTrack, IOException, IntermediateFileException, ExecutionException,
+          InterruptedException {
     VMComposition vmComposition = new VMComposition();
     Music voiceOver = new Music("voice/over/path", 0.9f, 0);
     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(voiceOver);
@@ -201,7 +206,8 @@ public class VMCompositionExportSessionImplTest {
   }
 
   @Test
-  public void exportCallsAddWatermarkIfWatermarkIsSelectedInComposition() throws IOException, IntermediateFileException {
+  public void exportCallsAddWatermarkIfWatermarkIsSelectedInComposition() throws IOException,
+          IntermediateFileException, ExecutionException, InterruptedException {
     VMComposition vmComposition = new VMComposition();
     vmComposition.setWatermarkActivated(true);
 
@@ -222,7 +228,8 @@ public class VMCompositionExportSessionImplTest {
   }
 
   @Test
-  public void exportDoesNotCallsAddWatermarkIfWatermarkIsNotSelectedInComposition() throws IOException, IntermediateFileException {
+  public void exportDoesNotCallsAddWatermarkIfWatermarkIsNotSelectedInComposition()
+          throws IOException, IntermediateFileException, ExecutionException, InterruptedException {
     VMComposition vmComposition = new VMComposition();
     vmComposition.setWatermarkActivated(false);
 
