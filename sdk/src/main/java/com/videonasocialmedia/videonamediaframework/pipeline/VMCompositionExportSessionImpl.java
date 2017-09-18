@@ -282,18 +282,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         Drawable drawableFadeTransition = vmComposition.getDrawableFadeTransitionVideo();
         boolean isVideoFadeTransitionActivated = vmComposition.isVideoFadeTransitionActivated();
         boolean isAudioFadeTransitionActivated = vmComposition.isAudioFadeTransitionActivated();
-        // TODO(jliarte): 17/03/17 move this logic to TranscoderHelper?
-        // copied from /data/repos/videona/ViMoJo/app/src/main/java/com/videonasocialmedia/vimojo/export/domain/RelaunchTranscoderTempBackgroundUseCase.java
         VideonaFormat videonaFormat = vmComposition.getVideoFormat();
-        if (videoToEdit.hasText()) {
-            transcoderHelper.generateOutputVideoWithOverlayImageAndTrimmingAsync(drawableFadeTransition,
-                    isVideoFadeTransitionActivated,isAudioFadeTransitionActivated, videoToEdit,
-                    videonaFormat, intermediatesTempAudioFadeDirectory, transcoderHelperListener);
-        } else {
-            transcoderHelper.generateOutputVideoWithTrimmingAsync(drawableFadeTransition,
-                    isVideoFadeTransitionActivated, isAudioFadeTransitionActivated, videoToEdit,
-                    videonaFormat, intermediatesTempAudioFadeDirectory, transcoderHelperListener);
-        }
+        transcoderHelper.updateIntermediateFile(drawableFadeTransition,
+                isVideoFadeTransitionActivated, isAudioFadeTransitionActivated, videoToEdit,
+                videonaFormat, intermediatesTempAudioFadeDirectory);
     }
 
     protected void saveFinalVideo(Movie result, String outputFilePath) throws IOException {

@@ -1,3 +1,6 @@
+v0.2.12
+- Added audio gain application to video adapt transcoding job
+
 v0.2.11
 - Added new player for audio files.
 - Update generate mixAudio, supporting more than two files.

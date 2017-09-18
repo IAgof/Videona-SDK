@@ -1,6 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
-import android.media.MediaMetadataRetriever;
+import  android.media.MediaMetadataRetriever;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
