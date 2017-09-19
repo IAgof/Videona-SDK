@@ -315,7 +315,7 @@ public class TranscoderFragment extends Fragment {
             videoToEdit.setStopTime(10000);
 
             transcoderHelper.generateOutputVideoWithTrimmingAsync(fadeTransition,
-                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"", listener);
+                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"");
 
           break;
         }
@@ -339,8 +339,7 @@ public class TranscoderFragment extends Fragment {
           //videoToEdit.setClipTextPosition(TextEffect.TextPosition.TOP.name());
 
           transcoderHelper.generateOutputVideoWithOverlayImageAsync(fadeTransition,
-                  isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "",
-                  listener);
+                  isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "");
 
           break;
         }
