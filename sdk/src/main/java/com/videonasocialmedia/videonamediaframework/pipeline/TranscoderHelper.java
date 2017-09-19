@@ -124,7 +124,7 @@ public class TranscoderHelper {
   }
 
   // TODO(jliarte): 18/09/17 check if this method is still needed
-  private ListenableFuture<Video> generateOutputVideoWithOverlayImageAndTrimmingAsync(
+  ListenableFuture<Video> generateOutputVideoWithOverlayImageAndTrimmingAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
           final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
           final String intermediatesTempAudioFadeDirectory) {
