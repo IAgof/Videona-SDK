@@ -109,10 +109,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
                     tempExportFilePath, movieDuration);
             }
-        } catch (IOException | IntermediateFileException | NullPointerException
-                // from waitForVideoTempFilesFinished
-                | InterruptedException | ExecutionException exportError) {
-            Log.d(TAG, "Catched " +  exportError.getClass().getName() + " while exporting");
+        } catch (IOException exportIOError) {
+            Log.d(TAG, "Catched " +  exportIOError.getClass().getName() + " while exporting, " +
+                    "message: " + exportIOError.getMessage());
+            exportListener.onExportError(String.valueOf(exportIOError.getMessage()));
+        } catch (IntermediateFileException | ExecutionException | InterruptedException
+                | NullPointerException exportError) {
+            Log.e(TAG, "Catched " +  exportError.getClass().getName() + " while exporting",
+                    exportError);
             exportListener.onExportError(String.valueOf(exportError));
         }
     }
