@@ -84,7 +84,8 @@ public class VideonaFormat implements MediaFormatStrategy {
         format.setInteger(MediaFormat.KEY_FRAME_RATE, DEFAULT_FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, DEFAULT_KEY_I_FRAME);
         format.setInteger(MediaFormat.KEY_COLOR_FORMAT, MediaCodecInfo.CodecCapabilities.COLOR_FormatSurface);
-
+        format.setInteger(MediaFormat.KEY_PROFILE, MediaCodecInfo.CodecProfileLevel.AVCProfileBaseline);
+        format.setInteger("level", MediaCodecInfo.CodecProfileLevel.AVCLevel13);
         return format;
     }
 

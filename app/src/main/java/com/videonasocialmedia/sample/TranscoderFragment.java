@@ -33,9 +33,7 @@ import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener
 
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 
-import com.videonasocialmedia.transcoder.video.overlay.Filter;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
-import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener;
@@ -43,11 +41,8 @@ import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
-import java.util.concurrent.Future;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -320,7 +315,7 @@ public class TranscoderFragment extends Fragment {
             videoToEdit.setStopTime(10000);
 
             transcoderHelper.generateOutputVideoWithTrimmingAsync(fadeTransition,
-                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"", listener);
+                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"");
 
           break;
         }
@@ -330,7 +325,7 @@ public class TranscoderFragment extends Fragment {
               + "videoAdapted.mp4";
           try {
             transcoderHelper.adaptVideoWithRotationToDefaultFormatAsync(videoToEdit, new VideonaFormat(),
-                destFinalPath, rotation, fadeTransition, isVideoFadeActivated, listener, videoToEdit.getTempPath());
+                destFinalPath, rotation, listener, videoToEdit.getTempPath());
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -344,8 +339,7 @@ public class TranscoderFragment extends Fragment {
           //videoToEdit.setClipTextPosition(TextEffect.TextPosition.TOP.name());
 
           transcoderHelper.generateOutputVideoWithOverlayImageAsync(fadeTransition,
-                  isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "",
-                  listener);
+                  isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "");
 
           break;
         }

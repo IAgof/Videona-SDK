@@ -1,5 +1,7 @@
 package com.videonasocialmedia.videonamediaframework.model;
 
+import android.graphics.drawable.Drawable;
+
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
@@ -26,6 +28,10 @@ public class VMComposition {
    * Lenght of the VMComposition.
    */
   private int duration = 0;
+
+  private boolean videoFadeTransitionActivated = false;
+  private boolean audioFadeTransitionActivated = false;
+  private Drawable drawableFadeTransitionVideo = null;
 
   public MediaTrack getMediaTrack() {
     return mediaTrack;
@@ -83,6 +89,8 @@ public class VMComposition {
     this.watermark = new Watermark(vmComposition.getWatermark().getResourceWatermarkFilePath());
     this.isWatermarkActivated = vmComposition.hasWatermark();
     this.profile = new Profile(vmComposition.getProfile());
+    this.setAudioFadeTransitionActivated(vmComposition.isAudioFadeTransitionActivated());
+    this.setVideoFadeTransitionActivated(vmComposition.isVideoFadeTransitionActivated());
   }
 
   public int getDuration() {
@@ -163,4 +171,29 @@ public class VMComposition {
   public Profile getProfile() {
     return profile;
   }
+
+  public void setVideoFadeTransitionActivated(boolean videoFadeTransitionActivated) {
+    this.videoFadeTransitionActivated = videoFadeTransitionActivated;
+  }
+
+  public void setAudioFadeTransitionActivated(boolean audioFadeTransitionActivated) {
+    this.audioFadeTransitionActivated = audioFadeTransitionActivated;
+  }
+
+  public boolean isVideoFadeTransitionActivated() {
+    return videoFadeTransitionActivated;
+  }
+
+  public boolean isAudioFadeTransitionActivated() {
+    return audioFadeTransitionActivated;
+  }
+
+  public Drawable getDrawableFadeTransitionVideo() {
+    return drawableFadeTransitionVideo;
+  }
+
+  public void setDrawableFadeTransitionVideo(Drawable drawableFadeTransitionVideo) {
+    this.drawableFadeTransitionVideo = drawableFadeTransitionVideo;
+  }
+
 }

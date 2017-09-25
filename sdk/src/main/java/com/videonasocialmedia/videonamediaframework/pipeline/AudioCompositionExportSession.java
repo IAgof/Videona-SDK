@@ -4,6 +4,7 @@ import com.googlecode.mp4parser.authoring.Movie;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
+import com.videonasocialmedia.videonamediaframework.muxer.IntermediateFileException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -44,6 +45,9 @@ public class AudioCompositionExportSession {
     } catch (IOException | NullPointerException | NoSuchElementException errorExportingSession) {
       errorExportingSession.printStackTrace();
       listener.onError(String.valueOf(errorExportingSession));
+    } catch (IntermediateFileException e) {
+      // TODO(jliarte): 23/07/17 handle this exception
+      e.printStackTrace();
     }
   }
 

@@ -12,6 +12,7 @@
 package com.videonasocialmedia.videonamediaframework.model.media;
 
 import android.media.MediaMetadataRetriever;
+import android.util.Log;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
@@ -36,7 +37,7 @@ public class Video extends Media {
      * The total duration of the file media resource
      */
     private int fileDuration;
-    // TODO(jliarte): 24/10/16 review this public field
+    // TODO(jliarte): 24/10/16 review this public field - is set in realm mapper directly
     public String tempPath;
     private String clipText;
     private String clipTextPosition;
@@ -50,7 +51,7 @@ public class Video extends Media {
 
     private int numTriesToExportVideo = 0;
     private String uuid = UUID.randomUUID().toString();
-    private ListenableFuture<Void> transcodingTask;
+    private ListenableFuture<Video> transcodingTask;
 
     private String videoError;
 
@@ -117,6 +118,10 @@ public class Video extends Media {
         return tempPath;
     }
 
+    public void resetTempPath() {
+        tempPath = null;
+    }
+
     public void setTempPath(String tempDirectory) {
         // TODO(jliarte): 18/11/16 tmp path should not be a constant depending on Android SDK but
         //                taken from Project path or VMComposition path and passed to constructor
@@ -163,6 +168,7 @@ public class Video extends Media {
         return (clipText != null) && (! clipText.isEmpty());
     }
 
+    // TODO(jliarte): 15/09/17 this can be calculated with startTime, stopTime and duration
     public boolean isTrimmedVideo() {
         return isTrimmedVideo;
     }
@@ -187,11 +193,11 @@ public class Video extends Media {
         this.uuid = uuid;
     }
 
-    public void setTranscodingTask(ListenableFuture<Void> future) {
+    public void setTranscodingTask(ListenableFuture<Video> future) {
         this.transcodingTask = future;
     }
 
-    public ListenableFuture<Void> getTranscodingTask() {
+    public ListenableFuture<Video> getTranscodingTask() {
         return transcodingTask;
     }
 

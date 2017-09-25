@@ -231,6 +231,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
           // detect end of trimming and play next clip or stop
           if (isCurrentClipEnded()) {
+            stopPlayer();
+            // (jliarte): 18/07/17 if a clip duration is reported greater than actual, next clip
+            // was never been played
             playNextClip();
           }
         }
@@ -239,6 +242,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
         Log.d(TAG, String.valueOf(exception));
       }
 
+      if (seekBar.getProgress() >= (int) clipTimesRanges.get(clipTimesRanges.size()-1).getUpper()) {
+        pausePreview();
+      }
       if (isPlaying()) {
         seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
       }
@@ -351,7 +357,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
   private void initClipPreview(Video clipToPlay) {
     if (rendererBuildingState == RENDERER_BUILDING_STATE_BUILT) {
-      player.stop();
+      stopPlayer();
     }
     rendererBuilder.cancel();
     videoFormat = null;
@@ -363,6 +369,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
             this.getMainHandler());
     } else {
       onRenderers(nextClipRenderers, (DefaultBandwidthMeter) bandwidthMeter);
+    }
+  }
+
+  private void stopPlayer() {
+    if (player != null) {
+      player.stop();
     }
   }
 
@@ -861,14 +873,17 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
           // (jliarte): 14/10/16 as playNextClip() was called from both here and
           // updateSeekbarProgress thread, sometimes it's called twice in a clip end, causing
           // a double currentClipIndex++ and thus skipping a clip
-          //          playNextClip();
+          // (jliarte): 18/07/17 recovered again playNextClip here as some clips duration is
+          // reported less than actual causing VideonaPlayer not reaching end of clips, now we stop
+          // the player if end of clip is detected and in both cases we end up here!
+//                    playNextClip();
         }
         break;
       case ExoPlayer.STATE_IDLE:
         break;
       case ExoPlayer.STATE_PREPARING:
         break;
-      case ExoPlayer.STATE_READY:
+      case ExoPlayer.STATE_READY: // state 4
         updateClipTextPreview();
         if (playWhenReady) {
           // player.seekAudioTo(getClipPositionFromTimeLineTime());
@@ -953,10 +968,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
         : renderers[TYPE_AUDIO] instanceof MediaCodecTrackRenderer
         ? ((MediaCodecTrackRenderer) renderers[TYPE_AUDIO]).codecCounters : null;
     this.bandwidthMeter = bandwidthMeter;
-    pushSurface(false);
 
+    if (player == null) {
+      // TODO(jliarte): 25/07/17 should reinit components?
+      return;
+    }
+    pushSurface(false);
     player.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
-    //player.prepare(renderers);
     player.seekTo(getClipPositionFromTimeLineTime());
     if (videoHasMusic()) {
       seekAudioTo(currentTimePositionInList);
@@ -995,7 +1013,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   }
 
   private void pushSurface(boolean blockForSurfacePush) {
-    if (videoRenderer == null) {
+    if (videoRenderer == null || player == null) {
       return;
     }
 

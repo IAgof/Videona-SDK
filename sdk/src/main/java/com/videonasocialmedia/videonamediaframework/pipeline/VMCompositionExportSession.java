@@ -14,7 +14,7 @@ public interface VMCompositionExportSession {
     int EXPORT_STAGE_APPLY_AUDIO_MIXED = 5;
     int EXPORT_STAGE_APPLY_WATERMARK = 6;
 
-    void exportAsyncronously();
+  void exportAsyncronously();
 
     void export();
 
