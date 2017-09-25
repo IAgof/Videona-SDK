@@ -32,18 +32,19 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     private List<Media> mediaListDecoded;
     private boolean result = false;
 
-    public AudioMixer(List<Media> mediaList, String tempDirectory, String outputFile,
-                      long durationOutputFile){
-        this.mediaList = mediaList;
+    public AudioMixer() {
         mediaListDecoded = new ArrayList<>(mediaList.size());
+    }
+
+
+    public boolean export(List<Media> mediaList, String tempDirectory, String outputFile,
+                          long durationOutputFile) {
+        this.mediaList = mediaList;
         this.tempDirectory = tempDirectory;
         this.outputFile = outputFile;
         this.durationOutputFile = durationOutputFile;
         cleanTempDirectory();
-    }
 
-
-    public boolean export() {
         for (Media media : mediaList) {
             AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile, this);
             decoder.decode();
@@ -54,10 +55,10 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
     }
 
     private void mixAudio(List<Media> mediaList) {
-        MixSound mixSound = new MixSound(this);
+        SoundMixer soundMixer = new SoundMixer(this);
         String outputTempMixAudioPath = tempDirectory + File.separator + "mixAudio.pcm";
         try {
-            mixSound.mixAudio(mediaList, outputTempMixAudioPath);
+            soundMixer.mixAudio(mediaList, outputTempMixAudioPath);
         } catch (IOException e) {
             e.printStackTrace();
             result = false;

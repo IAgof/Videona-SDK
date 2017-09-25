@@ -228,9 +228,9 @@ public class MediaTranscoder {
         final ListenableFuture<Boolean> transcodingJob = executorPool.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                AudioMixer mixer = new AudioMixer(mediaList, tempDirectory,
+                AudioMixer mixer = new AudioMixer();
+                return mixer.export(mediaList, tempDirectory,
                         outputFile, outputFileDuration);
-                return mixer.export();
             }
         });
         return transcodingJob;
