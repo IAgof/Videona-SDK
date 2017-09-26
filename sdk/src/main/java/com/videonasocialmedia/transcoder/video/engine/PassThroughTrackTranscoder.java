@@ -58,6 +58,7 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
         mBuffer = ByteBuffer.allocateDirect(mBufferSize).order(ByteOrder.nativeOrder());
     }
 
+
     @Override
     public void setup() {
     }
@@ -93,6 +94,11 @@ public class PassThroughTrackTranscoder implements TrackTranscoder {
     @Override
     public boolean isEncodedFinished() {
         return false;
+    }
+
+    @Override
+    public void setTrackFinished() {
+        mIsEOS = true;
     }
 
     @Override

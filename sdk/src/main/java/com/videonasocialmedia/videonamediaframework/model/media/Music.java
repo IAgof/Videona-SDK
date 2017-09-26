@@ -7,25 +7,28 @@
 
 package com.videonasocialmedia.videonamediaframework.model.media;
 
+import java.util.UUID;
+
 public class Music extends Audio {
-    public static final float DEFAULT_MUSIC_VOLUME = 1f;
-    //TODO en el futuro no será un recurso sino que se obtendrá
+  //TODO en el futuro no será un recurso sino que se obtendrá
     private int musicResourceId;
-    private int colorResourceId;
-    //TODO refactorizar nombre
+  private int colorResourceId;
+  //TODO refactorizar nombre
     private String musicTitle;
-    private String author;
-    // TODO(jliarte): 15/12/16 we set a string with the music duration in mm:ss, could lead to
+  private String author;
+  // TODO(jliarte): 15/12/16 we set a string with the music duration in mm:ss, could lead to
     //                inconsistencies with actual length
     private String musicDuration;
+
     private int iconResourceId;
 
-    // TODO(jliarte): 15/12/16 pull to Audio class
-    private float volume = DEFAULT_MUSIC_VOLUME;
+  private String uuid = UUID.randomUUID().toString();
+
+  public static float DEFAULT_VOLUME = 0.5f;
 
     public Music(int iconResourceId, String musicTitle, int musicResourceId, int colorResourceId,
-                 String author, String musicDuration) {
-        super(musicResourceId, "", "", musicTitle, "", 0, 0, null, null, null, null);
+                 String author, String musicDuration, int duration) {
+        super(musicResourceId, "", "", musicTitle, "", DEFAULT_VOLUME, 0, duration, null, null, null, null);
 
         this.musicResourceId = musicResourceId;
         this.colorResourceId = colorResourceId;
@@ -36,8 +39,8 @@ public class Music extends Audio {
     }
 
     public Music(int iconResourceId, String musicTitle, int musicResourceId, String musicPath,
-                 int colorResourceId, String author, String musicDuration) {
-        super(musicResourceId, "", "", musicTitle, musicPath, 0, 0, null, null, null, null);
+                 int colorResourceId, String author, String musicDuration, int duration) {
+        super(musicResourceId, "", "", musicTitle, musicPath, DEFAULT_VOLUME, 0, duration, null, null, null, null);
         this.musicResourceId = musicResourceId;
         this.colorResourceId = colorResourceId;
         this.musicTitle = musicTitle;
@@ -46,28 +49,24 @@ public class Music extends Audio {
         this.musicDuration = musicDuration;
     }
 
-    public Music(String musicPath){
-        super(0,"","", "", musicPath, 0, 0, null, null, null, null);
+    public Music(String musicPath, int duration){
+        super(0,"","", "", musicPath,DEFAULT_VOLUME, 0, duration, null, null, null, null);
     }
 
-    public Music(String musicPath, float volume) {
-        super(0,"","", "", musicPath, 0, 0, null, null, null, null);
+    public Music(String musicPath, float volume, int duration) {
+        super(0,"","", "", musicPath, volume, 0, duration, null, null, null, null);
         this.volume = volume;
     }
 
   public Music(Music item) {
     super(item.getMusicResourceId(), item.getIconPath(), item.getSelectedIconPath(),
-        item.getMusicTitle(), item.getMediaPath(), item.getStartTime(), item.getStopTime(),
+        item.getMusicTitle(), item.getMediaPath(), item.getVolume(), item.getStartTime(), item.getDuration(),
         null, null, null, null);
     this.colorResourceId = item.getColorResourceId();
     this.iconResourceId = item.getIconResourceId();
     this.author = item.getAuthor();
     this.musicDuration = item.getMusicDuration();
   }
-
-  public float getVolume() {
-        return volume;
-    }
 
     public int getMusicResourceId() {
         return musicResourceId;
@@ -108,6 +107,10 @@ public class Music extends Audio {
         return author;
     }
 
+    public void setMusicAuthor(String author){
+      this.author = author;
+    }
+
     public String getMusicDuration() {
         return musicDuration;
     }
@@ -120,4 +123,12 @@ public class Music extends Audio {
     public void setVolume(float volume) {
         this.volume = volume;
     }
+
+  public String getUuid() {
+    return uuid;
+  }
+
+  public void setUuid(String uuid) {
+    this.uuid = uuid;
+  }
 }

@@ -19,14 +19,6 @@
                 app:aspect="sixteen_nine"
                 />
 
-            <ImageButton
-                android:id="@+id/button_editor_play_pause"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerInParent="true"
-                android:background="#00000000"
-                android:src="@drawable/common_icon_play"
-                />
             <ImageView
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
@@ -53,14 +45,14 @@
 
             <ImageView
                 android:id="@+id/image_transition_fade"
-                android:src="@drawable/alpha_transition_black"
+                android:src="@drawable/alpha_transition_white"
                 android:scaleType="fitStart"
                 android:alpha="0"
                 android:layout_width="match_parent"
                 android:layout_height="match_parent"
                 android:layout_alignBottom="@+id/video_editor_preview"/>
-
     </RelativeLayout>
+
 
     <LinearLayout
         android:id="@+id/video_view_seekbar_layout"
@@ -76,33 +68,46 @@
             android:id="@+id/video_view_time_current"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
             android:gravity="center"
             android:layout_gravity="center"
+            android:visibility="gone"
             android:textAppearance="@style/Base.TextAppearance.AppCompat.Small"
-            android:text="00:00" />
+            android:text="00:00"
+            />
+
+        <ImageButton
+            android:id="@+id/button_editor_play_pause"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_vertical"
+            android:layout_marginLeft="4dp"
+            android:gravity="right"
+            android:layout_weight="0.5"
+            android:background="#00000000"
+            android:src="@drawable/common_icon_play_normal"
+            />
 
         <SeekBar
             android:id="@+id/seekbar_editor_preview"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="9"
-            android:maxHeight="1dp"
+            android:layout_weight="10.25"
+            android:maxHeight="2dp"
+            android:paddingTop="12dp"
+            android:paddingBottom="12dp"
             android:progressDrawable="@color/colorAccent"
-            android:thumb="@drawable/ic_circular_thumb_seekbar"
-            android:layout_marginLeft="2dp"
-            android:layout_marginRight="2dp"
-            android:layout_alignParentStart="true" />
+            android:thumb="@drawable/ic_circular_thumb_seekbar_player"
+            android:layout_gravity="center"/>
 
         <TextView
             android:id="@+id/video_view_time_project"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:gravity="center"
-            android:layout_gravity="center"
+            android:layout_weight="0.5"
+            android:gravity="left"
+            android:layout_gravity="center_vertical"
             android:text="00:00"
-            android:textAppearance="@style/Base.TextAppearance.AppCompat.Small"
+            android:textSize="12sp"
             />
     </LinearLayout>
 

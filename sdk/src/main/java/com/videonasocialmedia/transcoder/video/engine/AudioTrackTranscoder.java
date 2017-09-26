@@ -229,5 +229,11 @@ public class AudioTrackTranscoder implements TrackTranscoder {
     public boolean isEncodedFinished() {
         return false;
     }
+
+    @Override
+    public void setTrackFinished() {
+        mIsEncoderEOS = true;
+    }
+
 }
 

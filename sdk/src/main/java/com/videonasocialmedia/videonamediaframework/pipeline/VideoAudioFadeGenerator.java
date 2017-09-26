@@ -1,8 +1,7 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
 import com.videonasocialmedia.transcoder.MediaTranscoder;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
-import com.videonasocialmedia.videonamediaframework.model.Constants;
+import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
 
 import java.io.File;
 import java.io.IOException;
@@ -13,7 +12,7 @@ import java.util.Date;
  * Created by alvaro on 23/10/16.
  */
 
-public class VideoAudioFadeGenerator implements OnAudioEffectListener {
+public class VideoAudioFadeGenerator {
 
   private MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
   protected TranscoderHelper transcoderHelper = new TranscoderHelper(mediaTranscoder);
@@ -32,35 +31,33 @@ public class VideoAudioFadeGenerator implements OnAudioEffectListener {
 
   public void getAudioFadeInFadeOutFromVideo(String videoToEditPath, int timeFadeInMs,
                                              int timeFadeOutMs) throws IOException {
-    transcoderHelper.generateFileWithAudioFadeInFadeOut(videoToEditPath, timeFadeInMs,
-        timeFadeOutMs, tempDirectoryFilesAudio, tempFileAudio, this);
-  }
+    transcoderHelper.generateFileWithAudioFadeInFadeOutAsync(videoToEditPath, timeFadeInMs,
+            timeFadeOutMs, tempDirectoryFilesAudio, tempFileAudio, new MediaTranscoderListener() {
+              @Override
+              public void onTranscodeSuccess(String outputFile) {
+                listener.onGetAudioFadeInFadeOutFromVideoSuccess(outputFile);
+              }
 
-  @Override
-  public void onAudioEffectSuccess(String outputFile) {
-    listener.onGetAudioFadeInFadeOutFromVideoSuccess(outputFile);
-  }
+              @Override
+              public void onTranscodeProgress(String progress) {
+              }
 
-  @Override
-  public void onAudioEffectProgress(String progress) {
+              @Override
+              public void onTranscodeError(String error) {
+                listener.onGetAudioFadeInFadeOutFromVideoError(error);
+              }
 
-  }
-
-  @Override
-  public void onAudioEffectError(String error) {
-    listener.onGetAudioFadeInFadeOutFromVideoError(error);
-  }
-
-  @Override
-  public void onAudioEffectCanceled() {
-    listener.onGetAudioFadeInFadeOutFromVideoError("canceled");
-
+              @Override
+              public void onTranscodeCanceled() {
+                listener.onGetAudioFadeInFadeOutFromVideoError("canceled");
+              }
+            });
   }
 
   /**
    * Created by alvaro on 23/10/16.
    */
-  public static interface VideoAudioFadeListener {
+  public interface VideoAudioFadeListener {
       void onGetAudioFadeInFadeOutFromVideoSuccess(String audioFile);
       void onGetAudioFadeInFadeOutFromVideoError(String message);
   }

@@ -12,6 +12,9 @@
 package com.videonasocialmedia.videonamediaframework.model.media;
 
 import android.media.MediaMetadataRetriever;
+import android.util.Log;
+
+import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
 import java.util.UUID;
@@ -27,20 +30,18 @@ import static com.videonasocialmedia.videonamediaframework.model.Constants.*;
  */
 public class Video extends Media {
 
+    public static float DEFAULT_VOLUME = 1f;
     private static final AtomicInteger count = new AtomicInteger(0);
-
-    public static String VIDEO_FOLDER_PATH;
 
     /**
      * The total duration of the file media resource
      */
     private int fileDuration;
-    // TODO(jliarte): 24/10/16 review this public field
+    // TODO(jliarte): 24/10/16 review this public field - is set in realm mapper directly
     public String tempPath;
     private String clipText;
     private String clipTextPosition;
-    private boolean isTempPathFinished = false;
-    private boolean isTextToVideoAdded = false;
+
     private boolean isTrimmedVideo = false;
 
     // TODO(jliarte): 14/06/16 this entity should not depend on MediaMetadataRetriever as it is part of android
@@ -50,6 +51,11 @@ public class Video extends Media {
 
     private int numTriesToExportVideo = 0;
     private String uuid = UUID.randomUUID().toString();
+    private ListenableFuture<Video> transcodingTask;
+
+    private String videoError;
+
+    private boolean isTranscodingTempFileFinished = true;
 
 
     /**
@@ -64,8 +70,8 @@ public class Video extends Media {
      *
      * @see com.videonasocialmedia.videonamediaframework.model.media.Media
      */
-    public Video(String mediaPath) {
-        super(-1, null, mediaPath, 0, 0, null);
+    public Video(String mediaPath, float volume) {
+        super(-1, null, mediaPath, volume, 0, 0, null);
         try {
             retriever.setDataSource(mediaPath);
 
@@ -79,24 +85,23 @@ public class Video extends Media {
         }
     }
 
-    public Video(String mediaPath, int fileStartTime, int duration) {
-        super(-1, null, mediaPath, fileStartTime, duration, null);
+    public Video(String mediaPath, float volume, int fileStartTime, int duration) {
+        super(-1, null, mediaPath, volume, fileStartTime, duration, null);
         fileDuration = getFileDuration(mediaPath);
     }
 
     public Video(Video video) {
-        super(-1, null, video.getMediaPath(), video.getStartTime(),
+        super(-1, null, video.getMediaPath(), video.getVolume(), video.getStartTime(),
                 video.getDuration(), null);
         fileDuration = video.getFileDuration();
         stopTime = video.getStopTime();
-        isTextToVideoAdded = video.hasText();
         clipText = video.getClipText();
         clipTextPosition = video.getClipTextPosition();
         if(video.isEdited()) {
             tempPath = video.getTempPath();
         }
-        isTempPathFinished = video.outputVideoIsFinished();
         isTrimmedVideo = video.isTrimmedVideo();
+        isTranscodingTempFileFinished = video.isTranscodingTempFileFinished();
     }
 
     public int getFileDuration() {
@@ -113,32 +118,16 @@ public class Video extends Media {
         return tempPath;
     }
 
+    public void resetTempPath() {
+        tempPath = null;
+    }
+
     public void setTempPath(String tempDirectory) {
         // TODO(jliarte): 18/11/16 tmp path should not be a constant depending on Android SDK but
         //                taken from Project path or VMComposition path and passed to constructor
 //        String tempDirectory = Constants.PATH_APP_TEMP_INTERMEDIATE_FILES;
         tempPath = tempDirectory + File.separator
             + INTERMEDIATE_FILE_PREFIX + identifier + "_" + System.currentTimeMillis() + ".mp4";
-    }
-
-    public void setTempPathToPreviousEdition(String tempPath){
-        this.tempPath = tempPath;
-    }
-
-    public boolean outputVideoIsFinished() {
-        return isTempPathFinished;
-    }
-
-    public void setTempPathFinished(boolean tempPathFinished) {
-        isTempPathFinished = tempPathFinished;
-    }
-
-    public void deleteTempVideo() {
-        if (tempPath != null) {
-            File f = new File(tempPath);
-            f.delete();
-            tempPath = null;
-        }
     }
 
     public void createIdentifier() {
@@ -176,13 +165,10 @@ public class Video extends Media {
     }
 
     public boolean hasText() {
-        return isTextToVideoAdded;
+        return (clipText != null) && (! clipText.isEmpty());
     }
 
-    public void setTextToVideoAdded(boolean textToVideoAdded) {
-        isTextToVideoAdded = textToVideoAdded;
-    }
-
+    // TODO(jliarte): 15/09/17 this can be calculated with startTime, stopTime and duration
     public boolean isTrimmedVideo() {
         return isTrimmedVideo;
     }
@@ -199,15 +185,39 @@ public class Video extends Media {
         numTriesToExportVideo++;
     }
 
-    public boolean isTextToVideoAdded() {
-        return isTextToVideoAdded;
-    }
-
     public String getUuid() {
         return uuid;
     }
 
     public void setUuid(String uuid) {
         this.uuid = uuid;
+    }
+
+    public void setTranscodingTask(ListenableFuture<Video> future) {
+        this.transcodingTask = future;
+    }
+
+    public ListenableFuture<Video> getTranscodingTask() {
+        return transcodingTask;
+    }
+
+    public void setVideoError(String videoError) {
+        this.videoError = videoError;
+    }
+
+    public String getVideoError(){
+        return videoError;
+    }
+
+    public void resetNumTriesToExportVideo() {
+        numTriesToExportVideo = 0;
+    }
+
+    public boolean isTranscodingTempFileFinished() {
+        return isTranscodingTempFileFinished;
+    }
+
+    public void setTranscodingTempFileFinished(boolean transcodingTempFileFinished) {
+        isTranscodingTempFileFinished = transcodingTempFileFinished;
     }
 }

@@ -6,7 +6,9 @@ import android.media.MediaFormat;
 import android.util.Log;
 
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
+import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -19,14 +21,16 @@ import java.nio.ByteBuffer;
 public class AudioDecoder {
 
     private final static String LOG_TAG = "AudioDecoder";
+    public static final String DECODED_AUDIO_PREFIX = "AUD_DECOD_";
+    private Media media;
 
     private String inputFile;
-
     public String getOutputFile() {
         return outputFile;
     }
-
     private String outputFile;
+
+    private long durationFile = 0;
 
     MediaCodec decoder;
     MediaFormat format;
@@ -42,11 +46,19 @@ public class AudioDecoder {
     private OnAudioDecoderListener listener;
 
     public AudioDecoder(String inputFile, String outputFile, OnAudioDecoderListener listener){
-
         this.inputFile = inputFile;
         this.outputFile = outputFile;
         this.listener = listener;
+    }
 
+    public AudioDecoder(Media media, String tempDirectory, long durationFile,
+                        OnAudioDecoderListener listener) {
+        this.media = media;
+        this.inputFile = media.getMediaPath();
+        String outputName = File.separator + DECODED_AUDIO_PREFIX + System.currentTimeMillis() + ".pcm";
+        this.outputFile = tempDirectory + outputName;
+        this.listener = listener;
+        this.durationFile = durationFile;
     }
 
     private boolean setDecoder(MediaExtractor extractor) {
@@ -75,27 +87,25 @@ public class AudioDecoder {
             decoder.start();
         } catch (IOException e) {
             Log.e(LOG_TAG, "Failed creating decoder", e);
-            listener.OnFileDecodedError(String.valueOf(e));
+            listener.onFileDecodedError(String.valueOf(e));
         }
         return success;
     }
 
     public void decode() {
-
         try {
             outputStream = new FileOutputStream(outputFile);
         } catch (FileNotFoundException e) {
             e.printStackTrace();
-            listener.OnFileDecodedError(String.valueOf(e));
+            listener.onFileDecodedError(String.valueOf(e));
         }
 
         MediaExtractor extractor = new MediaExtractor();
         try {
             extractor.setDataSource(inputFile);
-
         } catch (IOException e) {
             e.printStackTrace();
-            listener.OnFileDecodedError(String.valueOf(e));
+            listener.onFileDecodedError(String.valueOf(e));
         }
         setDecoder(extractor);
         ByteBuffer[] codecInputBuffers = decoder.getInputBuffers();
@@ -128,8 +138,6 @@ public class AudioDecoder {
 
         int counter=0;
         while (!sawOutputEOS) {
-
-
             counter++;
             if (!sawInputEOS) {
                 inputBufIndex = decoder.dequeueInputBuffer(kTimeOutUs);
@@ -162,14 +170,13 @@ public class AudioDecoder {
                     }
                 } else {
                     Log.e(LOG_TAG, "inputBufIndex " + inputBufIndex);
-                    listener.OnFileDecodedError("inputBufIndex " + inputBufIndex);
+                    listener.onFileDecodedError("inputBufIndex " + inputBufIndex);
                 }
             }
 
             int res = decoder.dequeueOutputBuffer(BufInfo, kTimeOutUs);
 
             if (res >= 0) {
-
                 // Log.d(LOG_TAG, "got frame, size " + info.size + "/" +
                 // info.presentationTimeUs);
                 if (BufInfo.size > 0) {
@@ -184,15 +191,12 @@ public class AudioDecoder {
                 buf.clear();
 
                 if (chunk.length > 0) {
-
                     // play audioTrack
                     //audioTrack.write(chunk, 0, chunk.length);
 
                     // write to file
                     try {
-
-                        if(isMono) {
-
+                        if (isMono) {
                             // Generate false stereo
                             int monoByteArrayLength = chunk.length;
                             byte[] stereoGeneratedSnd = new byte[monoByteArrayLength * 2];
@@ -203,23 +207,23 @@ public class AudioDecoder {
                                 stereoGeneratedSnd[i * 2 + 2] = chunk[i];
                                 stereoGeneratedSnd[i * 2 + 3] = chunk[i + 1];
                             }
-
                             outputStream.write(stereoGeneratedSnd);
-
                         } else {
-
                             outputStream.write(chunk);
                         }
-
                     } catch (IOException e) {
                         e.printStackTrace();
-                        listener.OnFileDecodedError(String.valueOf(e));
+                        listener.onFileDecodedError(String.valueOf(e));
                     }
-
                 }
                 decoder.releaseOutputBuffer(outputBufIndex, false /* render */);
                 if ((BufInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     Log.i(LOG_TAG, "saw output EOS.");
+                    sawOutputEOS = true;
+                }
+
+                if (durationFile > 0 && extractor.getSampleTime() > durationFile) {
+                    Log.i(LOG_TAG, "file duration, end of decoder " + extractor.getSampleTime());
                     sawOutputEOS = true;
                 }
             } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
@@ -236,7 +240,6 @@ public class AudioDecoder {
         }
 
         Log.d(LOG_TAG, "stopping...");
-
         // closing AudioTrack
         /*
         if (audioTrack != null) {
@@ -245,18 +248,17 @@ public class AudioDecoder {
             audioTrack = null;
         }
         */
-
         try {
             outputStream.flush();
             outputStream.close();
         } catch (IOException e) {
             e.printStackTrace();
-            listener.OnFileDecodedError(String.valueOf(e));
+            listener.onFileDecodedError(String.valueOf(e));
         }
         decoder.stop();
         decoder.release();
         extractor.release();
-        listener.OnFileDecodedSuccess(inputFile);
+        //listener.OnFileDecodedSuccess(outputFile);
+        listener.onFileDecodedMediaSuccess(media, outputFile);
     }
-
 }

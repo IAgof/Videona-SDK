@@ -7,6 +7,7 @@ import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedList;
@@ -17,7 +18,10 @@ import java.util.List;
  */
 public class Appender {
 
-    public Movie appendVideos(List<String> videoPaths, boolean addOriginalAudio) throws IOException {
+    private static final String TAG = Appender.class.getCanonicalName();
+
+    public Movie appendVideos(List<String> videoPaths, boolean addOriginalAudio)
+            throws IOException, IntermediateFileException {
         List<Movie> movieList = getMovieList(videoPaths);
         List<Track> videoTracks = new LinkedList<>();
         List<Track> audioTracks = new LinkedList<>();
@@ -37,15 +41,26 @@ public class Appender {
         return createMovie(audioTracks, videoTracks);
     }
 
-    private List<Movie> getMovieList(List<String> videoPaths) throws IOException {
+    private List<Movie> getMovieList(List<String> videoPaths) throws IOException,
+            IntermediateFileException {
         List<Movie> movieList = new ArrayList<>();
 
         for (String videoPath : videoPaths) {
-           long start=System.currentTimeMillis();
-            Movie movie= MovieCreator.build(videoPath);
-            long spent=System.currentTimeMillis()-start;
-            Log.d("BUILDING MOVIE", "time spent in millis: " + spent);
-            movieList.add(movie);
+           long start = System.currentTimeMillis();
+            try {
+                Movie movie = MovieCreator.build(videoPath);
+                long spent = System.currentTimeMillis()-start;
+                Log.d("BUILDING MOVIE", "time spent in millis: " + spent);
+                movieList.add(movie);
+            } catch (FileNotFoundException fileError) {
+                Log.e(TAG, "Missing file, index " + videoPaths.indexOf(videoPath) +
+                        " path " + videoPath);
+                throw new IntermediateFileException(videoPath, videoPaths.indexOf(videoPath));
+            } catch (NullPointerException npe) {
+                Log.e(TAG, "Null pointer while getting movie list for index "
+                        + videoPaths.indexOf(videoPath));
+                throw new IntermediateFileException(videoPath, videoPaths.indexOf(videoPath));
+            }
         }
         return movieList;
     }

@@ -1,13 +1,11 @@
 package com.videonasocialmedia.videonamediaframework.playback;
 
+import android.animation.Animator;
 import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.media.AudioManager;
-import android.media.MediaCodec;
-import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.AttributeSet;
@@ -16,6 +14,7 @@ import android.util.Range;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
+import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -28,21 +27,14 @@ import com.google.android.exoplayer.DummyTrackRenderer;
 import com.google.android.exoplayer.ExoPlaybackException;
 import com.google.android.exoplayer.ExoPlayer;
 import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
-import com.google.android.exoplayer.MediaCodecSelector;
 import com.google.android.exoplayer.MediaCodecTrackRenderer;
 import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
 import com.google.android.exoplayer.TrackRenderer;
-import com.google.android.exoplayer.audio.AudioCapabilities;
-import com.google.android.exoplayer.audio.AudioTrack;
 import com.google.android.exoplayer.chunk.Format;
-import com.google.android.exoplayer.extractor.ExtractorSampleSource;
-import com.google.android.exoplayer.upstream.Allocator;
 import com.google.android.exoplayer.upstream.BandwidthMeter;
-import com.google.android.exoplayer.upstream.DataSource;
-import com.google.android.exoplayer.upstream.DefaultAllocator;
 import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
-import com.google.android.exoplayer.upstream.DefaultUriDataSource;
 import com.google.android.exoplayer.util.Util;
+
 
 
 import com.videonasocialmedia.sdk.R;
@@ -54,7 +46,6 @@ import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 import com.videonasocialmedia.videonamediaframework.utils.TimeUtils;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -63,11 +54,10 @@ import java.util.List;
 /**
  * Created by jliarte on 25/08/16.
  */
-public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
-    SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener, ExtractorSampleSource.EventListener,
-    MediaCodecAudioTrackRenderer.EventListener, MediaCodecVideoTrackRenderer.EventListener {
+public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, VideonaAudioPlayer,
+    SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener,
+        RendererBuilder.RendererBuilderListener {
   private static final String TAG = "VideonaPlayerExo";
-  private static final int RENDERER_COUNT = 3;
   private static final int BUFFER_LENGTH_MIN = 50;
   private static final int REBUFFER_LENGTH_MIN = 100;
   public static final int TYPE_VIDEO = 0;
@@ -79,7 +69,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private static final int RENDERER_BUILDING_STATE_IDLE = 1;
   private static final int RENDERER_BUILDING_STATE_BUILDING = 2;
   private static final int RENDERER_BUILDING_STATE_BUILT = 3;
-  private static final int TIME_TRANSITION_FADE = 500;
+  private static final int TIME_TRANSITION_FADE = 500; // 500ms
   private final TextToDrawable drawableGenerator;
 
   AspectRatioVideoView videoPreview;
@@ -90,7 +80,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   TextView textTimeCurrentSeekbar;
   TextView textTimeProjectSeekbar;
   LinearLayout seekBarLayout;
-  ValueAnimator animator = ValueAnimator.ofFloat(0f, 1f);
 
   private final View videonaPlayerView;
   private VideonaPlayerListener videonaPlayerListener;
@@ -102,8 +91,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private Format videoFormat;
   private Surface surface;
 
-  private Music music;
-  private MediaPlayer musicPlayer;
+  private VideonaAudioPlayerExo musicPlayer;
+  private VideonaAudioPlayerExo voiceOverPlayer;
   private List<Video> videoList;
   private int currentClipIndex = 0;
   private int currentTimePositionInList = 0;
@@ -125,12 +114,16 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       }
     }
   };
-  private float musicVolume = 0.5f;
-  private static final float DEFAULT_VOLUME = 0.5f;
 
   private ValueAnimator outAnimator;
   private ValueAnimator inAnimator;
-  private boolean isSetTransitionFadeActivated = false;
+  private String userAgent;
+  private TrackRenderer[] nextClipRenderers;
+  private boolean isSetVideoTransitionFadeActivated = false;
+  private boolean isSetAudioTransitionFadeActivated = false;
+  private boolean isInAnimatorLaunched;
+  private boolean isOutAnimatorLaunched;
+  private float videoVolume;
 
   /**
    * Default constructor.
@@ -178,7 +171,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   private void initLayoutsComponents() {
-
     videoPreview = (AspectRatioVideoView) findViewById(R.id.video_editor_preview);
     videoPreview.setOnTouchListener(new OnTouchListener() {
       @Override
@@ -200,7 +192,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     textTimeCurrentSeekbar = (TextView) findViewById(R.id.video_view_time_current);
     textTimeProjectSeekbar = (TextView) findViewById(R.id.video_view_time_project);
     seekBarLayout = (LinearLayout) findViewById(R.id.video_view_seekbar_layout);
-
   }
 
   /**
@@ -209,47 +200,22 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    */
   private void initVideonaPlayerComponents(Context context) {
     mainHandler = new Handler();
-    player = ExoPlayer.Factory.newInstance(RENDERER_COUNT, BUFFER_LENGTH_MIN, REBUFFER_LENGTH_MIN);
+    player = ExoPlayer.Factory.newInstance(RendererBuilder.RENDERER_COUNT, BUFFER_LENGTH_MIN, REBUFFER_LENGTH_MIN);
     player.addListener(this);
     player.setSelectedTrack(TYPE_TEXT, DISABLED_TRACK);
     surface = videoPreview.getHolder().getSurface();
     rendererBuildingState = RENDERER_BUILDING_STATE_IDLE;
-    String userAgent = Util.getUserAgent(context, "ExoPlayerDemo");
+    userAgent = Util.getUserAgent(context, "VideonaExoPlayer");
     rendererBuilder = new RendererBuilder(context, userAgent);
 
     // TODO(jliarte): 1/09/16 instantiate field when need to adjust volume
     //        AudioManager audioManager = (AudioManager) context.getApplicationContext()
     //                .getSystemService(Context.AUDIO_SERVICE);
-    initMusicPlayer();
     initClipList();
     initSeekBar();
     clipTimesRanges = new ArrayList<>();
     setupInAnimator();
     setupOutAnimator();
-  }
-
-  private void initMusicPlayer() {
-    if (musicPlayer == null && videoHasMusic()) {
-      musicPlayer = MediaPlayer.create(getContext(), Uri.parse(music.getMediaPath()));
-      if (musicPlayer != null) {
-        musicPlayer.setVolume(musicVolume, musicVolume);
-      }
-    }
-
-  }
-
-  /**
-   * Sets video and music/voice over volumes.
-   *
-   * @param volume music/voice over track volume. Video track volume will be the 1 - volume
-   */
-  public void setVolume(float volume) {
-    player.sendMessage(rendererBuilder.getAudioRenderer(),
-        MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, 1f - volume);
-    if (musicPlayer != null) {
-      musicPlayer.setVolume(volume, volume);
-    }
-    musicVolume = volume;
   }
 
   private void updateSeekBarProgress() {
@@ -261,29 +227,45 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
               - videoList.get(currentClipIndex()).getStartTime();
           setSeekBarProgress(progress);
           currentTimePositionInList = progress;
+          previewAVTransitions(progress);
+
           // detect end of trimming and play next clip or stop
-
-          if(isSetTransitionFadeActivated) {
-            if (isPlaying() && isStartOfCurrentClip()) {
-              inAnimator.start();
-            }
-            if (isPlaying() && isEndOfCurrentClip()) {
-              outAnimator.start();
-            }
-          }
-
-          if(isCurrentClipEnded()){
+          if (isCurrentClipEnded()) {
+            stopPlayer();
+            // (jliarte): 18/07/17 if a clip duration is reported greater than actual, next clip
+            // was never been played
             playNextClip();
           }
-
         }
       } catch (Exception exception) {
-        Log.d(TAG, "updateSeekBarProgress: exception updating videonaplayer seekbar");
+        Log.d(TAG, "updateSeekBarProgress: exception updating videonaPlayer seekbar");
         Log.d(TAG, String.valueOf(exception));
       }
 
+      if (seekBar.getProgress() >= (int) clipTimesRanges.get(clipTimesRanges.size()-1).getUpper()) {
+        pausePreview();
+      }
       if (isPlaying()) {
         seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
+      }
+    }
+  }
+
+  private void previewAVTransitions(int progress) {
+    if (isSetVideoTransitionFadeActivated || isSetAudioTransitionFadeActivated) {
+      if (isPlaying() && shouldLaunchStartTransition(progress)) {
+        if (!isInAnimatorLaunched) {
+          Log.d(TAG, "updateSeekBarProgress inAnimator start ");
+          isInAnimatorLaunched = true;
+          inAnimator.start();
+        }
+      }
+      if (isPlaying() && shouldLaunchEndTransition(progress)) {
+        if (!isOutAnimatorLaunched) {
+          Log.d(TAG, "updateSeekBarProgress outAnimator start ");
+          isOutAnimatorLaunched = true;
+          outAnimator.start();
+        }
       }
     }
   }
@@ -292,23 +274,18 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper();
   }
 
-  private boolean isEndOfCurrentClip() {
-    int seekBarProgress = seekBar.getProgress();
+  private boolean shouldLaunchEndTransition(int seekBarProgress) {
     int timeEndClip = (int) clipTimesRanges.get(currentClipIndex()).getUpper();
-    //return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper() - TIME_TRANSITION_FADE;
     return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE) );
   }
 
-  private boolean isStartOfCurrentClip() {
-
+  private boolean shouldLaunchStartTransition(int seekBarProgress) {
     int timeStartLastClip;
-    if(currentClipIndex() > 0){
+    if (currentClipIndex() > 0) {
       timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
     } else {
       timeStartLastClip = 0;
     }
-    int seekBarProgress = seekBar.getProgress();
-
     return ((seekBarProgress > timeStartLastClip) && (seekBarProgress < (timeStartLastClip + TIME_TRANSITION_FADE)));
   }
 
@@ -333,7 +310,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   public void onPause() {
     pausePreview();
     releaseVideoView();
-    releaseMusicPlayer();
   }
 
   private void releaseVideoView() {
@@ -341,14 +317,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       currentTimePositionInList = getCurrentPosition();
       player.release();
       player = null;
+      clearNextBufferedClip();
     }
-  }
-
-  private void releaseMusicPlayer() {
-    if (musicPlayer != null) {
-      musicPlayer.stop();
-      musicPlayer.release();
-      musicPlayer = null;
+    if (videoHasMusic()) {
+      releaseAudio();
     }
   }
 
@@ -378,20 +350,32 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       this.currentTimePositionInList = instantTime;
       setSeekBarProgress(currentTimePositionInList);
       Video clipToPlay = videoList.get(getClipIndexByProgress(this.currentTimePositionInList));
+      videoVolume = clipToPlay.getVolume();
       initClipPreview(clipToPlay);
     }
   }
 
   private void initClipPreview(Video clipToPlay) {
     if (rendererBuildingState == RENDERER_BUILDING_STATE_BUILT) {
-      player.stop();
+      stopPlayer();
     }
     rendererBuilder.cancel();
     videoFormat = null;
     videoRenderer = null;
-    rendererBuildingState = RENDERER_BUILDING_STATE_BUILDING;
-    maybeReportPlayerState();
-    rendererBuilder.buildRenderers(this, Uri.fromFile(new File(clipToPlay.getMediaPath())));
+    if (nextClipRenderers == null) {
+      rendererBuildingState = RENDERER_BUILDING_STATE_BUILDING;
+      maybeReportPlayerState();
+      rendererBuilder.buildRenderers(this, Uri.fromFile(new File(clipToPlay.getMediaPath())),
+            this.getMainHandler());
+    } else {
+      onRenderers(nextClipRenderers, (DefaultBandwidthMeter) bandwidthMeter);
+    }
+  }
+
+  private void stopPlayer() {
+    if (player != null) {
+      player.stop();
+    }
   }
 
   public void clearImageText() {
@@ -468,30 +452,50 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     if (player != null) {
       player.setPlayWhenReady(true);
     }
+    if (videoHasMusic()) {
+      playAudio();
+    }
     // TODO(jliarte): 31/08/16 else??? - player should not ever be null!!
-    hidePlayButton();
+    showPauseButton();
     seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
   }
 
   @Override
   public void pausePreview() {
-    pauseMusic();
     pauseVideo();
     seekBarUpdaterHandler.removeCallbacksAndMessages(null);
     showPlayButton();
+  }
+
+  @Override
+  public void setVideoVolume(float volume) {
+    player.sendMessage(rendererBuilder.getAudioRenderer(),
+        MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
+  }
+
+  @Override
+  public void setMusicVolume(float volume) {
+    if (musicPlayer != null) {
+      musicPlayer.setAudioVolume(volume);
+    }
+  }
+
+  @Override
+  public void setVoiceOverVolume(float volume) {
+    if (voiceOverPlayer != null) {
+      voiceOverPlayer.setAudioVolume(volume);
+    }
   }
 
   private void pauseVideo() {
     if (player != null) {
       player.setPlayWhenReady(false);
     }
-  }
-
-  private void pauseMusic() {
-    if (musicPlayer != null && musicPlayer.isPlaying()) {
-      musicPlayer.pause();
+    if (videoHasMusic()) {
+      pauseAudio();
     }
   }
+
 
   @Override
   public void seekTo(int seekTimeInMsec) {
@@ -500,27 +504,40 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       setSeekBarProgress(currentTimePositionInList);
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
       if (currentClipIndex() != clipIndex) {
+        // (jliarte): 26/04/17 moved into seekToClip
+//        clearNextBufferedClip();
         seekToClip(clipIndex);
       } else {
         player.seekTo(getClipPositionFromTimeLineTime());
       }
+
+      if (videoHasMusic()) {
+        seekAudioTo(currentTimePositionInList);
+      }
     }
   }
 
+  private void clearNextBufferedClip() {
+    nextClipRenderers = null;
+  }
+
   @Override
-  public void seekClipTo(int seekTimeInMsec) {
+  public void seekClipToTime(int seekTimeInMsec) {
     if (player != null) {
       currentTimePositionInList = seekTimeInMsec
           - videoList.get(currentClipIndex()).getStartTime()
           + (int) clipTimesRanges.get(currentClipIndex()).getLower();
       setSeekBarProgress(currentTimePositionInList);
       player.seekTo(seekTimeInMsec);
+      seekTo(currentTimePositionInList);
     }
   }
 
   @Override
   public void seekToClip(int position) {
+    Log.d(TAG, "onClipClicked: " + position);
     pausePreview();
+    clearNextBufferedClip();
     currentClipIndex = position;
     // TODO(jliarte): 6/09/16 (hot)fix for Pablo's Index out of bonds
     if (position >= videoList.size() && position >= clipTimesRanges.size()) {
@@ -531,20 +548,71 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     setSeekBarProgress(currentTimePositionInList);
   }
 
+  /** VideonaAudioPlayer interface, Music and VoiceOver have the same behaviour **/
   @Override
-  public void setMusic(Music music) {
-    this.music = music;
-    initMusicPlayer();
+  public void playAudio() {
     if (musicPlayer != null) {
-      musicPlayer.seekTo(currentTimePositionInList);
-      musicVolume = music.getVolume();
-      setVolume(music.getVolume());
+      musicPlayer.playAudio();
+    }
+    if (voiceOverPlayer != null) {
+      voiceOverPlayer.playAudio();
     }
   }
 
   @Override
-  public void setTransitionFade(){
-    isSetTransitionFadeActivated = true;
+  public void pauseAudio() {
+    if (musicPlayer != null) {
+      musicPlayer.pauseAudio();
+    }
+    if (voiceOverPlayer != null) {
+      voiceOverPlayer.pauseAudio();
+    }
+  }
+
+  @Override
+  public void releaseAudio() {
+    if (musicPlayer != null) {
+      musicPlayer.releaseAudio();
+      musicPlayer = null;
+    }
+    if (voiceOverPlayer != null) {
+      voiceOverPlayer.releaseAudio();
+      voiceOverPlayer = null;
+    }
+  }
+
+  @Override
+  public void seekAudioTo(long timeInMs) {
+    if (musicPlayer != null) {
+      musicPlayer.seekAudioTo(timeInMs);
+    }
+    if (voiceOverPlayer != null) {
+      voiceOverPlayer.seekAudioTo(timeInMs);
+    }
+  }
+
+  private boolean videoHasMusic() {
+    return musicPlayer != null || voiceOverPlayer != null;
+  }
+
+  @Override
+  public void setVideoTransitionFade() {
+    isSetVideoTransitionFadeActivated = true;
+  }
+
+  @Override
+  public void setAudioTransitionFade() {
+    isSetAudioTransitionFadeActivated = true;
+  }
+
+  @Override
+  public void setMusic(Music music) {
+    musicPlayer = new VideonaAudioPlayerExo(getContext(), music);
+  }
+
+  @Override
+  public void setVoiceOver(Music voiceOver) {
+    voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), voiceOver);
   }
 
   @Override
@@ -596,31 +664,88 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   private void setupInAnimator() {
     inAnimator = ValueAnimator.ofFloat(1f, 0f);
-
     inAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
       @Override
       public void onAnimationUpdate(ValueAnimator animation) {
-        imageTransitionFade.setAlpha((Float) animation.getAnimatedValue());
+        float value = (Float) animation.getAnimatedValue();
+        Log.d(TAG, "setupInAnimator value " + value);
+        if (isSetVideoTransitionFadeActivated) {
+          imageTransitionFade.setAlpha(value);
+        }
+        if (isSetAudioTransitionFadeActivated) {
+          setVideoVolume(value * videoVolume);
+        }
+      }
+    });
+
+    inAnimator.addListener(new Animator.AnimatorListener() {
+      @Override
+      public void onAnimationStart(Animator animation) {
+        if (imageTransitionFade.getVisibility() == INVISIBLE) {
+            imageTransitionFade.setVisibility(VISIBLE);
+        }
+      }
+
+      @Override
+      public void onAnimationEnd(Animator animation) {
+          isInAnimatorLaunched = false;
+        Log.d(TAG, "AnimatorListener onAnimationEnd ");
+      }
+
+      @Override
+      public void onAnimationCancel(Animator animation) {
+
+      }
+
+      @Override
+      public void onAnimationRepeat(Animator animation) {
+
       }
     });
 
     inAnimator.setDuration(TIME_TRANSITION_FADE);
-    inAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    inAnimator.setInterpolator(new LinearInterpolator());
     inAnimator.setRepeatCount(0);
   }
 
   private void setupOutAnimator() {
     outAnimator = ValueAnimator.ofFloat(0f, 1f);
-
     outAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
       @Override
       public void onAnimationUpdate(ValueAnimator animation) {
-        imageTransitionFade.setAlpha((Float) animation.getAnimatedValue());
+        float value = (Float) animation.getAnimatedValue();
+        Log.d(TAG, "setupOutAnimator value " + value);
+        if(isSetVideoTransitionFadeActivated)
+          imageTransitionFade.setAlpha(value);
+        if(isSetAudioTransitionFadeActivated)
+          setVideoVolume(value*videoVolume);
+      }
+    });
+    outAnimator.addListener(new Animator.AnimatorListener() {
+      @Override
+      public void onAnimationStart(Animator animation) {
+
+      }
+
+      @Override
+      public void onAnimationEnd(Animator animation) {
+        isOutAnimatorLaunched = false;
+        Log.d(TAG, "AnimatorListener onAnimationEnd ");
+      }
+
+      @Override
+      public void onAnimationCancel(Animator animation) {
+
+      }
+
+      @Override
+      public void onAnimationRepeat(Animator animation) {
+
       }
     });
 
     outAnimator.setDuration(TIME_TRANSITION_FADE);
-    outAnimator.setRepeatMode(ValueAnimator.REVERSE);
+    outAnimator.setInterpolator(new LinearInterpolator());
     outAnimator.setRepeatCount(0);
   }
 
@@ -644,7 +769,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    * @param event received @{@link MotionEvent}
    * @return true if event has beeen processed
    */
-
   public boolean onTouchPreview(MotionEvent event) {
     boolean eventProcessed = false;
     if (event.getAction() == MotionEvent.ACTION_DOWN) {
@@ -665,7 +789,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         pausePreview();
       }
       if (playerHasVideos()) {
-        hidePlayButton();
+        showPauseButton();
         seekTo(progress);
         notifyNewClipPlayed();
       } else {
@@ -683,23 +807,22 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   private void showPlayButton() {
-    playButton.setVisibility(View.VISIBLE);
+    //playButton.setVisibility(View.VISIBLE);
+    playButton.setImageResource(R.drawable.common_icon_play_normal);
   }
 
-  public void hidePlayButton() {
-    playButton.setVisibility(View.INVISIBLE);
+  public void showPauseButton() {
+    //playButton.setVisibility(View.INVISIBLE);
+    playButton.setImageResource(R.drawable.common_icon_pause_normal);
   }
-
 
   @Override
   public void onStartTrackingTouch(SeekBar seekBar) {
-
   }
 
   @Override
   public void onStopTrackingTouch(SeekBar seekBar) {
     showPlayButton();
-
   }
 
   /***
@@ -710,12 +833,15 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     currentClipIndex++;
     if (hasNextClipToPlay()) {
       Video video = videoList.get(currentClipIndex());
+      videoVolume = video.getVolume();
       currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
       initClipPreview(video);
     } else {
       pausePreview();
+      clearNextBufferedClip();
       seekToClip(0);
-      imageTransitionFade.setAlpha(0f);
+      // avoid black frame, imageTransitionFade over player
+      imageTransitionFade.setVisibility(INVISIBLE);
     }
     notifyNewClipPlayed();
   }
@@ -739,25 +865,28 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     Log.d(TAG, "Playwhenready: " + playWhenReady + " state: " + playbackState);
     clearImageText();
     switch (playbackState) {
-      case ExoPlayer.STATE_BUFFERING:
+      case ExoPlayer.STATE_BUFFERING: // state 3
         break;
-      case ExoPlayer.STATE_ENDED:
+      case ExoPlayer.STATE_ENDED: // state 5
+        clearNextBufferedClip();
         if (playWhenReady) {
           // (jliarte): 14/10/16 as playNextClip() was called from both here and
           // updateSeekbarProgress thread, sometimes it's called twice in a clip end, causing
           // a double currentClipIndex++ and thus skipping a clip
-          //          playNextClip();
+          // (jliarte): 18/07/17 recovered again playNextClip here as some clips duration is
+          // reported less than actual causing VideonaPlayer not reaching end of clips, now we stop
+          // the player if end of clip is detected and in both cases we end up here!
+//                    playNextClip();
         }
         break;
       case ExoPlayer.STATE_IDLE:
         break;
       case ExoPlayer.STATE_PREPARING:
         break;
-      case ExoPlayer.STATE_READY:
+      case ExoPlayer.STATE_READY: // state 4
         updateClipTextPreview();
         if (playWhenReady) {
-          startMusicTrackPlayback();
-          // player.seekTo(getClipPositionFromTimeLineTime());
+          // player.seekAudioTo(getClipPositionFromTimeLineTime());
         }
         break;
       default:
@@ -790,23 +919,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     return null;
   }
 
-  private void startMusicTrackPlayback() {
-    if (videoHasMusic()) {
-      playMusicSyncWithVideo();
-    }
-  }
-
-  private void playMusicSyncWithVideo() {
-    // releaseMusicPlayer();
-    initMusicPlayer();
-    if (musicPlayer != null) {
-      musicPlayer.seekTo(currentTimePositionInList);
-      if (!musicPlayer.isPlaying()) {
-        musicPlayer.start();
-      }
-    }
-  }
-
   /**
    * Sets video preview mute status.
    *
@@ -827,27 +939,23 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
             */
   }
 
-  private boolean videoHasMusic() {
-    return (music != null);
-  }
 
   @Override
   public void onPlayWhenReadyCommitted() {
-
   }
 
   @Override
   public void onPlayerError(ExoPlaybackException error) {
-
   }
-
 
   public Handler getMainHandler() {
     return mainHandler;
   }
 
-  private void onRenderers(TrackRenderer[] renderers, DefaultBandwidthMeter bandwidthMeter) {
-    for (int i = 0; i < RENDERER_COUNT; i++) {
+  @Override
+  public void onRenderers(TrackRenderer[] renderers, DefaultBandwidthMeter bandwidthMeter) {
+    prebufferNextClip();
+    for (int i = 0; i < RendererBuilder.RENDERER_COUNT; i++) {
       if (renderers[i] == null) {
         // Convert a null renderer to a dummy renderer.
         renderers[i] = new DummyTrackRenderer();
@@ -860,11 +968,38 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         : renderers[TYPE_AUDIO] instanceof MediaCodecTrackRenderer
         ? ((MediaCodecTrackRenderer) renderers[TYPE_AUDIO]).codecCounters : null;
     this.bandwidthMeter = bandwidthMeter;
+
+    if (player == null) {
+      // TODO(jliarte): 25/07/17 should reinit components?
+      return;
+    }
     pushSurface(false);
-    player.prepare(renderers);
+    player.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
     player.seekTo(getClipPositionFromTimeLineTime());
-    setVolume(musicVolume);
+    if (videoHasMusic()) {
+      seekAudioTo(currentTimePositionInList);
+    }
+    setVideoVolume(videoVolume);
     rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
+  }
+
+
+  private void prebufferNextClip() {
+    if (currentClipIndex < videoList.size() - 1) {
+      clearNextBufferedClip();
+      RendererBuilder nextClipRendererBuilder = new RendererBuilder(getContext(), userAgent);
+      Video nextClipToPlay = videoList.get(currentClipIndex + 1);
+      nextClipRendererBuilder
+              .buildRenderers(new RendererBuilder.RendererBuilderListener() {
+                @Override
+                public void onRenderers(TrackRenderer[] renderers,
+                                        DefaultBandwidthMeter bandwidthMeter) {
+                  nextClipRenderers = renderers;
+                }
+              },
+              Uri.fromFile(new File(nextClipToPlay.getMediaPath())),
+              this.getMainHandler());
+    }
   }
 
   protected int getClipPositionFromTimeLineTime() {
@@ -878,7 +1013,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   }
 
   private void pushSurface(boolean blockForSurfacePush) {
-    if (videoRenderer == null) {
+    if (videoRenderer == null || player == null) {
       return;
     }
 
@@ -888,140 +1023,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     } else {
       player.sendMessage(
           videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
-    }
-  }
-
-  /***
-   * Renderer Event Listener.
-   ***/
-
-  @Override
-  public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees,
-                                 float pixelWidthHeightRatio) {
-  }
-
-  /** end of Renderer Event Listener. **/
-
-  /***
-   * MediaCodecVideoTrackRenderer EventListener.
-   ***/
-
-  @Override
-  public void onDrawnToSurface(Surface surface) {
-
-  }
-
-  @Override
-  public void onLoadError(int sourceId, IOException exception) {
-
-  }
-
-  @Override
-  public void onDroppedFrames(int count, long elapsed) {
-
-  }
-  /** End of MediaCodecVideoTrackRenderer EventListener. **/
-
-  /***
-   * MediaCodecAudioTrackRenderer.EventListener.
-   ***/
-  @Override
-  public void onAudioTrackUnderrun(int bufferSize, long bufferSizeMs, long elapsedSinceLastFeedMs) {
-
-  }
-
-  @Override
-  public void onAudioTrackInitializationError(AudioTrack.InitializationException exception) {
-
-  }
-
-  @Override
-  public void onAudioTrackWriteError(AudioTrack.WriteException exception) {
-
-  }
-
-  @Override
-  public void onDecoderInitializationError(
-      MediaCodecTrackRenderer.DecoderInitializationException exception) {
-
-  }
-
-  @Override
-  public void onCryptoError(MediaCodec.CryptoException exception) {
-
-  }
-
-  @Override
-  public void onDecoderInitialized(String decoderName, long elapsedRealtimeMs,
-                                   long initializationDurationMs) {
-
-  }
-
-  // TODO(jliarte): 31/08/16 move to interface?
-  public void releaseView() {
-
-  }
-
-  /**
-   * End of MediaCodecAudioTrackRenderer.EventListener
-   **/
-
-  public class RendererBuilder {
-    private static final int BUFFER_SEGMENT_SIZE = 64 * 1024;
-    private static final int BUFFER_SEGMENT_COUNT = 256;
-
-    private final Context context;
-    private final String userAgent;
-    private MediaCodecAudioTrackRenderer audioRenderer;
-
-    public MediaCodecAudioTrackRenderer getAudioRenderer() {
-      return audioRenderer;
-    }
-
-
-    public RendererBuilder(Context context, String userAgent) {
-      this.context = context;
-      this.userAgent = userAgent;
-    }
-
-    protected void buildRenderers(VideonaPlayerExo player, Uri videoUri) {
-      final long startTime = System.currentTimeMillis();
-
-      Allocator allocator = new DefaultAllocator(BUFFER_SEGMENT_SIZE);
-      Handler mainHandler = player.getMainHandler();
-
-      // Build the video and audio renderers.
-      DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter(mainHandler, null);
-      DataSource dataSource = new DefaultUriDataSource(context, bandwidthMeter, userAgent);
-      ExtractorSampleSource sampleSource = new ExtractorSampleSource(videoUri, dataSource,
-          allocator, BUFFER_SEGMENT_COUNT * BUFFER_SEGMENT_SIZE, mainHandler, player, 0);
-      MediaCodecVideoTrackRenderer videoRenderer = new MediaCodecVideoTrackRenderer(context,
-          sampleSource, MediaCodecSelector.DEFAULT, MediaCodec.VIDEO_SCALING_MODE_SCALE_TO_FIT,
-          5000, mainHandler, player, 50);
-      audioRenderer = new MediaCodecAudioTrackRenderer(sampleSource,
-          MediaCodecSelector.DEFAULT, null, true, mainHandler, player,
-          AudioCapabilities.getCapabilities(context), AudioManager.STREAM_MUSIC);
-      // (jliarte): 1/09/16 maybe it's easier with the traditional method using audio manager,
-      //      as here we would to advance the audio track to the current position in timeline
-      //      on each clip played
-      //            if (musicTrack != null) {
-      //                MediaCodecAudioTrackRenderer musicTrackRenderer =
-      //                    new MediaCodecAudioTrackRenderer(musicSource,
-      //                        MediaCodecSelector.DEFAULT, null)
-      //            }
-
-      // Invoke the callback.
-      TrackRenderer[] renderers = new TrackRenderer[VideonaPlayerExo.RENDERER_COUNT];
-      renderers[VideonaPlayerExo.TYPE_VIDEO] = videoRenderer;
-      renderers[VideonaPlayerExo.TYPE_AUDIO] = audioRenderer;
-      player.onRenderers(renderers, bandwidthMeter);
-      long stopTime = System.currentTimeMillis();
-      long elapsedTime = stopTime - startTime;
-      Log.d(TAG, "----------- time spent building renderers: " + elapsedTime);
-    }
-
-    public void cancel() {
-      // Do nothing.
     }
   }
 

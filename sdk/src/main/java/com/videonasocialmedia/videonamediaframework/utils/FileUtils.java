@@ -1,5 +1,7 @@
 package com.videonasocialmedia.videonamediaframework.utils;
 
+import android.media.MediaMetadataRetriever;
+
 import java.io.File;
 
 /**
@@ -36,4 +38,30 @@ public class FileUtils {
     File dir = new File(directoryPath);
     return !dir.exists() && dir.mkdirs();
   }
+
+  public static long getDurationFile(String filePath) {
+    /**
+     * Other solution to get duration, continue dependency with MediaRetriever, Android.
+     Video exportedVideo = new Video(filePath);
+     return exportedVideo.getFileDuration();
+     */
+    long duration = 0;
+    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+    retriever.setDataSource(filePath);
+    duration = Integer.parseInt(retriever.extractMetadata(
+        MediaMetadataRetriever.METADATA_KEY_DURATION));
+    return duration*1000;
+  }
+
+  public static void removeFile(String filePath) {
+    File f = new File(filePath);
+    f.delete();
+  }
+
+  public static void moveFile(String origPath, String dstPath) {
+    File orig = new File(origPath);
+    File dest = new File(dstPath);
+    orig.renameTo(dest);
+  }
+
 }

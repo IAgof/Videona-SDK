@@ -14,13 +14,10 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
-import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
-import android.widget.TextView;
 
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
@@ -162,13 +159,13 @@ public class MainActivity extends AppCompatActivity implements PlayerFragment.On
       // getItem is called to instantiate the fragment for the given page.
       // Return a PlaceholderFragment (defined as a static inner class below).
       if(position == 0){
-        return new PlayerFragment().newInstance("Hola", "Adios");
+        return new PlayerFragment().newInstance("", "");
       } else {
         if(position == 1){
-          return new TranscoderFragment().newInstance("Hello", "Bye");
+          return new TranscoderFragment().newInstance("", "");
         }
       }
-      return new PlayerFragment().newInstance("Hola", "Adios");
+      return new PlayerFragment().newInstance("", "");
     }
 
     @Override

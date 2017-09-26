@@ -64,4 +64,7 @@ public interface TrackTranscoder {
      * End of videos encoded
      */
     boolean isEncodedFinished();
+
+    void setTrackFinished();
+
 }

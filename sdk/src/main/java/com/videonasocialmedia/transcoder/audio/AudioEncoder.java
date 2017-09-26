@@ -112,6 +112,7 @@ public class AudioEncoder implements Runnable {
             fis.close();
         } catch (IOException e) {
             e.printStackTrace();
+            listener.OnFileEncodedError(String.valueOf(e));
         }
 
         mediaMuxer.stop();

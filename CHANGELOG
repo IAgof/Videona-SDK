@@ -1,0 +1,40 @@
+v0.2.12
+- Added audio gain application to video adapt transcoding job
+
+v0.2.11
+- Added new player for audio files.
+- Update generate mixAudio, supporting more than two files.
+
+v0.2.10
+- Improved adaptVideoToFormat job. Included support for rotate video if needed.
+
+v0.2.9
+- Update VMCompositionExportSessionImpl and review exporting process.
+- Sending export session progress messages back to listener.
+- Added exportAsyncronously method to export session impl
+
+v0.2.8
+- Update Video and TranscoderHelper to improve how to detect errors generating transcoding files
+
+v0.2.7
+- Update player preview. Added new icons and adjust design, margins.
+
+v0.2.6
+- TranscoderHelper, add new feature adaptVideo to format.
+
+v0.2.5
+- Updated duration audio, video fade transitions.
+- TranscoderHelper, created new methods to transcoder video, only apply to audio, video transitions.
+
+v0.2.4
+- Updated feature add watermark to VMComposition export session.
+
+v0.2.3
+- Updated backend for intermediates video files generation
+
+v0.2.2
+- Updated mix audio two files functionality for mixing original video audio with music at different volumes.
+
+v0.2.1
+- Update preview player with audio and video fade transitions.
+- Improved player added prebuffering of next clip to a faster switching.

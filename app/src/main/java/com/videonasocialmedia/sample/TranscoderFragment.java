@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
+import android.media.MediaMetadataRetriever;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -23,24 +24,25 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
-import com.videonasocialmedia.transcoder.MediaTranscoder;
-import com.videonasocialmedia.transcoder.MediaTranscoderListener;
 
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEffectListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioMixerListener;
+import com.google.common.util.concurrent.ListenableFuture;
+import com.videonasocialmedia.transcoder.MediaTranscoder;
+
+
+import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
+
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
-import com.videonasocialmedia.transcoder.video.overlay.Filter;
+
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
-import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffect;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
+import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelperListener;
 import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import java.io.File;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
-import java.util.concurrent.Future;
+import java.util.ArrayList;
+import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -57,8 +59,7 @@ import static com.videonasocialmedia.sample.MainActivity.tempDir;
  * Use the {@link TranscoderFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class TranscoderFragment extends Fragment implements OnAudioMixerListener,
-    OnAudioEffectListener {
+public class TranscoderFragment extends Fragment {
   // TODO: Rename parameter arguments, choose names that match
   // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
   private static final String ARG_PARAM1 = "param1";
@@ -78,7 +79,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
   private static final int REQUEST_CODE_OVERLAY_VIDEO = 3;
   private static final int REQUEST_CODE_FADE_INOUT_AUDIO = 4;
   private static final int PROGRESS_BAR_MAX = 1000;
-  private Future<Void> mFuture;
+  private ListenableFuture<Void> listenableFuture;
 
 
   @BindView(R.id.btnMixAudio) Button mixAudio;
@@ -95,7 +96,9 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       System.currentTimeMillis() + ".m4a";
 
   Drawable fadeTransition;
-  boolean isFadeActivated;
+  boolean isVideoFadeActivated;
+  boolean isAudioFadeActivated = false;
+  int rotation;
 
   public TranscoderFragment() {
     // Required empty public constructor
@@ -128,7 +131,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       mParam2 = getArguments().getString(ARG_PARAM2);
     }
     fadeTransition = ContextCompat.getDrawable(this.getContext(), R.drawable.alpha_transition_black);
-    isFadeActivated = getFadeTransitionActivatedFromPreferences();
+    isVideoFadeActivated = getFadeTransitionActivatedFromPreferences();
   }
 
 
@@ -197,7 +200,7 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
 
   @OnClick(R.id.cancel_button)
   public void onClickCancelButton(){
-    mFuture.cancel(true);
+    listenableFuture.cancel(true);
   }
 
   @OnClick(R.id.btnMixAudio)
@@ -239,79 +242,90 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
       }
     }
 
+    // Modo rápido de pruebas
+    Video audio1 = new Video(inputVideo, 0.5f);
+    Video audio2 = new Video(inputVideo2, 0.5f);
+    String inputFile3 = new File(inputVideo).getParent() + File.separator + "input_video_3.mp4";
+    Video audio3 = new Video(inputFile3, 0.9f);
+    List<Media> mediaList = new ArrayList<>();
+    mediaList.add(audio1);
+    mediaList.add(audio2);
+    mediaList.add(audio3);
+    ListenableFuture<Boolean> listenableFuture;
+
     try {
-      mFuture = MediaTranscoder.getInstance().mixAudioTwoFiles(inputVideo, inputVideo2, 0.90f,
-          tempDir, outputAudio, this);
+      listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
+          tempDir, outputAudio, getDurationFile(inputVideo));
     } catch (IOException e) {
       e.printStackTrace();
     }
 
+  }
 
+  public static long getDurationFile(String filePath){
+    long duration = 0;
+    MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+    retriever.setDataSource(filePath);
+    duration = Integer.parseInt(retriever.extractMetadata(
+        MediaMetadataRetriever.METADATA_KEY_DURATION));
+    return duration*1000;
   }
 
   @TargetApi(Build.VERSION_CODES.LOLLIPOP)
   @Override
   public void onActivityResult(int requestCode, int resultCode, Intent data) {
     if(resultCode == RESULT_OK) {
-      final File file;
+
       String externalDir = String.valueOf(Environment.getExternalStoragePublicDirectory(
           Environment.DIRECTORY_MOVIES));
-      String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-      file = new File(externalDir, "transcode_test_" + timeStamp + ".mp4");
 
       final String inPath = getPath(getActivity(), data.getData());
-      progressBar.setMax(PROGRESS_BAR_MAX);
+      final Video videoToEdit = new Video(inPath, 1f);
+      videoToEdit.setTempPath(externalDir);
+      final String exportedPath = videoToEdit.getTempPath();
+     // progressBar.setMax(PROGRESS_BAR_MAX);
       final long startTime = SystemClock.uptimeMillis();
-      MediaTranscoderListener listener = new MediaTranscoderListener() {
+      final TranscoderHelperListener listener = new TranscoderHelperListener() {
         @Override
-        public void onTranscodeProgress(double progress) {
-          if (progress < 0) {
-            progressBar.setIndeterminate(true);
-          } else {
-            progressBar.setIndeterminate(false);
-            progressBar.setProgress((int) Math.round(progress * PROGRESS_BAR_MAX));
-          }
-        }
-
-        @Override
-        public void onTranscodeCompleted() {
+        public void onSuccessTranscoding(Video video) {
           Log.d(TAG, "transcoding took " + (SystemClock.uptimeMillis() - startTime) + "ms");
+          Log.d(TAG, "transcoded file " + exportedPath);
+          File file = new File(exportedPath);
           onTranscodeFinished(true, "transcoded file placed on " + file.getAbsolutePath());
           startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.fromFile(file),
               "video/mp4"));
         }
 
         @Override
-        public void onTranscodeCanceled() {
-          onTranscodeFinished(false, "Transcoder canceled. " + inPath);
-        }
-
-        @Override
-        public void onTranscodeFailed(Exception exception) {
-          onTranscodeFinished(false, "Transcoder error occurred." + inPath);
-        }
+        public void onErrorTranscoding(Video video, String message) {
+          onTranscodeFinished(false, "Transcoder error. " + inPath);
+       }
       };
+
+      MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
+      TextToDrawable drawableGenerator = new TextToDrawable(getContext());
+      TranscoderHelper transcoderHelper = new TranscoderHelper(drawableGenerator, mediaTranscoder);
 
       switchButtonEnabled(true);
 
       switch (requestCode) {
         case REQUEST_CODE_TRIM_VIDEO:{
 
-          try {
-            mFuture = MediaTranscoder.getInstance().transcodeAndTrimVideo(fadeTransition,
-                isFadeActivated, inPath, file.getAbsolutePath(), new VideonaFormat(), listener,
-                5000, 10000);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+            videoToEdit.setStartTime(5000);
+            videoToEdit.setStopTime(10000);
+
+            transcoderHelper.generateOutputVideoWithTrimmingAsync(fadeTransition,
+                isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"");
 
           break;
         }
         case REQUEST_CODE_TRANSCODE_VIDEO: {
-
+          //Example adapt video to format
+          String destFinalPath = new File(videoToEdit.getMediaPath()).getParent() + File.separator
+              + "videoAdapted.mp4";
           try {
-            mFuture = MediaTranscoder.getInstance().transcodeOnlyVideo(fadeTransition,
-                isFadeActivated, inPath, file.getAbsolutePath(), new VideonaFormat(), listener);
+            transcoderHelper.adaptVideoWithRotationToDefaultFormatAsync(videoToEdit, new VideonaFormat(),
+                destFinalPath, rotation, listener, videoToEdit.getTempPath());
           } catch (IOException e) {
             e.printStackTrace();
           }
@@ -320,34 +334,41 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
         }
         case REQUEST_CODE_OVERLAY_VIDEO: {
 
-          /**
-           Example to overlay image from file
-           String pathName = "/sdcard/DCIM/tempV1.png";
-           Drawable drawable = Drawable.createFromPath(pathName);
-           Image imageText = new Image(pathName, 1280, 720, 0, 0);
-           */
-          VideonaFormat videonaFormat = new VideonaFormat(5000 * 1000, 1920, 1080);
-          Filter imageFilter = new Filter(getActivity().getDrawable(R.drawable.overlay_filter_bollywood),
-              videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
+          videoToEdit.setClipText("Overlay text");
+          videoToEdit.setClipTextPosition("CENTER");
+          //videoToEdit.setClipTextPosition(TextEffect.TextPosition.TOP.name());
 
-          try {
-            MediaTranscoder.getInstance().transcodeAndOverlayImageToVideo(fadeTransition,
-                isFadeActivated, inPath, file.getAbsolutePath(), videonaFormat, listener,
-                imageFilter);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+          transcoderHelper.generateOutputVideoWithOverlayImageAsync(fadeTransition,
+                  isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "");
+
           break;
         }
 
         case REQUEST_CODE_FADE_INOUT_AUDIO: {
 
-          try {
-            mFuture = MediaTranscoder.getInstance().audioFadeInFadeOutToFile(inPath, 500, 500,
-                tempDir, outputAudioFadeInOut, this);
-          } catch (IOException e) {
-            e.printStackTrace();
-          }
+          listenableFuture = MediaTranscoder.getInstance().audioFadeInFadeOutToFile(inPath, 500, 500,
+                  tempDir, outputAudioFadeInOut, new MediaTranscoderListener() {
+                    @Override
+                    public void onTranscodeSuccess(String outputFile) {
+                      textViewInfoProgress.setText("Success " + outputFile);
+                      textViewInfoProgress.setTextColor(Color.GREEN);
+                    }
+
+                    @Override
+                    public void onTranscodeProgress(String progress) {
+
+                    }
+
+                    @Override
+                    public void onTranscodeError(String error) {
+
+                    }
+
+                    @Override
+                    public void onTranscodeCanceled() {
+
+                    }
+                  });
           break;
         }
         default:
@@ -491,10 +512,10 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
 
 
   private void onTranscodeFinished(boolean isSuccess, String toastMessage) {
-    progressBar.setIndeterminate(false);
-    progressBar.setProgress(isSuccess ? PROGRESS_BAR_MAX : 0);
+   // progressBar.setIndeterminate(false);
+   // progressBar.setProgress(isSuccess ? PROGRESS_BAR_MAX : 0);
     switchButtonEnabled(false);
-    Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
+    //Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
   }
 
   private void switchButtonEnabled(boolean isProgress) {
@@ -505,50 +526,6 @@ public class TranscoderFragment extends Fragment implements OnAudioMixerListener
     mixAudio.setEnabled(!isProgress);
     fadeInOutVideo.setEnabled(!isProgress);
     cancelButton.setEnabled(isProgress);
-  }
-
-  @Override
-  public void onAudioMixerSuccess(String outputFile) {
-    textViewInfoProgress.setText("Success " + outputFile);
-    textViewInfoProgress.setTextColor(Color.GREEN);
-  }
-
-  @Override
-  public void onAudioMixerProgress(String progress) {
-    textViewInfoProgress.setText(progress);
-    textViewInfoProgress.setTextColor(Color.BLUE);
-  }
-
-  @Override
-  public void onAudioMixerError(String error) {
-    textViewInfoProgress.setText(error);
-    textViewInfoProgress.setTextColor(Color.RED);
-  }
-
-  @Override
-  public void onAudioMixerCanceled() {
-
-  }
-
-  @Override
-  public void onAudioEffectSuccess(String outputFile) {
-    textViewInfoProgress.setText("Success " + outputFile);
-    textViewInfoProgress.setTextColor(Color.GREEN);
-  }
-
-  @Override
-  public void onAudioEffectProgress(String progress) {
-
-  }
-
-  @Override
-  public void onAudioEffectError(String error) {
-
-  }
-
-  @Override
-  public void onAudioEffectCanceled() {
-
   }
 
   /**

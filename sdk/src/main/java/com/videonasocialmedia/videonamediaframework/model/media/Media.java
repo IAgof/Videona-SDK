@@ -16,6 +16,8 @@ import android.media.MediaMetadata;
 import com.videonasocialmedia.videonamediaframework.model.media.transitions.Transition;
 import com.videonasocialmedia.videonamediaframework.model.licensing.License;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
+import com.videonasocialmedia.videonamediaframework.model.media.utils.ChangeNotifier;
+import com.videonasocialmedia.videonamediaframework.model.media.utils.ElementChangedListener;
 
 import java.util.ArrayList;
 
@@ -32,6 +34,7 @@ import java.util.ArrayList;
 
 public abstract class Media extends MediaElement {
 
+    private final ChangeNotifier changeNotifier = new ChangeNotifier();
     /**
      * Title of the media. Should be the video name in the social network
      */
@@ -41,6 +44,8 @@ public abstract class Media extends MediaElement {
      * The path of the media resource
      */
     protected String mediaPath;
+
+    protected float volume;
 
     // TODO(jliarte): 14/06/16 seems to not being used. If so, maybe initialize in getter?
 //    protected File source;
@@ -83,6 +88,7 @@ public abstract class Media extends MediaElement {
 
     protected int position;
 
+
     /**
      * Constructor of minimum number of parameters. Default constructor.
      *
@@ -93,10 +99,11 @@ public abstract class Media extends MediaElement {
      * @param duration      - Media item duration in milliseconds within the file referenced
      * @param license       - Legal stuff.
      */
-    protected Media(int identifier, String iconPath, String mediaPath, int startTime,
+    protected Media(int identifier, String iconPath, String mediaPath, float volume, int startTime,
                    int duration , License license) {
         super(identifier, iconPath);
         this.mediaPath = mediaPath;
+        this.volume = volume;
 //        this.source = new File(this.mediaPath);
         this.startTime = startTime;
         this.stopTime = duration;
@@ -120,11 +127,12 @@ public abstract class Media extends MediaElement {
      * @param license          - Legal stuff.
      */
     protected Media(int identifier, String iconPath, String selectedIconPath, String title,
-                    String mediaPath, int startTime, int duration, Transition opening,
+                    String mediaPath, float volume, int startTime, int duration, Transition opening,
                     Transition ending, MediaMetadata metadata, License license) {
         super(identifier, iconPath, selectedIconPath);
         this.title = title;
         this.mediaPath = mediaPath;
+        this.volume = volume;
 //        this.source = new File(this.mediaPath);
         this.startTime = startTime;
         this.stopTime = duration;
@@ -254,4 +262,25 @@ public abstract class Media extends MediaElement {
     public void setPosition(int position) {
         this.position = position;
     }
+
+    public float getVolume() {
+        return volume;
+    }
+
+    public void setVolume(float volume){
+        this.volume = volume;
+    }
+
+    public void addListener(ElementChangedListener listener) {
+        changeNotifier.addListener(listener);
+    }
+
+    public void removeListener(ElementChangedListener listener) {
+        changeNotifier.removeListener(listener);
+    }
+
+    public void notifyChanges() {
+        changeNotifier.notifyChanges();
+    }
+
 }

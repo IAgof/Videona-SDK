@@ -41,13 +41,12 @@ public class MediaTranscoderEngine {
     private static final double PROGRESS_UNKNOWN = -1.0;
     private static final long SLEEP_TO_WAIT_TRACK_TRANSCODERS = 10;
     private static final long PROGRESS_INTERVAL_STEPS = 10;
+    private String rotation;
     private FileDescriptor mInputFileDescriptor;
     private TrackTranscoder mVideoTrackTranscoder;
     private TrackTranscoder mAudioTrackTranscoder;
     private MediaExtractor mExtractor;
     private MediaMuxer mMuxer;
-    private volatile double mProgress;
-    private ProgressCallback mProgressCallback;
     private long mDurationUs;
 
     private MediaExtractorUtils.TrackResult trackResult;
@@ -55,31 +54,21 @@ public class MediaTranscoderEngine {
     private MediaFormat audioOutputFormat;
     private Muxer muxer;
 
+    private boolean interruptTranscoding = false;
+
     /**
      * Do not use this constructor unless you know what you are doing.
      */
     public MediaTranscoderEngine() {
     }
 
+    public MediaTranscoderEngine(String rotation){
+        this.rotation = rotation;
+    }
+
     public void setDataSource(FileDescriptor fileDescriptor) {
         mInputFileDescriptor = fileDescriptor;
     }
-
-    public ProgressCallback getProgressCallback() {
-        return mProgressCallback;
-    }
-
-    public void setProgressCallback(ProgressCallback progressCallback) {
-        mProgressCallback = progressCallback;
-    }
-
-    /**
-     * NOTE: This method is thread safe.
-     */
-    public double getProgress() {
-        return mProgress;
-    }
-
 
     /**
      * Run video transcoding. Blocks current thread.
@@ -93,8 +82,6 @@ public class MediaTranscoderEngine {
     public void transcodeOnlyVideo(Drawable fadeTransition, boolean isFadeActivated,
                                    String outputPath, MediaFormatStrategy formatStrategy)
             throws IOException, InterruptedException {
-
-
         if (outputPath == null) {
             throw new NullPointerException("Output path cannot be null.");
         }
@@ -114,35 +101,10 @@ public class MediaTranscoderEngine {
             runPipelines();
             mMuxer.stop();
         } finally {
-            try {
-                if (mVideoTrackTranscoder != null) {
-                    mVideoTrackTranscoder.release();
-                    mVideoTrackTranscoder = null;
-                }
-                if (mAudioTrackTranscoder != null) {
-                    mAudioTrackTranscoder.release();
-                    mAudioTrackTranscoder = null;
-                }
-                if (mExtractor != null) {
-                    mExtractor.release();
-                    mExtractor = null;
-                }
-            } catch (RuntimeException e) {
-                // Too fatal to make alive the app, because it may leak native resources.
-                //noinspection ThrowFromFinallyBlock
-                throw new Error("Could not shutdown extractor, codecs and muxer pipeline.", e);
-            }
-            try {
-                if (mMuxer != null) {
-                    mMuxer.release();
-                    mMuxer = null;
-                }
-            } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release muxer.", e);
-            }
+            releaseCriticalResourcesOrThrowError();
+            releaseMuxer();
         }
     }
-
 
     /**
      * Run video transcoding. Blocks current thread.
@@ -159,8 +121,6 @@ public class MediaTranscoderEngine {
                                               MediaFormatStrategy formatStrategy,
                                               Overlay overlay)
             throws IOException, InterruptedException {
-
-
         if (outputPath == null) {
             throw new NullPointerException("Output path cannot be null.");
         }
@@ -180,32 +140,8 @@ public class MediaTranscoderEngine {
             runPipelines();
             mMuxer.stop();
         } finally {
-            try {
-                if (mVideoTrackTranscoder != null) {
-                    mVideoTrackTranscoder.release();
-                    mVideoTrackTranscoder = null;
-                }
-                if (mAudioTrackTranscoder != null) {
-                    mAudioTrackTranscoder.release();
-                    mAudioTrackTranscoder = null;
-                }
-                if (mExtractor != null) {
-                    mExtractor.release();
-                    mExtractor = null;
-                }
-            } catch (RuntimeException e) {
-                // Too fatal to make alive the app, because it may leak native resources.
-                //noinspection ThrowFromFinallyBlock
-                throw new Error("Could not shutdown extractor, codecs and muxer pipeline.", e);
-            }
-            try {
-                if (mMuxer != null) {
-                    mMuxer.release();
-                    mMuxer = null;
-                }
-            } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release muxer.", e);
-            }
+            releaseCriticalResourcesOrThrowError();
+            releaseMuxer();
         }
     }
 
@@ -224,8 +160,6 @@ public class MediaTranscoderEngine {
                                       String outputPath, MediaFormatStrategy formatStrategy,
                                       int startTimeMs, int endTimeMs)
         throws IOException, InterruptedException {
-
-
         if (outputPath == null) {
             throw new NullPointerException("Output path cannot be null.");
         }
@@ -246,32 +180,8 @@ public class MediaTranscoderEngine {
             runPipelines();
             mMuxer.stop();
         } finally {
-            try {
-                if (mVideoTrackTranscoder != null) {
-                    mVideoTrackTranscoder.release();
-                    mVideoTrackTranscoder = null;
-                }
-                if (mAudioTrackTranscoder != null) {
-                    mAudioTrackTranscoder.release();
-                    mAudioTrackTranscoder = null;
-                }
-                if (mExtractor != null) {
-                    mExtractor.release();
-                    mExtractor = null;
-                }
-            } catch (RuntimeException e) {
-                // Too fatal to make alive the app, because it may leak native resources.
-                //noinspection ThrowFromFinallyBlock
-                throw new Error("Could not shutdown extractor, codecs and muxer pipeline.", e);
-            }
-            try {
-                if (mMuxer != null) {
-                    mMuxer.release();
-                    mMuxer = null;
-                }
-            } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release muxer.", e);
-            }
+            releaseCriticalResourcesOrThrowError();
+            releaseMuxer();
         }
     }
 
@@ -280,9 +190,7 @@ public class MediaTranscoderEngine {
                                                   MediaFormatStrategy formatStrategy,
                                                   Overlay overlay,
                                                   int startTimeMs, int endTimeMs)
-        throws IOException, InterruptedException {
-
-
+            throws IOException, InterruptedException {
         if (outputPath == null) {
             throw new NullPointerException("Output path cannot be null.");
         }
@@ -303,32 +211,52 @@ public class MediaTranscoderEngine {
             runPipelines();
             mMuxer.stop();
         } finally {
-            try {
-                if (mVideoTrackTranscoder != null) {
-                    mVideoTrackTranscoder.release();
-                    mVideoTrackTranscoder = null;
-                }
-                if (mAudioTrackTranscoder != null) {
-                    mAudioTrackTranscoder.release();
-                    mAudioTrackTranscoder = null;
-                }
-                if (mExtractor != null) {
-                    mExtractor.release();
-                    mExtractor = null;
-                }
-            } catch (RuntimeException e) {
-                // Too fatal to make alive the app, because it may leak native resources.
-                //noinspection ThrowFromFinallyBlock
-                throw new Error("Could not shutdown extractor, codecs and muxer pipeline.", e);
+            releaseCriticalResourcesOrThrowError();
+            releaseMuxer();
+        }
+    }
+
+    private void releaseCriticalResourcesOrThrowError() {
+        try {
+            releaseVideoTrackTranscoder();
+            releaseAudioTrackTranscoder();
+            releaseExtractor();
+        } catch (RuntimeException e) {
+            // Too fatal to make alive the app, because it may leak native resources.
+            //noinspection ThrowFromFinallyBlock
+            throw new Error("Could not shutdown extractor, codecs and muxer pipeline.", e);
+        }
+    }
+
+    private void releaseExtractor() {
+        if (mExtractor != null) {
+            mExtractor.release();
+            mExtractor = null;
+        }
+    }
+
+    private void releaseAudioTrackTranscoder() {
+        if (mAudioTrackTranscoder != null) {
+            mAudioTrackTranscoder.release();
+            mAudioTrackTranscoder = null;
+        }
+    }
+
+    private void releaseVideoTrackTranscoder() {
+        if (mVideoTrackTranscoder != null) {
+            mVideoTrackTranscoder.release();
+            mVideoTrackTranscoder = null;
+        }
+    }
+
+    private void releaseMuxer() {
+        try {
+            if (mMuxer != null) {
+                mMuxer.release();
+                mMuxer = null;
             }
-            try {
-                if (mMuxer != null) {
-                    mMuxer.release();
-                    mMuxer = null;
-                }
-            } catch (RuntimeException e) {
-                Log.e(TAG, "Failed to release muxer.", e);
-            }
+        } catch (RuntimeException e) {
+            Log.d(TAG, "Failed to release muxer.", e);
         }
     }
 
@@ -349,10 +277,9 @@ public class MediaTranscoderEngine {
             MediaFormatValidator.validateAudioOutputFormat(mAudioTrackTranscoder.getDeterminedFormat());
             }
         });
-
     }
 
-    private void setupAudioTranscoder(){
+    private void setupAudioTranscoder() {
         if (audioOutputFormat == null) {
             mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mAudioTrackIndex, muxer, Muxer.SampleType.AUDIO);
@@ -365,7 +292,7 @@ public class MediaTranscoderEngine {
     }
 
     private void setupVideoTranscoder(Drawable fadeTransition, boolean isFadeActivated,
-                                      Overlay overlay){
+                                      Overlay overlay) {
         if (videoOutputFormat == null) {
             mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
@@ -378,7 +305,7 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
 
-    private void setupVideoTranscoder(Drawable fadeTransition, boolean isFadeActivated){
+    private void setupVideoTranscoder(Drawable fadeTransition, boolean isFadeActivated) {
         if (videoOutputFormat == null) {
             mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
@@ -390,8 +317,19 @@ public class MediaTranscoderEngine {
         mExtractor.selectTrack(trackResult.mVideoTrackIndex);
     }
 
-    private void setupRangeTimeVideoTranscoder(int startTimeMs, int endTimeMs){
+    private void setupVideoTranscoder(int degrees, Drawable fadeTransition, boolean isFadeActivated) {
+        if (videoOutputFormat == null) {
+            mVideoTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
+                trackResult.mVideoTrackIndex, muxer, Muxer.SampleType.VIDEO);
+        } else {
+            mVideoTrackTranscoder = new VideoTrackTranscoder(fadeTransition, isFadeActivated,
+                mDurationUs, mExtractor, trackResult.mVideoTrackIndex,videoOutputFormat, muxer, degrees);
+        }
+        mVideoTrackTranscoder.setup();
+        mExtractor.selectTrack(trackResult.mVideoTrackIndex);
+    }
 
+    private void setupRangeTimeVideoTranscoder(int startTimeMs, int endTimeMs) {
         if(startTimeMs*1000 > mDurationUs) {
             throw new InvalidOutputFormatException("start time bigger than durations file");
         } else {
@@ -405,16 +343,22 @@ public class MediaTranscoderEngine {
         }
     }
 
-
     private void setupMetadata() throws IOException {
         MediaMetadataRetriever mediaMetadataRetriever = new MediaMetadataRetriever();
         mediaMetadataRetriever.setDataSource(mInputFileDescriptor);
 
-        String rotationString = mediaMetadataRetriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
-        try {
-            mMuxer.setOrientationHint(Integer.parseInt(rotationString));
-        } catch (NumberFormatException e) {
-            // skip
+        String rotationString = mediaMetadataRetriever
+            .extractMetadata(MediaMetadataRetriever.METADATA_KEY_VIDEO_ROTATION);
+        Log.d(TAG, " rotationString setupMetadata " + rotationString);
+        Log.d(TAG, " rotation setupMetadata " + rotation);
+        if(rotation == null){
+            try {
+                mMuxer.setOrientationHint(Integer.parseInt(rotationString));
+            } catch (NumberFormatException e) {
+                // skip
+            }
+        }else {
+            mMuxer.setOrientationHint(Integer.parseInt(rotation));
         }
 
         // TODO: parse ISO 6709
@@ -433,12 +377,14 @@ public class MediaTranscoderEngine {
         long loopCount = 0;
         if (mDurationUs <= 0) {
             double progress = PROGRESS_UNKNOWN;
-            mProgress = progress;
-            if (mProgressCallback != null) mProgressCallback.onProgress(progress); // unknown
         }
         while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
-
-            if(mVideoTrackTranscoder.isEncodedFinished()){
+            if (interruptTranscoding) {
+                Log.d(TAG, "interrupt transcoding exit runPipeLines");
+                mVideoTrackTranscoder.setTrackFinished();
+                return;
+            }
+            if (mVideoTrackTranscoder.isEncodedFinished()) {
                 return;
             }
 
@@ -449,8 +395,6 @@ public class MediaTranscoderEngine {
                 double videoProgress = mVideoTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mVideoTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
                 double audioProgress = mAudioTrackTranscoder.isFinished() ? 1.0 : Math.min(1.0, (double) mAudioTrackTranscoder.getWrittenPresentationTimeUs() / mDurationUs);
                 double progress = (videoProgress + audioProgress) / 2.0;
-                mProgress = progress;
-                if (mProgressCallback != null) mProgressCallback.onProgress(progress);
             }
             if (!stepped) {
                 try {
@@ -462,13 +406,35 @@ public class MediaTranscoderEngine {
         }
     }
 
-
-    public interface ProgressCallback {
-        /**
-         * Called to notify progress. Same thread which initiated transcode is used.
-         *
-         * @param progress Progress in [0.0, 1.0] range, or negative value if progress is unknown.
-         */
-        void onProgress(double progress);
+    public void adaptMediaToFormatStrategyAndRotation(
+            String outputPath, MediaFormatStrategy formatStrategy, int rotation)
+            throws IOException, InterruptedException {
+        if (outputPath == null) {
+            throw new NullPointerException("Output path cannot be null.");
+        }
+        if (mInputFileDescriptor == null) {
+            throw new IllegalStateException("Data source is not set.");
+        }
+        try {
+            // NOTE: use single extractor to keep from running out audio track fast.
+            mExtractor = new MediaExtractor();
+            mExtractor.setDataSource(mInputFileDescriptor);
+            mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
+            setupMetadata();
+            setupOutputFormat(formatStrategy);
+            setupAudioTranscoder();
+            setupVideoTranscoder(rotation, null, false);
+            //setupTrackTranscoders(formatStrategy);
+            runPipelines();
+            mMuxer.stop();
+        } finally {
+            releaseCriticalResourcesOrThrowError();
+            releaseMuxer();
+        }
     }
+
+    public void interruptTranscoding() {
+        interruptTranscoding = true;
+    }
+
 }
