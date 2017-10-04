@@ -1,6 +1,6 @@
 package com.videonasocialmedia.transcoder.audio;
 
-
+import android.util.Log;
 
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
@@ -19,7 +19,7 @@ import java.util.List;
  */
 public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
         OnAudioEncoderListener {
-
+    private static final String LOG_TAG = AudioMixer.class.getSimpleName();
     private boolean DEBUG = true;
 
     private String tempDirectory;
@@ -27,19 +27,16 @@ public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
 
     private long durationOutputFile;
 
-    private List<Media> mediaList;
-
     private List<Media> mediaListDecoded;
     private boolean result = false;
 
     public AudioMixer() {
-        mediaListDecoded = new ArrayList<>(mediaList.size());
+        mediaListDecoded = new ArrayList<>();
     }
-
 
     public boolean export(List<Media> mediaList, String tempDirectory, String outputFile,
                           long durationOutputFile) {
-        this.mediaList = mediaList;
+        Log.e(LOG_TAG, "Duration output file is: " + durationOutputFile);
         this.tempDirectory = tempDirectory;
         this.outputFile = outputFile;
         this.durationOutputFile = durationOutputFile;

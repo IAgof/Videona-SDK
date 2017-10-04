@@ -136,35 +136,25 @@ public class AudioDecoder {
 
         int inputBufIndex;
 
-        int counter=0;
         while (!sawOutputEOS) {
-            counter++;
             if (!sawInputEOS) {
                 inputBufIndex = decoder.dequeueInputBuffer(kTimeOutUs);
-
                 if (inputBufIndex >= 0) {
                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
-
                     int sampleSize = extractor
                             .readSampleData(dstBuf, 0 /* offset */);
-
                     long presentationTimeUs = 0;
-
                     if (sampleSize < 0) {
-
                         sawInputEOS = true;
                         sampleSize = 0;
                     } else {
-
                         presentationTimeUs = extractor.getSampleTime();
                     }
                     // can throw illegal state exception (???)
-
                     decoder.queueInputBuffer(inputBufIndex, 0 /* offset */,
                             sampleSize, presentationTimeUs,
                             sawInputEOS ? MediaCodec.BUFFER_FLAG_END_OF_STREAM
                                     : 0);
-
                     if (!sawInputEOS) {
                         extractor.advance();
                     }
@@ -231,9 +221,8 @@ public class AudioDecoder {
 
                 Log.i(LOG_TAG, "output buffers have changed.");
             } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
-                MediaFormat oformat = decoder.getOutputFormat();
-
-                Log.i(LOG_TAG, "output outputFormat has changed to " + oformat);
+                MediaFormat outputFormat = decoder.getOutputFormat();
+                Log.i(LOG_TAG, "output outputFormat has changed to " + outputFormat);
             } else {
                 Log.i(LOG_TAG, "dequeueOutputBuffer returned " + res);
             }
