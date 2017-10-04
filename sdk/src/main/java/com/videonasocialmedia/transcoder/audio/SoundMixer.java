@@ -10,6 +10,7 @@ package com.videonasocialmedia.transcoder.audio;
  *
  */
 
+import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
@@ -55,49 +56,26 @@ public class SoundMixer {
 
   public void mixAudio(List<Media> mediaList, String outputTempMixAudioPath)
       throws IOException {
-    int mediaListSize = setupDataLists(mediaList);
+    setupDataLists(mediaList);
 
     // FIXME: 2/10/17 always return 2^22 limiting output lenght, is it a problem?
     int maxLength = bufferList.get(0).limit(); // Video fix buffer length, first list element always is Video
-    Log.d(LOG_TAG, "Max length is " + maxLength);
     int indexOutput = 0;
     long maxSizeOutput = randomAccessFileList.get(0).length();
-    Log.d(LOG_TAG, "maxSizeOutput is " + maxLength);
     output = new byte[(int) maxSizeOutput];
 
-    float normalizeVolume = getNormalizeVolume(mediaList, mediaListSize);
+    float normalizeVolume = getNormalizeVolume(mediaList);
 
     while (fileChannelList.get(0).read(bufferList.get(0)) > 0) {
       if (indexOutput + maxLength > output.length) {
         maxLength = output.length - indexOutput;
       }
-
-      for (int i = 1; i < fileChannelList.size(); i++) {
-        fileChannelList.get(i).read(bufferList.get(i));
-      }
-
-      for (ByteBuffer buffer : bufferList) {
-        buffer.flip();
-      }
-
-      List<byte[]> dataList = new ArrayList<>(mediaListSize);
-      for (Media media : mediaList) {
-        byte[] data = adjustVolume(bufferList.get(mediaList.indexOf(media)).array(),
-            media.getVolume() / normalizeVolume);
-        dataList.add(data);
-      }
-
-      byte[] tempOutput = manipulateSamples(dataList);
-
-      for (int j = 0; j < maxLength; j++) {
-        output[j] = tempOutput[j];
-      }
-
-      for (ByteBuffer buffer : bufferList) {
-        buffer.clear();
-      }
-
+      prepareInputChunk();
+      List<byte[]> dataList = normalizeSoundSamples(mediaList, normalizeVolume);
+      byte[] chunkOutputSamples = mixSoundSamples(dataList);
+      appendSamplesToOutputAt(chunkOutputSamples, indexOutput, maxLength);
       indexOutput = indexOutput + maxLength;
+      clearBuffers();
     }
     closeChannels();
     convertByteToFile(output, outputTempMixAudioPath);
@@ -106,7 +84,38 @@ public class SoundMixer {
     listener.OnMixSoundSuccess(outputTempMixAudioPath);
   }
 
-  private int setupDataLists(List<Media> mediaList) throws FileNotFoundException {
+  private void clearBuffers() {
+    for (ByteBuffer buffer : bufferList) {
+      buffer.clear();
+    }
+  }
+
+  private void appendSamplesToOutputAt(byte[] chunkOutputSamples, int indexOutput, int maxLength) {
+    for (int j = 0; j < maxLength; j++) {
+      output[indexOutput + j] = chunkOutputSamples[j];
+    }
+  }
+
+  @NonNull
+  private List<byte[]> normalizeSoundSamples(List<Media> mediaList, float normalizeVolume) {
+    List<byte[]> dataList = new ArrayList<>(mediaList.size());
+    for (Media media : mediaList) {
+      byte[] data = adjustVolume(bufferList.get(mediaList.indexOf(media)).array(),
+          media.getVolume() / normalizeVolume);
+      dataList.add(data);
+    }
+    return dataList;
+  }
+
+  private void prepareInputChunk() throws IOException {
+    bufferList.get(0).flip();
+    for (int i = 1; i < fileChannelList.size(); i++) {
+      fileChannelList.get(i).read(bufferList.get(i));
+      bufferList.get(i).flip();
+    }
+  }
+
+  private void setupDataLists(List<Media> mediaList) throws FileNotFoundException {
     int mediaListSize = mediaList.size();
     inputFileList = new ArrayList<>(mediaListSize);
     for (Media media : mediaList) {
@@ -128,7 +137,6 @@ public class SoundMixer {
     for (int i = 0; i < mediaListSize; i++) {
       bufferList.add(ByteBuffer.allocate(SIZE_4_MB));
     }
-    return mediaListSize;
   }
 
   private void closeChannels() throws IOException {
@@ -138,25 +146,25 @@ public class SoundMixer {
     for (RandomAccessFile randomAccessFile : randomAccessFileList) {
       randomAccessFile.close();
     }
-
     Log.d(LOG_TAG, "Close");
   }
 
-  private float getNormalizeVolume(List<Media> mediaList, int mediaListSize) {
+  private float getNormalizeVolume(List<Media> mediaList) {
     float normalizeVolume = 0;
-    if (mediaListSize == 1) {
+    if (mediaList.size() == 1) {
       normalizeVolume = 1;
     } else {
       for (Media media : mediaList) {
         normalizeVolume = normalizeVolume + media.getVolume();
       }
     }
+    normalizeVolume = normalizeVolume / mediaList.size();
     Log.d(LOG_TAG, "normalize volume " + normalizeVolume);
     return normalizeVolume;
   }
 
-  private byte[] manipulateSamples(List<byte[]> dataList) {
-    Log.d(LOG_TAG, "manipulateSamples ...");
+  private byte[] mixSoundSamples(List<byte[]> dataList) {
+    Log.d(LOG_TAG, "mixSoundSamples ...");
 
     // Convert byte[] to short[] (16 bit) to float[] (32 bit) (End result: Big Endian)
     List<ShortBuffer> shortBufferList = new ArrayList<>(dataList.size());
@@ -218,7 +226,8 @@ public class SoundMixer {
     return array;
   }
 
-  public static void convertByteToFile(byte[] fileBytes, String outputFile) throws FileNotFoundException {
+  public static void convertByteToFile(byte[] fileBytes, String outputFile)
+          throws FileNotFoundException {
     BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outputFile));
     try {
       bos.write(fileBytes);

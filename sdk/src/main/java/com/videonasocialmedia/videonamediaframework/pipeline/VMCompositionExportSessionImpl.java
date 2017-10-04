@@ -61,6 +61,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     private String intermediatesTempAudioFadeDirectory;
     private final MediaTranscoder mediaTranscoder;
     protected TranscoderHelper transcoderHelper;
+    private String finalVideoExportedFilePath;
 
     public VMCompositionExportSessionImpl(
             VMComposition vmComposition, String outputFilesDirectory, String tempFilesDirectory, 
@@ -74,6 +75,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         FileUtils.createDirectory(tempAudioPath);
         outputAudioMixedFile = tempFilesDirectory + File.separator + Constants.MIXED_AUDIO_FILE_NAME;
         tempVideoExportedPath = outputFilesDirectory + File.separator + "export";
+        finalVideoExportedFilePath = outputFilesDirectory + getNewExportedVideoFileName();
         audioTrimmer = new AudioTrimmer();
         appender = new Appender();
         this.mediaTranscoder = MediaTranscoder.getInstance();
@@ -111,8 +113,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 applyWatermark();
                 mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
                     tempExportFilePath, movieDuration);
-                exportListener.onExportSuccess(
-                        new Video(tempExportFilePath, Video.DEFAULT_VOLUME));
+//                exportListener.onExportSuccess(
+//                        new Video(path, Video.DEFAULT_VOLUME));
             }
         } catch (IOException exportIOError) {
             Log.d(TAG, "Catched " +  exportIOError.getClass().getName() + " while exporting, " +
@@ -389,15 +391,18 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     protected void mixAudio(List<Media> mediaList, final String videoPath,
                             long movieDuration) {
+        // TODO(jliarte): 4/10/17 these two conditions feel strange here, redesign these steps
         if (mediaList.size() == 1 && mediaList.get(0).getVolume() == Video.DEFAULT_VOLUME) {
+            FileUtils.moveFile(videoPath, finalVideoExportedFilePath);
+            notifyFinalSuccess(finalVideoExportedFilePath);
             return;
         }
         if (mediaList.size() == 0) {
+            FileUtils.moveFile(videoPath, finalVideoExportedFilePath);
+            notifyFinalSuccess(finalVideoExportedFilePath);
             return;
         }
         exportListener.onExportProgress("Mixing audio", EXPORT_STAGE_MIX_AUDIO);
-        final String finalVideoExportedFilePath = outputFilesDirectory
-                + getNewExportedVideoFileName();
 
         boolean resultMixAudioFiles = applyMixAudioAndWaitForFinish(mediaList, movieDuration);
         if (!resultMixAudioFiles) {
@@ -429,11 +434,15 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                   FileUtils.removeFile(videoPath);
                     Log.d(TAG, "export, video appended, removed "
                         + videoPath);
-                  FileUtils.cleanDirectoryFiles(new File(tempAudioPath));
-                  exportListener.onExportSuccess(
-                      new Video(finalVideoExportedFilePath, Video.DEFAULT_VOLUME));
+                    notifyFinalSuccess(finalVideoExportedFilePath);
                 }
             });
+    }
+
+    private void notifyFinalSuccess(String finalVideoExportedFilePath) {
+        FileUtils.cleanDirectoryFiles(new File(tempAudioPath));
+        exportListener.onExportSuccess(
+            new Video(finalVideoExportedFilePath, Video.DEFAULT_VOLUME));
     }
 
     public boolean applyMixAudioAndWaitForFinish(List<Media> mediaList, long movieDuration) {
