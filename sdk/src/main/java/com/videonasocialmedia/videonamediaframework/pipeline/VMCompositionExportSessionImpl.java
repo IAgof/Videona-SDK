@@ -5,8 +5,10 @@ import android.support.annotation.NonNull;
 import android.util.Log;
 
 import com.google.common.base.Function;
+import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
@@ -33,6 +35,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 
@@ -372,7 +375,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     Log.d(LOG_TAG, "Got " + waitingForIntermediatesError.getClass().getName()
                             + " while waiting for intermediate generation tasks to finish: " +
                     waitingForIntermediatesError.getMessage());
-//                    exportListener.onExportError(waitingForIntermediatesError.getMessage());
                     throw waitingForIntermediatesError;
                 }
             }
@@ -396,62 +398,34 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
         exportListener.onExportProgress("Mixing audio", EXPORT_STAGE_MIX_AUDIO);
 
-        ListenableFuture<Boolean> mixAudioJob =
+        ListenableFuture<Boolean> mixAudioTask =
             transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath,
                     outputAudioMixedFile, movieDuration);
-        ListenableFuture<Object> chainedTask = Futures.transform(mixAudioJob, new Function<Boolean, Object>() {
+        AsyncFunction<? super Boolean, ?> swapAudioTask = new AsyncFunction<Boolean, Object>() {
             @Override
-            public Object apply(Boolean input) {
-                // TODO(jliarte): 5/10/17 remove callbacks here too
+            public ListenableFuture<Object> apply(Boolean input) throws Exception {
                 exportListener.onExportProgress("Applying mixed audio", EXPORT_STAGE_APPLY_AUDIO_MIXED);
                 Log.d(LOG_TAG, "export, swapping audio mixed in video appended");
                 // TODO(jliarte): 5/10/17 move to constructor to allow dependency injection?
                 VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
-                // TODO:(alvaro.martinez) 19/04/17 Implement ListenableFuture in VideoAudioSwapper and remove listener
-                videoAudioSwapper.export(videoPath, outputAudioMixedFile,
-                        finalVideoExportedFilePath,
-                        new ExporterVideoSwapAudio.VideoAudioSwapperListener() {
-                            @Override
-                            public void onExportError(String error) {
-                                exportListener.onExportProgress("error Mixing audio", EXPORT_STAGE_MIX_AUDIO);
-                                exportListener.onExportError("error mixing audio, swapping");
-                            }
-
-                            @Override
-                            public void onExportSuccess() {
-                                Log.d(LOG_TAG, "export, video with music/voiceOver exported, success "
-                                        + finalVideoExportedFilePath);
-                                FileUtils.removeFile(videoPath);
-                                Log.d(LOG_TAG, "export, video appended, removed "
-                                        + videoPath);
-                                notifyFinalSuccess(finalVideoExportedFilePath);
-                            }
-                        });
-                return null;
+                return videoAudioSwapper.exportAsync(videoPath, outputAudioMixedFile, finalVideoExportedFilePath);
             }
-        });
+        };
+        ListenableFuture<Object> chainedTask = Futures.transform(mixAudioTask, swapAudioTask);
 
         try {
             chainedTask.get();
+            Log.d(LOG_TAG, "export, video with music/voiceOver exported, success "
+                    + finalVideoExportedFilePath);
+            FileUtils.removeFile(videoPath);
+            Log.d(LOG_TAG, "export, video appended, removed "
+                    + videoPath);
+            notifyFinalSuccess(finalVideoExportedFilePath);
         } catch (InterruptedException | ExecutionException e) {
             e.printStackTrace();
             exportListener.onExportProgress("Error Mixing audio", EXPORT_STAGE_MIX_AUDIO);
             exportListener.onExportError(e.getMessage());
         }
-
-//        boolean resultMixAudioFiles = false;
-//        try {
-//            resultMixAudioFiles = mixAudioJob.get();
-//        } catch (InterruptedException | ExecutionException e) {
-//            e.printStackTrace();
-//            exportListener.onExportError(e.getMessage());
-//        }
-//        if (!resultMixAudioFiles) {
-//          Log.d(LOG_TAG, "error mixing audio, applyMixAudioAndWaitForFinish");
-//          exportListener.onExportProgress("error Mixing audio", EXPORT_STAGE_MIX_AUDIO);
-//          exportListener.onExportError("error mixing audio");
-//          return;
-//        }
     }
 
     private void notifyFinalSuccess(String finalVideoExportedFilePath) {
