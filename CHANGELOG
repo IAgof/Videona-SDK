@@ -1,3 +1,8 @@
+v0.3-RC1
+- Changes in SDK Transcoder helper API:
+    * Removed listener parameter from generateOutputVideoWithOverlayImageAndTrimmingAsync, generateOutputVideoWithOverlayImageAsync, generateOutputVideoWithTrimmingAsync, generateTempFileMixAudio methods. Now return transcoding task ListenableFuture<Video>
+    * Grouped and made private generateOutputVideoWithOverlayImageAndTrimmingAsync, generateOutputVideoWithOverlayImageAsync and generateOutputVideoWithTrimmingAsync into new public updateIntermediateFile
+
 v0.2.12
 - Added audio gain application to video adapt transcoding job
 
