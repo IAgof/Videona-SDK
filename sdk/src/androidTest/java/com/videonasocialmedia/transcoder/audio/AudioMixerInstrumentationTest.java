@@ -3,6 +3,7 @@ package com.videonasocialmedia.transcoder.audio;
 import android.media.MediaMetadataRetriever;
 
 import com.videonasocialmedia.integration.AssetManagerAndroidTest;
+import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
@@ -36,7 +37,7 @@ public class AudioMixerInstrumentationTest extends AssetManagerAndroidTest {
   }
 
   @Test
-  public void testAudioMixing() throws IOException {
+  public void testAudioMixing() throws IOException, TranscodingException {
     ArrayList<Media> mediaList = new ArrayList<>();
     String videoPath = getAssetPath("longvid.mp4");
     String musicPath = getAssetPath("music.m4a");

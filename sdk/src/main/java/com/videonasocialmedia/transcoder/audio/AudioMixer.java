@@ -1,10 +1,6 @@
 package com.videonasocialmedia.transcoder.audio;
 
-import android.util.Log;
-
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
+import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
@@ -17,99 +13,65 @@ import java.util.List;
 /**
  * Created by alvaro on 19/09/16.
  */
-public class AudioMixer implements OnAudioDecoderListener, OnMixSoundListener,
-        OnAudioEncoderListener {
+public class AudioMixer {
     private static final String LOG_TAG = AudioMixer.class.getSimpleName();
+    // TODO(jliarte): 5/10/17 seems to be a bug in gradle plugin that always set libraries as release
+    // see https://issuetracker.google.com/issues/36967265
+//    private boolean DEBUG = BuildConfig.DEBUG;
     private boolean DEBUG = true;
 
     private String tempDirectory;
     private String outputFile;
 
+    // TODO(jliarte): 5/10/17 is this still necessary?
     private long durationOutputFile;
 
     private List<Media> mediaListDecoded;
-    private boolean result = false;
 
     public AudioMixer() {
         mediaListDecoded = new ArrayList<>();
     }
 
     public boolean export(List<Media> mediaList, String tempDirectory, String outputFile,
-                          long durationOutputFile) {
-        Log.e(LOG_TAG, "Duration output file is: " + durationOutputFile);
+                          long durationOutputFile) throws IOException, TranscodingException {
         this.tempDirectory = tempDirectory;
+        String outputTempMixAudioPath = this.tempDirectory + File.separator + "mixAudio.pcm";
         this.outputFile = outputFile;
         this.durationOutputFile = durationOutputFile;
         cleanTempDirectory();
 
         for (Media media : mediaList) {
-            AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile, this);
-            decoder.decode();
+            // TODO(jliarte): 5/10/17 should we move this parameters to method call, as they aren't
+            // collaborators
+            AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile);
+            String decodedFilePath = decoder.decode();
+            mediaListDecoded.add(new Video(decodedFilePath, media.getVolume()));
+            saveDebugWavFile(tempDirectory, decodedFilePath);
         }
-        mixAudio(mediaListDecoded);
-
-        return result;
+        SoundMixer soundMixer = new SoundMixer();
+        soundMixer.mixAudio(mediaListDecoded, outputTempMixAudioPath);
+        saveDebugWavFile(tempDirectory, outputTempMixAudioPath);
+        encodeAudio(outputTempMixAudioPath);
+        return true;
     }
 
-    private void mixAudio(List<Media> mediaList) {
-        SoundMixer soundMixer = new SoundMixer(this);
-        String outputTempMixAudioPath = tempDirectory + File.separator + "mixAudio.pcm";
-        try {
-            soundMixer.mixAudio(mediaList, outputTempMixAudioPath);
-        } catch (IOException e) {
-            e.printStackTrace();
-            result = false;
+    private void saveDebugWavFile(String tempDirectory, String pcmFilePath) {
+        if (DEBUG) {
+            String debugWavFile = tempDirectory + File.separator
+                    + new File(pcmFilePath).getName() + ".wav";
+            UtilsAudio.copyWaveFile(pcmFilePath, debugWavFile);
         }
     }
 
-    private void encodeAudio(String inputFileRaw) {
-        AudioEncoder encoder = new AudioEncoder(inputFileRaw, outputFile, this);
-        encoder.run();
+    private void encodeAudio(String inputFileRaw) throws IOException, TranscodingException {
+        AudioEncoder encoder = new AudioEncoder();
+        encoder.encodeToMp4(inputFileRaw, outputFile);
+        cleanTempDirectory();
     }
 
     private void cleanTempDirectory() {
-        FileUtils.cleanDirectory(new File(tempDirectory));
-    }
-
-
-    @Override
-    public void onFileDecodedMediaSuccess(Media media, String outputFile) {
-        mediaListDecoded.add(new Video(outputFile, media.getVolume()));
-        if (DEBUG) {
-            String fileDecoded = tempDirectory + File.separator + new File(outputFile).getName() + ".wav";
-            UtilsAudio.copyWaveFile(outputFile, fileDecoded);
-        }
-    }
-
-    @Override
-    public void onFileDecodedError(String error) {
-        result = false;
-    }
-
-    @Override
-    public void OnMixSoundSuccess(String outputFile) {
-        if (DEBUG) {
-            String tempMixAudioWav = tempDirectory + File.separator + "mixAudio.wav";
-            UtilsAudio.copyWaveFile(outputFile, tempMixAudioWav);
-        }
-        encodeAudio(outputFile);
-    }
-
-    @Override
-    public void OnMixSoundError(String error) {
-        result = false;
-    }
-
-    @Override
-    public void OnFileEncodedSuccess(String outputFile) {
-        result = true;
         if (!DEBUG) {
-            cleanTempDirectory();
+            FileUtils.cleanDirectory(new File(tempDirectory));
         }
-    }
-
-    @Override
-    public void OnFileEncodedError(String error) {
-        result = false;
     }
 }

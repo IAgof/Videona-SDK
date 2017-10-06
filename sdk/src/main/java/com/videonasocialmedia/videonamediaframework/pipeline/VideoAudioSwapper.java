@@ -20,16 +20,13 @@ import java.util.List;
  */
 
 public class VideoAudioSwapper implements ExporterVideoSwapAudio {
+  private static final String LOG_TAG = VideoAudioSwapper.class.getSimpleName();
   private VideoAudioSwapperListener videoAudioSwapperListener;
-
-  public VideoAudioSwapper() {
-  }
 
   @Override
   public void export(String videoFilePath, String newAudioFilePath, String outputFilePath,
                      VideoAudioSwapperListener videoAudioSwapperListener) {
     this.videoAudioSwapperListener = videoAudioSwapperListener;
-
     Movie result = null;
     try {
       result = getFinalMovie(videoFilePath, newAudioFilePath);
@@ -96,7 +93,7 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
       long start = System.currentTimeMillis();
       Utils.createFile(result, outputFilePath);
       long spent = System.currentTimeMillis() - start;
-      Log.d("WRITING VIDEO FILE", "time spent in millis: " + spent);
+      Log.d(LOG_TAG, "WRITING VIDEO FILE - time spent in millis: " + spent);
       videoAudioSwapperListener.onExportSuccess();
     } catch (IOException | NullPointerException e) {
       videoAudioSwapperListener.onExportError(String.valueOf(e));

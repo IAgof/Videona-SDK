@@ -253,13 +253,8 @@ public class TranscoderFragment extends Fragment {
     mediaList.add(audio3);
     ListenableFuture<Boolean> listenableFuture;
 
-    try {
-      listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
-          tempDir, outputAudio, getDurationFile(inputVideo));
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-
+    listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
+        tempDir, outputAudio, getDurationFile(inputVideo));
   }
 
   public static long getDurationFile(String filePath){

@@ -1,16 +1,12 @@
 package com.videonasocialmedia.transcoder.audio;
 
 import com.videonasocialmedia.integration.AssetManagerAndroidTest;
-import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
-import com.videonasocialmedia.videonamediaframework.model.media.MediaElement;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
-import org.hamcrest.CoreMatchers;
 import org.junit.Before;
 import org.junit.Test;
-import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 
 import java.io.File;
@@ -27,7 +23,6 @@ import static org.junit.Assert.*;
 public class SoundMixerInstrumentationTest extends AssetManagerAndroidTest {
 
   private String testPath;
-  @Mock private OnMixSoundListener mockedListener;
 
   @Before
   public void setUp() {
@@ -45,7 +40,7 @@ public class SoundMixerInstrumentationTest extends AssetManagerAndroidTest {
     ArrayList<Media> mediaListDecoded = new ArrayList<>();
     mediaListDecoded.add(audio1);
     mediaListDecoded.add(audio2);
-    SoundMixer soundMixer = new SoundMixer(mockedListener);
+    SoundMixer soundMixer = new SoundMixer();
     String outputFilePath = testPath + File.separator + Constants.MIXED_AUDIO_FILE_NAME;
 
     soundMixer.mixAudio(mediaListDecoded, outputFilePath);

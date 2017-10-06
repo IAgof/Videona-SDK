@@ -1,10 +1,9 @@
 package com.videonasocialmedia.transcoder.audio;
 
 
+import com.videonasocialmedia.sdk.BuildConfig;
 import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
-import com.videonasocialmedia.videonamediaframework.model.media.Media;
+import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import java.io.BufferedOutputStream;
@@ -23,10 +22,9 @@ import java.nio.channels.FileChannel;
  * Created by alvaro on 22/10/16.
  */
 
-public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListener {
-
+public class AudioEffect {
   private static final String LOG_TAG = "AudioEffect";
-  private static final boolean DEBUG = true;
+  private static final boolean DEBUG = BuildConfig.DEBUG;
 
   private final String inputFile;
   private final int timeFadeInMs;
@@ -60,38 +58,22 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
   }
 
   public void transitionFadeInOut() {
-    audioDecoder = new AudioDecoder(inputFile, tempFilePcm, this);
-    audioDecoder.decode();
-  }
-
-  @Override
-  public void onFileDecodedError(String error) {
-    if (listener != null) {
-      listener.onTranscodeError(error);
-    }
-  }
-
-  @Override
-  public void onFileDecodedMediaSuccess(Media media, String outputFile) {
-    if (DEBUG) {
-      String tempFileWav = tempDirectory + File.separator + "tempFilePcm_" +
-          System.currentTimeMillis() + ".wav";
-      UtilsAudio.copyWaveFile(tempFilePcm, tempFileWav);
-    }
-
+    // TODO(jliarte): 5/10/17 Should we unify constructors?
+    audioDecoder = new AudioDecoder(inputFile, tempFilePcm);
     try {
-      setFadeInFadeOut(tempFilePcm, timeFadeInMs, timeFadeOutMs);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-  }
+      audioDecoder.decode();
+      if (DEBUG) {
+        String tempFileWav = tempDirectory + File.separator + "tempFilePcm_" +
+                System.currentTimeMillis() + ".wav";
+        UtilsAudio.copyWaveFile(tempFilePcm, tempFileWav);
+      }
 
-  @Override
-  public void OnFileEncodedSuccess(String outputFile) {
-    deleteTempFiles();
-    if (listener != null) {
-      listener.onTranscodeProgress("Transcoded completed");
-      listener.onTranscodeSuccess(outputFile);
+      setFadeInFadeOut(tempFilePcm, timeFadeInMs, timeFadeOutMs);
+    } catch (IOException errorApplyingFade) {
+      errorApplyingFade.printStackTrace();
+      if (listener != null) {
+        listener.onTranscodeError(errorApplyingFade.getMessage());
+      }
     }
   }
 
@@ -100,15 +82,8 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     FileUtils.removeFile(tempFileFadeInOut);
   }
 
-  @Override
-  public void OnFileEncodedError(String error) {
-    if (listener != null) {
-      listener.onTranscodeError(error);
-    }
-  }
-
   private void setFadeInFadeOut(String tempFilePcm, int timeFadeInMs, int timeFadeOutMs)
-      throws IOException {
+          throws IOException {
     File inputFile = new File(tempFilePcm);
     FileInputStream fis = new FileInputStream(inputFile);
     byte[] arrayAudio = createByteArray(fis);
@@ -117,13 +92,26 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     output = manipulateFadeInOut(arrayAudio, timeFadeInMs, timeFadeOutMs);
     convertByteToFile(output, tempFileFadeInOut);
 
-    encodeAudio(tempFileFadeInOut);
+    try {
+      encodeAudio(tempFileFadeInOut);
+      deleteTempFiles();
+      if (listener != null) {
+        listener.onTranscodeProgress("Transcoded completed");
+        listener.onTranscodeSuccess(outputFile);
+      }
+    } catch (IOException | TranscodingException error) {
+      error.printStackTrace();
+      if (listener != null) {
+        listener.onTranscodeError(error.getMessage());
+      }
+    }
+
   }
 
-  private void setFadeInFadeOutBigSizeFiles(String tempFilePcm) throws IOException {
-    File inputFile1 = new File(tempFilePcm);
+  private void setFadeInFadeOutBigSizeFiles(String tempFilePcm) throws IOException, TranscodingException {
+    File inputFile = new File(tempFilePcm);
 
-    RandomAccessFile accessFileOne = new RandomAccessFile(inputFile1, "r");
+    RandomAccessFile accessFileOne = new RandomAccessFile(inputFile, "r");
     FileChannel inChannel1 = accessFileOne.getChannel();
 
     int SIZE_4MB = 1024 * 512;
@@ -166,9 +154,9 @@ public class AudioEffect implements OnAudioDecoderListener, OnAudioEncoderListen
     return baos.toByteArray(); // be sure to close InputStream in calling function
   }
 
-  private void encodeAudio(String tempFileFadeInOut) {
-    AudioEncoder encoder = new AudioEncoder(tempFileFadeInOut, outputFile, this);
-    encoder.run();
+  private void encodeAudio(String tempFileFadeInOut) throws IOException, TranscodingException {
+    AudioEncoder encoder = new AudioEncoder();
+    encoder.encodeToMp4(tempFileFadeInOut, outputFile);
   }
 
   public static void convertByteToFile(byte[] fileBytes, String outputFile)

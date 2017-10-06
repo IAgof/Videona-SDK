@@ -13,16 +13,13 @@ package com.videonasocialmedia.transcoder.audio;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.videonasocialmedia.transcoder.audio.listener.OnMixSoundListener;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.ShortBuffer;
@@ -40,17 +37,11 @@ public class SoundMixer {
   // http://stackoverflow.com/questions/2398000/audio-playback-creating-nested-loop-for-fade-in-out?rq=1
 
   private static String LOG_TAG = SoundMixer.class.getSimpleName();
-
-  private OnMixSoundListener listener;
   private ArrayList<File> inputFileList;
   private ArrayList<RandomAccessFile> randomAccessFileList;
   private ArrayList<FileChannel> fileChannelList;
   private ArrayList<ByteBuffer> bufferList;
   public static final int SIZE_4_MB = 1024 * 1024 * 4;
-
-  public SoundMixer(OnMixSoundListener listener) {
-    this.listener = listener;
-  }
 
   private byte[] output;
 
@@ -58,7 +49,6 @@ public class SoundMixer {
       throws IOException {
     setupDataLists(mediaList);
 
-    // FIXME: 2/10/17 always return 2^22 limiting output lenght, is it a problem?
     int maxLength = bufferList.get(0).limit(); // Video fix buffer length, first list element always is Video
     int indexOutput = 0;
     long maxSizeOutput = randomAccessFileList.get(0).length();
@@ -78,10 +68,11 @@ public class SoundMixer {
       clearBuffers();
     }
     closeChannels();
-    convertByteToFile(output, outputTempMixAudioPath);
+    saveBytesToFile(output, outputTempMixAudioPath);
 
     Log.d(LOG_TAG, "onMixSoundSuccess");
-    listener.OnMixSoundSuccess(outputTempMixAudioPath);
+    // (jliarte): 5/10/17 no more need of calling success as we've reached end of method successfully
+//    listener.OnMixSoundSuccess(outputTempMixAudioPath);
   }
 
   private void clearBuffers() {
@@ -226,7 +217,7 @@ public class SoundMixer {
     return array;
   }
 
-  public static void convertByteToFile(byte[] fileBytes, String outputFile)
+  public static void saveBytesToFile(byte[] fileBytes, String outputFile)
           throws FileNotFoundException {
     BufferedOutputStream bos = new BufferedOutputStream(new FileOutputStream(outputFile));
     try {
@@ -239,26 +230,26 @@ public class SoundMixer {
     }
   }
 
-  public static byte[] getBytesFromFile(File file) throws IOException {
-    InputStream is = new FileInputStream(file);
-
-    long length = file.length();
-    if (length > Integer.MAX_VALUE) {
-    }
-
-    byte[] bytes = new byte[(int) length];
-    int offset = 0;
-    int numRead = 0;
-    while (offset < bytes.length && (numRead = is.read(bytes, offset, Math.min(bytes.length - offset, 512 * 1024))) >= 0) {
-      offset += numRead;
-    }
-
-    if (offset < bytes.length) {
-      Log.i(LOG_TAG, "Could not completely read file");
-    }
-    is.close();
-
-    return bytes;
-  }
+//  public static byte[] getBytesFromFile(File file) throws IOException {
+//    InputStream is = new FileInputStream(file);
+//
+//    long length = file.length();
+//    if (length > Integer.MAX_VALUE) {
+//    }
+//
+//    byte[] bytes = new byte[(int) length];
+//    int offset = 0;
+//    int numRead = 0;
+//    while (offset < bytes.length && (numRead = is.read(bytes, offset, Math.min(bytes.length - offset, 512 * 1024))) >= 0) {
+//      offset += numRead;
+//    }
+//
+//    if (offset < bytes.length) {
+//      Log.i(LOG_TAG, "Could not completely read file");
+//    }
+//    is.close();
+//
+//    return bytes;
+//  }
 
 }

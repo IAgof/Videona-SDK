@@ -232,14 +232,8 @@ public class TranscoderHelper {
   public ListenableFuture<Boolean> generateTempFileMixAudio(
           List<Media> mediaList, String tempAudioPath, String outputFilePath,
           long audioFileDuration) {
-    ListenableFuture<Boolean> transcodingJob = null;
-    try {
-      transcodingJob = mediaTranscoder.mixAudioFiles(mediaList,
-          tempAudioPath, outputFilePath, audioFileDuration);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return transcodingJob;
+    return mediaTranscoder.mixAudioFiles(mediaList, tempAudioPath, outputFilePath,
+            audioFileDuration);
   }
 
   public ListenableFuture<Video> generateOutputVideoWithTrimmingAsync(
@@ -347,14 +341,10 @@ public class TranscoderHelper {
                     }
                   });
 
-        } catch (IOException e) {
-          e.printStackTrace();
-          listener.onErrorTranscoding(videoToAdapt, e.getMessage());
-        } catch (InterruptedException e) {
+        } catch (InterruptedException | ExecutionException e) {
+          // TODO(jliarte): 5/10/17 should we propagate error?
           e.printStackTrace();
 //              listener.onErrorTranscoding(videoToAdapt, e.getMessage());
-        } catch (ExecutionException e) {
-          e.printStackTrace();
         }
         return null;
       }

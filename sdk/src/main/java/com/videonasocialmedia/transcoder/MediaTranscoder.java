@@ -224,16 +224,14 @@ public class MediaTranscoder {
 
     public ListenableFuture<Boolean> mixAudioFiles(
             final List<Media> mediaList, final String tempDirectory, final String outputFile,
-            final long outputFileDuration) throws IOException  {
-        final ListenableFuture<Boolean> transcodingJob = executorPool.submit(new Callable<Boolean>() {
+            final long outputFileDuration) {
+        return executorPool.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
                 AudioMixer mixer = new AudioMixer();
-                return mixer.export(mediaList, tempDirectory,
-                        outputFile, outputFileDuration);
+                return mixer.export(mediaList, tempDirectory, outputFile, outputFileDuration);
             }
         });
-        return transcodingJob;
     }
 
     public ListenableFuture<Void> audioFadeInFadeOutToFile(final String inputFile,

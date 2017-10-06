@@ -5,11 +5,9 @@ import android.media.MediaExtractor;
 import android.media.MediaFormat;
 import android.util.Log;
 
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioDecoderListener;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -19,8 +17,7 @@ import java.nio.ByteBuffer;
  * Created by Veronica Lago Fominaya on 19/08/2015.
  */
 public class AudioDecoder {
-
-    private final static String LOG_TAG = "AudioDecoder";
+    private final static String LOG_TAG = AudioDecoder.class.getSimpleName();
     public static final String DECODED_AUDIO_PREFIX = "AUD_DECOD_";
     private Media media;
 
@@ -43,30 +40,32 @@ public class AudioDecoder {
 
     private int audioTrackId;
 
-    private OnAudioDecoderListener listener;
-
-    public AudioDecoder(String inputFile, String outputFile, OnAudioDecoderListener listener){
+    /**
+     * Should we unify constructors?
+     * @param inputFile
+     * @param outputFile
+     */
+    @Deprecated
+    public AudioDecoder(String inputFile, String outputFile) {
         this.inputFile = inputFile;
         this.outputFile = outputFile;
-        this.listener = listener;
     }
 
-    public AudioDecoder(Media media, String tempDirectory, long durationFile,
-                        OnAudioDecoderListener listener) {
+    public AudioDecoder(Media media, String tempDirectory, long durationFile) {
         this.media = media;
         this.inputFile = media.getMediaPath();
-        String outputName = File.separator + DECODED_AUDIO_PREFIX + System.currentTimeMillis() + ".pcm";
+        String outputName = File.separator + DECODED_AUDIO_PREFIX + System.currentTimeMillis()
+                + ".pcm";
         this.outputFile = tempDirectory + outputName;
-        this.listener = listener;
         this.durationFile = durationFile;
     }
 
-    private boolean setDecoder(MediaExtractor extractor) {
+    private boolean setDecoder(MediaExtractor extractor) throws IOException {
         boolean success = true;
         try {
             format = extractor.getTrackFormat(0);
             String mime = format.getString(MediaFormat.KEY_MIME);
-            if(mime.startsWith("audio/")) {
+            if (mime.startsWith("audio/")) {
                 audioTrackId = 0;
             } else {
                 format = extractor.getTrackFormat(1);
@@ -85,28 +84,18 @@ public class AudioDecoder {
             format.setInteger(MediaFormat.KEY_BIT_RATE, bitRate);
             decoder.configure(format, null, null, 0);
             decoder.start();
-        } catch (IOException e) {
-            Log.e(LOG_TAG, "Failed creating decoder", e);
-            listener.onFileDecodedError(String.valueOf(e));
+        } catch (IOException ioException) {
+            Log.e(LOG_TAG, "Failed creating decoder", ioException);
+            throw ioException;
+//            listener.onFileDecodedError(String.valueOf(ioException));
         }
         return success;
     }
 
-    public void decode() {
-        try {
-            outputStream = new FileOutputStream(outputFile);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            listener.onFileDecodedError(String.valueOf(e));
-        }
-
+    public String decode() throws IOException {
+        outputStream = new FileOutputStream(outputFile);
         MediaExtractor extractor = new MediaExtractor();
-        try {
-            extractor.setDataSource(inputFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-            listener.onFileDecodedError(String.valueOf(e));
-        }
+        extractor.setDataSource(inputFile);
         setDecoder(extractor);
         ByteBuffer[] codecInputBuffers = decoder.getInputBuffers();
         ByteBuffer[] codecOutputBuffers = decoder.getOutputBuffers();
@@ -128,9 +117,9 @@ public class AudioDecoder {
 
         extractor.selectTrack(audioTrackId);
 
-        // start decoding ¿Why 10000?
-        final long kTimeOutUs = 10000;
-        MediaCodec.BufferInfo BufInfo = new MediaCodec.BufferInfo();
+        // start decoding ¿Why 10000? - wait up to "timeoutUs" microseconds if timeoutUs > 0.
+        final long decoderTimeOutUs = 10000;
+        MediaCodec.BufferInfo bufferInfo = new MediaCodec.BufferInfo();
         boolean sawInputEOS = false;
         boolean sawOutputEOS = false;
 
@@ -138,11 +127,11 @@ public class AudioDecoder {
 
         while (!sawOutputEOS) {
             if (!sawInputEOS) {
-                inputBufIndex = decoder.dequeueInputBuffer(kTimeOutUs);
+                inputBufIndex = decoder.dequeueInputBuffer(decoderTimeOutUs);
                 if (inputBufIndex >= 0) {
+                    // fill inputBuffer with valid data
                     ByteBuffer dstBuf = codecInputBuffers[inputBufIndex];
-                    int sampleSize = extractor
-                            .readSampleData(dstBuf, 0 /* offset */);
+                    int sampleSize = extractor.readSampleData(dstBuf, 0 /* offset */);
                     long presentationTimeUs = 0;
                     if (sampleSize < 0) {
                         sawInputEOS = true;
@@ -158,56 +147,39 @@ public class AudioDecoder {
                     if (!sawInputEOS) {
                         extractor.advance();
                     }
-                } else {
-                    Log.e(LOG_TAG, "inputBufIndex " + inputBufIndex);
-                    listener.onFileDecodedError("inputBufIndex " + inputBufIndex);
                 }
+                // TODO(jliarte): 5/10/17 should this be an error?
+//                else {
+//                    Log.e(LOG_TAG, "inputBufIndex " + inputBufIndex);
+//                    listener.onFileDecodedError("inputBufIndex " + inputBufIndex);
+//                }
             }
 
-            int res = decoder.dequeueOutputBuffer(BufInfo, kTimeOutUs);
-
-            if (res >= 0) {
-                // Log.d(LOG_TAG, "got frame, size " + info.size + "/" +
-                // info.presentationTimeUs);
-                if (BufInfo.size > 0) {
-                    // noOutputCounter = 0;
-                }
-
-                int outputBufIndex = res;
+            int outputBufferId = decoder.dequeueOutputBuffer(bufferInfo, decoderTimeOutUs);
+            if (outputBufferId >= 0) {
+                int outputBufIndex = outputBufferId;
                 ByteBuffer buf = codecOutputBuffers[outputBufIndex];
 
-                final byte[] chunk = new byte[BufInfo.size];
+                final byte[] chunk = new byte[bufferInfo.size];
                 buf.get(chunk);
                 buf.clear();
 
                 if (chunk.length > 0) {
-                    // play audioTrack
-                    //audioTrack.write(chunk, 0, chunk.length);
-
                     // write to file
-                    try {
-                        if (isMono) {
-                            // Generate false stereo
-                            int monoByteArrayLength = chunk.length;
-                            byte[] stereoGeneratedSnd = new byte[monoByteArrayLength * 2];
-
-                            for (int i = 0; i < monoByteArrayLength; i += 2) {
-                                stereoGeneratedSnd[i * 2 + 0] = chunk[i];
-                                stereoGeneratedSnd[i * 2 + 1] = chunk[i + 1];
-                                stereoGeneratedSnd[i * 2 + 2] = chunk[i];
-                                stereoGeneratedSnd[i * 2 + 3] = chunk[i + 1];
-                            }
-                            outputStream.write(stereoGeneratedSnd);
-                        } else {
-                            outputStream.write(chunk);
-                        }
-                    } catch (IOException e) {
-                        e.printStackTrace();
-                        listener.onFileDecodedError(String.valueOf(e));
+//                    try {
+                    if (isMono) {
+                        byte[] stereoGeneratedSnd = getFalseStereoBytes(chunk);
+                        outputStream.write(stereoGeneratedSnd);
+                    } else {
+                        outputStream.write(chunk);
                     }
+//                    } catch (IOException e) {
+//                        e.printStackTrace();
+//                        listener.onFileDecodedError(String.valueOf(e));
+//                    }
                 }
                 decoder.releaseOutputBuffer(outputBufIndex, false /* render */);
-                if ((BufInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
+                if ((bufferInfo.flags & MediaCodec.BUFFER_FLAG_END_OF_STREAM) != 0) {
                     Log.i(LOG_TAG, "saw output EOS.");
                     sawOutputEOS = true;
                 }
@@ -216,38 +188,45 @@ public class AudioDecoder {
                     Log.i(LOG_TAG, "file duration, end of decoder " + extractor.getSampleTime());
                     sawOutputEOS = true;
                 }
-            } else if (res == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
+            } else if (outputBufferId == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
                 codecOutputBuffers = decoder.getOutputBuffers();
 
                 Log.i(LOG_TAG, "output buffers have changed.");
-            } else if (res == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
+            } else if (outputBufferId == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 MediaFormat outputFormat = decoder.getOutputFormat();
                 Log.i(LOG_TAG, "output outputFormat has changed to " + outputFormat);
             } else {
-                Log.i(LOG_TAG, "dequeueOutputBuffer returned " + res);
+                Log.i(LOG_TAG, "dequeueOutputBuffer returned " + outputBufferId);
             }
         }
 
         Log.d(LOG_TAG, "stopping...");
-        // closing AudioTrack
-        /*
-        if (audioTrack != null) {
-            audioTrack.flush();
-            audioTrack.release();
-            audioTrack = null;
-        }
-        */
-        try {
-            outputStream.flush();
-            outputStream.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            listener.onFileDecodedError(String.valueOf(e));
-        }
+//        try {
+        outputStream.flush();
+        outputStream.close();
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//            listener.onFileDecodedError(String.valueOf(e));
+//        }
         decoder.stop();
         decoder.release();
         extractor.release();
-        //listener.OnFileDecodedSuccess(outputFile);
-        listener.onFileDecodedMediaSuccess(media, outputFile);
+        return outputFile;
+        // (jliarte): 5/10/17 no more need of calling success as we've reached end of method successfully
+//        listener.onFileDecodedMediaSuccess(media, outputFile);
+    }
+
+    private byte[] getFalseStereoBytes(byte[] chunk) {
+        // Generate false stereo
+        int monoByteArrayLength = chunk.length;
+        byte[] stereoGeneratedSnd = new byte[monoByteArrayLength * 2];
+
+        for (int i = 0; i < monoByteArrayLength; i += 2) {
+            stereoGeneratedSnd[i * 2 + 0] = chunk[i];
+            stereoGeneratedSnd[i * 2 + 1] = chunk[i + 1];
+            stereoGeneratedSnd[i * 2 + 2] = chunk[i];
+            stereoGeneratedSnd[i * 2 + 3] = chunk[i + 1];
+        }
+        return stereoGeneratedSnd;
     }
 }
