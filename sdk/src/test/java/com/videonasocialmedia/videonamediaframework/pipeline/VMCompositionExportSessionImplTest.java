@@ -164,29 +164,29 @@ public class VMCompositionExportSessionImplTest {
 
     verify(mockedAppender).appendVideos(videoPaths, true);
   }
-
-  @Test
-  public void createMovieFromCompositionAppenderWithOriginalVideoIfCompositionHasMusic()
-          throws IllegalItemOnTrack, IOException, IntermediateFileException, ExecutionException,
-          InterruptedException {
-    VMComposition vmComposition = new VMComposition();
-    Music music = new Music("music/path", 0);
-    assert music.getVolume() == 0.5f; // default music volume 0.5f
-    music.setVolume(1f);
-    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(music);
-    assert vmComposition.hasMusic();
-    VMCompositionExportSessionImpl vmCompositionExportSession =
-            getVmCompositionExportSession(vmComposition);
-    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
-    exportSessionSpy.appender = mockedAppender;
-    doReturn(2.0).when(exportSessionSpy).getMovieDuration(any(Movie.class));
-    doReturn(mockedMovie).when(exportSessionSpy).addAudio(any(Movie.class), anyString(), anyByte());
-    ArrayList<String> videoPaths = new ArrayList<>();
-
-    exportSessionSpy.createMovieFromComposition(videoPaths);
-
-    verify(mockedAppender).appendVideos(videoPaths, true);
-  }
+//
+//  @Test
+//  public void createMovieFromCompositionAppenderWithOriginalVideoIfCompositionHasMusic()
+//          throws IllegalItemOnTrack, IOException, IntermediateFileException, ExecutionException,
+//          InterruptedException {
+//    VMComposition vmComposition = new VMComposition();
+//    Music music = new Music("music/path", 0);
+//    assert music.getVolume() == 0.5f; // default music volume 0.5f
+//    music.setVolume(1f);
+//    vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC).insertItem(music);
+//    assert vmComposition.hasMusic();
+//    VMCompositionExportSessionImpl vmCompositionExportSession =
+//            getVmCompositionExportSession(vmComposition);
+//    VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
+//    exportSessionSpy.appender = mockedAppender;
+//    doReturn(2.0).when(exportSessionSpy).getMovieDuration(any(Movie.class));
+//    doReturn(mockedMovie).when(exportSessionSpy).addAudio(any(Movie.class), anyString(), anyByte());
+//    ArrayList<String> videoPaths = new ArrayList<>();
+//
+//    exportSessionSpy.createMovieFromComposition(videoPaths);
+//
+//    verify(mockedAppender).appendVideos(videoPaths, true);
+//  }
 
   @Test
   public void createMovieFromCompositionCallsAppenderWithOriginalVideoMusicIfCompositionMusicVolumeLowerThan1()

@@ -3,58 +3,61 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 /**
  * Created by alvaro on 23/10/16.
  */
 
 public class VideoAudioSwapper implements ExporterVideoSwapAudio {
-  private VideoAudioSwapperListener videoAudioSwapperListener;
+  private static final String LOG_TAG = VideoAudioSwapper.class.getSimpleName();
 
-  public VideoAudioSwapper() {
+  @Override
+  public void export(String videoFilePath, String newAudioFilePath, String outputFilePath)
+          throws IOException, TranscodingException {
+    Movie result = getFinalMovie(videoFilePath, newAudioFilePath);
+    if (result != null) {
+      saveFinalVideo(result, outputFilePath);
+    } else {
+      throw new TranscodingException("Error swapping video audio track.");
+    }
   }
 
   @Override
-  public void export(String videoFilePath, String newAudioFilePath, String outputFilePath,
-                     VideoAudioSwapperListener videoAudioSwapperListener) {
-    this.videoAudioSwapperListener = videoAudioSwapperListener;
-
-    Movie result = null;
-    try {
-      result = getFinalMovie(videoFilePath, newAudioFilePath);
-    } catch (IOException e) {
-      e.printStackTrace();
-      videoAudioSwapperListener.onExportError(String.valueOf(e));
-    }
-    if (result != null) {
-      saveFinalVideo(result, outputFilePath);
-    }
+  public ListenableFuture<Object> exportAsync(final String videoPath,
+                                              final String outputAudioMixedFile,
+                                              final String finalVideoExportedFilePath) {
+    return MoreExecutors.newDirectExecutorService()
+            .submit(new Callable<Object>() {
+              @Override
+              public Object call() throws Exception {
+                export(videoPath, outputAudioMixedFile, finalVideoExportedFilePath);
+                return null;
+              }
+            });
   }
 
-  private Movie getFinalMovie(String videoFilePath, String newAudioFilePath) throws IOException {
-    Movie result;
+  private Movie getFinalMovie(String videoFilePath, String newAudioFilePath) throws IOException,
+          TranscodingException {
     Movie movie = MovieCreator.build(videoFilePath);
-
     File musicFile = new File(newAudioFilePath);
-    if (musicFile == null) {
-      videoAudioSwapperListener.onExportError("Music not found");
+    if (!musicFile.exists()) {
+      throw new TranscodingException("Error swapping video audio track - Music not found.");
     }
-    ArrayList<String> audio = new ArrayList<>();
-    audio.add(musicFile.getPath());
-    result = swapAudio(movie, newAudioFilePath);
-
-    return result;
+    return swapAudio(movie, newAudioFilePath);
   }
 
   private Movie swapAudio(Movie originalMovie, String audioPath)
@@ -91,16 +94,11 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
     return videoTrack;
   }
 
-  private void saveFinalVideo(Movie result, String outputFilePath) {
-    try {
-      long start = System.currentTimeMillis();
-      Utils.createFile(result, outputFilePath);
-      long spent = System.currentTimeMillis() - start;
-      Log.d("WRITING VIDEO FILE", "time spent in millis: " + spent);
-      videoAudioSwapperListener.onExportSuccess();
-    } catch (IOException | NullPointerException e) {
-      videoAudioSwapperListener.onExportError(String.valueOf(e));
-    }
+  private void saveFinalVideo(Movie result, String outputFilePath) throws IOException {
+    long start = System.currentTimeMillis();
+    Utils.createFile(result, outputFilePath);
+    long spent = System.currentTimeMillis() - start;
+    Log.d(LOG_TAG, "WRITING VIDEO FILE - time spent in millis: " + spent);
   }
 
 }
