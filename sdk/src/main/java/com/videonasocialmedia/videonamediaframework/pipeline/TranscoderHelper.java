@@ -11,6 +11,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
+import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
@@ -232,14 +233,8 @@ public class TranscoderHelper {
   public ListenableFuture<Boolean> generateTempFileMixAudio(
           List<Media> mediaList, String tempAudioPath, String outputFilePath,
           long audioFileDuration) {
-    ListenableFuture<Boolean> transcodingJob = null;
-    try {
-      transcodingJob = mediaTranscoder.mixAudioFiles(mediaList,
-          tempAudioPath, outputFilePath, audioFileDuration);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return transcodingJob;
+    return mediaTranscoder.mixAudioFiles(mediaList, tempAudioPath, outputFilePath,
+            audioFileDuration);
   }
 
   public ListenableFuture<Video> generateOutputVideoWithTrimmingAsync(
@@ -333,28 +328,17 @@ public class TranscoderHelper {
           booleanListenableFuture.get();
           VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
           videoAudioSwapper.export(videoToAdapt.getTempPath(), audioWithGainOutputFile,
-                  destVideoPath, new ExporterVideoSwapAudio.VideoAudioSwapperListener() {
-                    @Override
-                    public void onExportError(String error) {
-                      FileUtils.removeFile(audioWithGainOutputFile);
-                      listener.onErrorTranscoding(videoToAdapt, "Error swapping audio");
-                    }
-
-                    @Override
-                    public void onExportSuccess() {
-                      FileUtils.removeFile(audioWithGainOutputFile);
-                      listener.onSuccessTranscoding(videoToAdapt);
-                    }
-                  });
-
-        } catch (IOException e) {
-          e.printStackTrace();
-          listener.onErrorTranscoding(videoToAdapt, e.getMessage());
-        } catch (InterruptedException e) {
+                  destVideoPath);
+          FileUtils.removeFile(audioWithGainOutputFile);
+          listener.onSuccessTranscoding(videoToAdapt);
+        } catch (InterruptedException | ExecutionException e) {
+          // TODO(jliarte): 5/10/17 should we propagate error?
           e.printStackTrace();
 //              listener.onErrorTranscoding(videoToAdapt, e.getMessage());
-        } catch (ExecutionException e) {
-          e.printStackTrace();
+        } catch (TranscodingException | IOException transcodingError) {
+          transcodingError.printStackTrace();
+//          FileUtils.removeFile(audioWithGainOutputFile);
+          listener.onErrorTranscoding(videoToAdapt, transcodingError.getMessage());
         }
         return null;
       }

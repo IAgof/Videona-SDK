@@ -12,7 +12,6 @@ package com.videonasocialmedia.transcoder.audio;
  *
  */
 
-
 import android.media.AudioFormat;
 import android.media.AudioRecord;
 import android.media.MediaCodec;
@@ -21,30 +20,29 @@ import android.media.MediaFormat;
 import android.media.MediaMuxer;
 import android.util.Log;
 
-import com.videonasocialmedia.transcoder.audio.listener.OnAudioEncoderListener;
+import com.videonasocialmedia.sdk.BuildConfig;
+import com.videonasocialmedia.transcoder.TranscodingException;
 
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
-public class AudioEncoder implements Runnable {
-
+public class AudioEncoder {
     // Source: http://codingmaadi.blogspot.com.es/2014/01/how-to-convert-file-with-raw-pcm.html
-
+    private String LOG_TAG = AudioEncoder.class.getSimpleName();
     public static final String MIME_TYPE = "audio/mp4a-latm";
     public static final int BIT_RATE = 192000;
     public static final int SAMPLING_RATE = 48000; //44100;
     public static final int CODEC_TIMEOUT_IN_MS = 1000; //5000;
     public static final int BUFFER_SIZE = 96000; // 88200; 2*SAMPLE_RATE
     public static final int NUM_CHANNELS = 1; // 2;
-    public static final int CHANNELS_COUNT = AudioFormat.CHANNEL_IN_MONO;//AudioFormat.CHANNEL_IN_STEREO; //
 
-    int minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE, CHANNELS_COUNT, AudioFormat.ENCODING_PCM_16BIT);
+    public static final int CHANNELS_COUNT = AudioFormat.CHANNEL_IN_MONO; //AudioFormat.CHANNEL_IN_STEREO; //
 
-    private boolean DEBUG = true;
-    private String LOGTAG = "AudioEncoder";
+    int minBufferSize = AudioRecord.getMinBufferSize(SAMPLING_RATE, CHANNELS_COUNT, 
+            AudioFormat.ENCODING_PCM_16BIT);
+    private boolean DEBUG = BuildConfig.DEBUG;
 
     private MediaCodec mediaCodec;
     private MediaFormat mediaFormat;
@@ -56,7 +54,7 @@ public class AudioEncoder implements Runnable {
     protected MediaCodec.BufferInfo mBufferInfo;
     protected int mTrackIndex;
     private boolean hasMoreData = true;
-    private FileInputStream fis;
+    private FileInputStream fileInputStream;
     private  byte[] tempBuffer = new byte[BUFFER_SIZE];
     private double presentationTimeUs;
     private int totalBytesRead = 0;
@@ -64,67 +62,42 @@ public class AudioEncoder implements Runnable {
     private ByteBuffer[] codecOutputBuffers;
     private int audioTrackIdx = 0;
 
-    private OnAudioEncoderListener listener;
-
-    public AudioEncoder(String inputFile, String outputFile, OnAudioEncoderListener listener){
-
+    public void encodeToMp4(String inputFile, String outputFile) throws IOException,
+            TranscodingException {
         this.inputFile = new File(inputFile);
         this.outputFile = new File(outputFile);
-
-        this.listener = listener;
-
         setUpMediaEncoder();
 
-    }
-
-    @Override
-    public void run(){
-
         int percentComplete;
-
         mBufferInfo = new MediaCodec.BufferInfo();
-
         codecInputBuffers = mediaCodec.getInputBuffers(); // Note: Array of buffers
         codecOutputBuffers = mediaCodec.getOutputBuffers();
-
-
-        try {
-            fis = new FileInputStream(inputFile);
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-            listener.OnFileEncodedError(String.valueOf(e));
-        }
-
-
+        fileInputStream = new FileInputStream(inputFile);
         while (mBufferInfo.flags != MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
-
             sendAudio();
             drainAudio();
-
             //TODO use in a progress seekbar or similar
-            percentComplete = (int) Math.round(((float) totalBytesRead / (float) inputFile.length()) * 100.0);
-            if(DEBUG)
-                Log.v(LOGTAG, "Conversion % - " + percentComplete);
-
+            percentComplete = (int) Math.round(((float) totalBytesRead / (float) inputFile.length())
+                    * 100.0);
+            if (DEBUG) {
+                Log.v(LOG_TAG, "Conversion % - " + percentComplete);
+            }
         }
 
-        try {
-            fis.close();
-        } catch (IOException e) {
-            e.printStackTrace();
-            listener.OnFileEncodedError(String.valueOf(e));
-        }
-
+        fileInputStream.close();
         mediaMuxer.stop();
         mediaMuxer.release();
-        if(DEBUG)
-            Log.v(LOGTAG, "Compression done ...");
-        listener.OnFileEncodedSuccess(outputFile.getAbsolutePath());
-
+        if (DEBUG) {
+            Log.v(LOG_TAG, "Compression done ...");
+        }
+        // (jliarte): 5/10/17 no more need of calling success as we've reached end of method successfully
+//        listener.OnFileEncodedSuccess(outputFile.getAbsolutePath());
+        Log.d(LOG_TAG, "Encoding success!! path " + this.outputFile.getAbsolutePath());
+        // TODO(jliarte): 5/10/17 maybe return?
+//        return outputFile.getAbsolutePath();
     }
 
-    private void sendAudio(){
-
+    private void sendAudio() throws IOException {
         int inputBufIndex = 0;
         while (inputBufIndex != -1 && hasMoreData) {
             inputBufIndex = mediaCodec.dequeueInputBuffer(CODEC_TIMEOUT_IN_MS);
@@ -134,28 +107,25 @@ public class AudioEncoder implements Runnable {
                 dstBuf.clear();
 
                 int bytesRead = 0;
-                try {
-                    bytesRead = fis.read(tempBuffer, 0, dstBuf.limit());
-                } catch (IOException e) {
-                    e.printStackTrace();
-                    listener.OnFileEncodedError(String.valueOf(e));
-                }
+                bytesRead = fileInputStream.read(tempBuffer, 0, dstBuf.limit());
                 if (bytesRead == -1) { // -1 implies EOS
                     hasMoreData = false;
-                    mediaCodec.queueInputBuffer(inputBufIndex, 0, 0, (long) presentationTimeUs, MediaCodec.BUFFER_FLAG_END_OF_STREAM);
+                    mediaCodec.queueInputBuffer(inputBufIndex, 0, 0, (long) presentationTimeUs,
+                            MediaCodec.BUFFER_FLAG_END_OF_STREAM);
                 } else {
                     totalBytesRead += bytesRead;
                     dstBuf.put(tempBuffer, 0, bytesRead);
-                    mediaCodec.queueInputBuffer(inputBufIndex, 0, bytesRead, (long) presentationTimeUs, 0);
+                    mediaCodec.queueInputBuffer(inputBufIndex, 0, bytesRead,
+                            (long) presentationTimeUs, 0);
 
-                    presentationTimeUs = 1000000l * (totalBytesRead / (2*NUM_CHANNELS)) / SAMPLING_RATE;
+                    presentationTimeUs = 1000000l * (totalBytesRead / (2 * NUM_CHANNELS)) 
+                            / SAMPLING_RATE;
                 }
             }
         }
     }
 
-    private void drainAudio(){
-
+    private void drainAudio() throws TranscodingException {
         // Drain audio
         int outputBufIndex = 0;
         while (outputBufIndex != MediaCodec.INFO_TRY_AGAIN_LATER) {
@@ -166,45 +136,42 @@ public class AudioEncoder implements Runnable {
                 encodedData.position(mBufferInfo.offset);
                 encodedData.limit(mBufferInfo.offset + mBufferInfo.size);
 
-                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0 && mBufferInfo.size != 0) {
+                if ((mBufferInfo.flags & MediaCodec.BUFFER_FLAG_CODEC_CONFIG) != 0 
+                        && mBufferInfo.size != 0) {
                     mediaCodec.releaseOutputBuffer(outputBufIndex, false);
                 } else {
-                    mediaMuxer.writeSampleData(audioTrackIdx, codecOutputBuffers[outputBufIndex], mBufferInfo);
+                    mediaMuxer.writeSampleData(audioTrackIdx, codecOutputBuffers[outputBufIndex],
+                            mBufferInfo);
                     mediaCodec.releaseOutputBuffer(outputBufIndex, false);
                 }
             } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_FORMAT_CHANGED) {
                 mediaFormat = mediaCodec.getOutputFormat();
-                Log.v(LOGTAG, "Output format changed - " + mediaFormat);
+                Log.v(LOG_TAG, "Output format changed - " + mediaFormat);
                 audioTrackIdx = mediaMuxer.addTrack(mediaFormat);
                 mediaMuxer.start();
             } else if (outputBufIndex == MediaCodec.INFO_OUTPUT_BUFFERS_CHANGED) {
-                Log.e(LOGTAG, "Output buffers changed during encode!");
-                listener.OnFileEncodedError("Output buffers changed during encode!");
+                Log.e(LOG_TAG, "Output buffers changed during encode!");
+                throw new TranscodingException("Output buffers changed during encode!");
             } else if (outputBufIndex == MediaCodec.INFO_TRY_AGAIN_LATER) {
                 // NO OP
             } else {
-                Log.e(LOGTAG, "Unknown return code from dequeueOutputBuffer - " + outputBufIndex);
-                listener.OnFileEncodedError("Unknown return code from dequeueOutputBuffer - " + outputBufIndex);
+                Log.e(LOG_TAG, "Unknown return code from dequeueOutputBuffer - " + outputBufIndex);
+                throw new TranscodingException("Output buffers changed during encode!");
             }
         }
     }
 
 
-    private void setUpMediaEncoder(){
-
-        try {
-            mediaMuxer = new MediaMuxer(outputFile.getAbsolutePath(), MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
-        } catch (IOException e) {
-            e.printStackTrace();
-            listener.OnFileEncodedError(String.valueOf(e));
-        }
-
+    private void setUpMediaEncoder() throws IOException {
+        mediaMuxer = new MediaMuxer(outputFile.getAbsolutePath(),
+                MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
         mediaFormat = MediaFormat.createAudioFormat(MIME_TYPE, SAMPLING_RATE, CHANNELS_COUNT);
 
-        // Set some properties.  Failing to specify some of these can cause the MediaCodec
+        // Set some properties. Failing to specify some of these can cause the MediaCodec
         // configure() call to throw an unhelpful exception.
         // https://github.com/google/ExoPlayer/issues/178 change to AACObjectLTP, // AACObjectERLC
-        mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE, MediaCodecInfo.CodecProfileLevel.AACObjectLC); // AACObjectLC)
+        mediaFormat.setInteger(MediaFormat.KEY_AAC_PROFILE,
+                MediaCodecInfo.CodecProfileLevel.AACObjectLC); // AACObjectLC)
         mediaFormat.setInteger(MediaFormat.KEY_SAMPLE_RATE, SAMPLING_RATE);
         mediaFormat.setInteger(MediaFormat.KEY_CHANNEL_COUNT, NUM_CHANNELS);
         mediaFormat.setInteger(MediaFormat.KEY_BIT_RATE, BIT_RATE);
@@ -212,18 +179,10 @@ public class AudioEncoder implements Runnable {
 
         // Create a MediaCodec encoder, and configure it with our format.  Get a Surface
         // we can use for input and wrap it with a class that handles the EGL work.
-        try {
-            mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
-        } catch (IOException e) {
-            e.printStackTrace();
-            listener.OnFileEncodedError(String.valueOf(e));
-        }
+        mediaCodec = MediaCodec.createEncoderByType(MIME_TYPE);
         mediaCodec.configure(mediaFormat, null, null, MediaCodec.CONFIGURE_FLAG_ENCODE);
-        //Log.d(TAG, "mEncoder info " + codec.getCodecInfo().getName());
         mediaCodec.start();
-
         mTrackIndex = -1;
-
     }
 }
  
