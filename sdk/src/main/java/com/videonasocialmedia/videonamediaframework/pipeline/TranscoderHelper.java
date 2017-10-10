@@ -345,6 +345,12 @@ public class TranscoderHelper {
     };
   }
 
+  public ListenableFuture<Void> generateOutputAudioVoiceOverAsync(String originFilePath, String
+                                                                   destFilePath){
+    return mediaTranscoder.transcodeAudioVoiceOver(originFilePath, destFilePath);
+  }
+
+
   private void waitTranscodingJobAndCheckState(ListenableFuture<Void> chainedTranscodingJob,
                                              TranscoderHelperListener listener, Video videoToEdit) {
     try {
