@@ -23,15 +23,18 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.videonasocialmedia.sdk.BuildConfig;
 import com.videonasocialmedia.transcoder.audio.AudioEffect;
 import com.videonasocialmedia.transcoder.audio.AudioEncoder;
 import com.videonasocialmedia.transcoder.audio.AudioMixer;
+import com.videonasocialmedia.transcoder.audio.UtilsAudio;
 import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
+import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -44,7 +47,7 @@ public class MediaTranscoder {
     private static final int N_THREADS = 10;
     private static volatile MediaTranscoder sMediaTranscoderInstance;
     private final ListeningExecutorService executorPool;
-
+    private boolean DEBUG = true;
     private MediaTranscoder() {
         executorPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(N_THREADS));
     }
@@ -263,6 +266,11 @@ public class MediaTranscoder {
         return executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
+                if(DEBUG){
+                    String debugWavFile = new File(originFilePath).getParent() + File.separator
+                            + new File(originFilePath).getName() + ".wav";
+                    UtilsAudio.copyWaveFile(originFilePath, debugWavFile);
+                }
                 AudioEncoder audioEncoder = new AudioEncoder();
                 audioEncoder.encodeToMp4(originFilePath, destFilePath);
                 return null;

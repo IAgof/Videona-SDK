@@ -345,7 +345,7 @@ public class TranscoderHelper {
     };
   }
 
-  public ListenableFuture<Void> generateOutputAudioVoiceOverAsync(String originFilePath, String
+  public ListenableFuture<Void> generateOutputAudioVoiceOver(String originFilePath, String
                                                                    destFilePath){
     return mediaTranscoder.transcodeAudioVoiceOver(originFilePath, destFilePath);
   }
