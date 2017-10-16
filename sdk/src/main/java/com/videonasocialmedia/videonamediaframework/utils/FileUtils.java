@@ -1,6 +1,7 @@
 package com.videonasocialmedia.videonamediaframework.utils;
 
 import android.media.MediaMetadataRetriever;
+import android.util.Log;
 
 import java.io.File;
 
@@ -9,6 +10,8 @@ import java.io.File;
  */
 
 public class FileUtils {
+  private static final String LOG_TAG = FileUtils.class.getSimpleName();
+
   public static void cleanDirectory(File directory) {
     cleanPath(directory, true);
   }
@@ -45,11 +48,13 @@ public class FileUtils {
      Video exportedVideo = new Video(filePath);
      return exportedVideo.getFileDuration();
      */
+    Log.d(LOG_TAG, "getDurationFile init");
     long duration = 0;
     MediaMetadataRetriever retriever = new MediaMetadataRetriever();
     retriever.setDataSource(filePath);
     duration = Integer.parseInt(retriever.extractMetadata(
         MediaMetadataRetriever.METADATA_KEY_DURATION));
+    Log.d(LOG_TAG, "getDurationFile end");
     return duration*1000;
   }
 

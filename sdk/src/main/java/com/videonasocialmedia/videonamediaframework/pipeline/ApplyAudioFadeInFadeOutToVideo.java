@@ -1,5 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
+import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
 import java.io.IOException;
@@ -8,8 +9,7 @@ import java.io.IOException;
  * Created by alvaro on 23/10/16.
  */
 
-public class ApplyAudioFadeInFadeOutToVideo
-        implements VideoAudioSwapper.VideoAudioSwapperListener,
+public class ApplyAudioFadeInFadeOutToVideo implements
         VideoAudioFadeGenerator.VideoAudioFadeListener {
   private VideoAudioFadeGenerator videoAudioFadeGenerator;
   private VideoAudioSwapper videoAudioSwapper;
@@ -36,21 +36,16 @@ public class ApplyAudioFadeInFadeOutToVideo
   }
 
   @Override
-  public void onExportError(String error) {
-    listener.OnGetAudioFadeInFadeOutError(error,videoToEdit);
-  }
-
-  @Override
-  public void onExportSuccess() {
-    listener.OnGetAudioFadeInFadeOutSuccess(videoToEdit);
-  }
-
-  @Override
   public void onGetAudioFadeInFadeOutFromVideoSuccess(String audioFile) {
     // TODO:(alvaro.martinez) 22/11/16 use project tmp directory
     videoToEdit.setTempPath(intermediatesTempDirectory);
-    videoAudioSwapper.export(tempPreviousPath, audioFile,
-        videoToEdit.getTempPath(), this);
+    try {
+      videoAudioSwapper.export(tempPreviousPath, audioFile, videoToEdit.getTempPath());
+      listener.OnGetAudioFadeInFadeOutSuccess(videoToEdit);
+    } catch (IOException | TranscodingException transcodingError) {
+      transcodingError.printStackTrace();
+      listener.OnGetAudioFadeInFadeOutSuccess(videoToEdit);
+    }
   }
 
   @Override
