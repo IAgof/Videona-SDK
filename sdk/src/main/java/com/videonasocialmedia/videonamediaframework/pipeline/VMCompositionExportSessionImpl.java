@@ -156,17 +156,23 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     new Video(exportedVideoAppendedPath, Video.DEFAULT_VOLUME),
                     vmComposition.getMediaTrack());
             mediaList.add(video);
+            Log.d(LOG_TAG, "medialist added " + video.getMediaPath() + " volume "
+                + video.getVolume());
         }
         // (jliarte): 4/10/17 made a copy of music and voice over objects to not alter its original volume!
         if (vmComposition.hasMusic()) {
             Media music = getMediaItemToMix(new Music(vmComposition.getMusic()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC));
             mediaList.add(music);
+            Log.d(LOG_TAG, "medialist added " + music.getMediaPath() + " volume "
+                + music.getVolume());
         }
         if (vmComposition.hasVoiceOver()) {
             Media voiceOver = getMediaItemToMix(new Music(vmComposition.getVoiceOver()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
             mediaList.add(voiceOver);
+            Log.d(LOG_TAG, "medialist added " + voiceOver.getMediaPath() + " volume "
+                + voiceOver.getVolume());
         }
         return mediaList;
     }
