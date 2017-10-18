@@ -309,8 +309,13 @@ public class TranscoderFragment extends Fragment {
             videoToEdit.setStartTime(5000);
             videoToEdit.setStopTime(10000);
 
+          try {
             transcoderHelper.generateOutputVideoWithTrimmingAsync(fadeTransition,
                 isVideoFadeActivated,isAudioFadeActivated, videoToEdit, new VideonaFormat(),"");
+          } catch (IOException e) {
+            // TODO(jliarte): 18/10/17 exception handling?
+            e.printStackTrace();
+          }
 
           break;
         }
@@ -333,8 +338,13 @@ public class TranscoderFragment extends Fragment {
           videoToEdit.setClipTextPosition("CENTER");
           //videoToEdit.setClipTextPosition(TextEffect.TextPosition.TOP.name());
 
-          transcoderHelper.generateOutputVideoWithOverlayImageAsync(fadeTransition,
-                  isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "");
+          try {
+            transcoderHelper.generateOutputVideoWithOverlayImageAsync(fadeTransition,
+                    isVideoFadeActivated, isAudioFadeActivated, videoToEdit, new VideonaFormat(), "");
+          } catch (IOException e) {
+            // TODO(jliarte): 18/10/17 execption handling?
+            e.printStackTrace();
+          }
 
           break;
         }

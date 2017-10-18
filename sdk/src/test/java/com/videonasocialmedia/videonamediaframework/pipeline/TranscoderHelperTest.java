@@ -15,6 +15,8 @@ import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mockito.runners.MockitoJUnitRunner;
 
+import java.io.IOException;
+
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.times;
 
@@ -33,7 +35,8 @@ public class TranscoderHelperTest {
   }
 
   @Test
-  public void updateIntermediateFileCallsGenerateOutputVideoWithOverlayImageAndTrimmingAsyncIfTextAndTrim() {
+  public void updateIntermediateFileCallsGenerateOutputVideoWithOverlayImageAndTrimmingAsyncIfTextAndTrim()
+          throws IOException {
     Video video = new Video("media/path", Video.DEFAULT_VOLUME);
     VideonaFormat videoFormat = new VideonaFormat();
     TranscoderHelper transcoderHelperSpy = Mockito.spy(injectedTranscoderHelper);
@@ -51,7 +54,8 @@ public class TranscoderHelperTest {
   }
 
   @Test
-  public void updateIntermediateFileCallsGenerateOutputVideoWithOverlayImageAsyncIfText() {
+  public void updateIntermediateFileCallsGenerateOutputVideoWithOverlayImageAsyncIfText()
+          throws IOException {
     Video video = new Video("media/path", Video.DEFAULT_VOLUME);
     VideonaFormat videoFormat = new VideonaFormat();
     TranscoderHelper transcoderHelperSpy = Mockito.spy(injectedTranscoderHelper);
@@ -69,7 +73,8 @@ public class TranscoderHelperTest {
   }
 
   @Test
-  public void updateIntermediateFileCallsGenerateOutputVideoWithTrimmingAsyncIfNoText() {
+  public void updateIntermediateFileCallsGenerateOutputVideoWithTrimmingAsyncIfNoText()
+          throws IOException {
     Video video = new Video("media/path", Video.DEFAULT_VOLUME);
     VideonaFormat videoFormat = new VideonaFormat();
     TranscoderHelper transcoderHelperSpy = Mockito.spy(injectedTranscoderHelper);

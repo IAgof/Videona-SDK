@@ -3,7 +3,11 @@ package com.videonasocialmedia.videonamediaframework.utils;
 import android.media.MediaMetadataRetriever;
 import android.util.Log;
 
+import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+
 import java.io.File;
+import java.util.concurrent.Callable;
 
 /**
  * Created by jliarte on 27/10/16.
@@ -40,6 +44,15 @@ public class FileUtils {
   public static boolean createDirectory(String directoryPath) {
     File dir = new File(directoryPath);
     return !dir.exists() && dir.mkdirs();
+  }
+
+  public static ListenableFuture<Long> getDurationFileAsync(final String filePath) {
+    return MoreExecutors.newDirectExecutorService().submit(new Callable<Long>() {
+      @Override
+      public Long call() throws Exception {
+        return getDurationFile(filePath);
+      }
+    });
   }
 
   public static long getDurationFile(String filePath) {
