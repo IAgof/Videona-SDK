@@ -155,24 +155,21 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Media video = getMediaItemToMix(
                     new Video(exportedVideoAppendedPath, Video.DEFAULT_VOLUME),
                     vmComposition.getMediaTrack());
-            mediaList.add(video);
-            Log.d(LOG_TAG, "medialist added " + video.getMediaPath() + " volume "
-                + video.getVolume());
+            if(video.getVolume()>0.00f)
+                mediaList.add(video);
         }
         // (jliarte): 4/10/17 made a copy of music and voice over objects to not alter its original volume!
         if (vmComposition.hasMusic()) {
             Media music = getMediaItemToMix(new Music(vmComposition.getMusic()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC));
-            mediaList.add(music);
-            Log.d(LOG_TAG, "medialist added " + music.getMediaPath() + " volume "
-                + music.getVolume());
+            if(music.getVolume()>0.00f)
+                mediaList.add(music);
         }
         if (vmComposition.hasVoiceOver()) {
             Media voiceOver = getMediaItemToMix(new Music(vmComposition.getVoiceOver()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
-            mediaList.add(voiceOver);
-            Log.d(LOG_TAG, "medialist added " + voiceOver.getMediaPath() + " volume "
-                + voiceOver.getVolume());
+            if(voiceOver.getVolume()>0.00f)
+                mediaList.add(voiceOver);
         }
         return mediaList;
     }
@@ -180,7 +177,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     @NonNull
     private Media getMediaItemToMix(Media media, Track track) {
         if (track.isMuted()) {
-            media.setVolume(0f);
+            media.setVolume(0.00f);
         } else {
             media.setVolume(track.getVolume());
         }
