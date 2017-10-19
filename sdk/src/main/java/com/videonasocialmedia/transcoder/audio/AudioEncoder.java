@@ -62,17 +62,17 @@ public class AudioEncoder {
     private ByteBuffer[] codecOutputBuffers;
     private int audioTrackIdx = 0;
 
-    public void encodeToMp4(String inputFile, String outputFile) throws IOException,
+    public void encodeToMp4(String inputFilePath, String outputFilePath) throws IOException,
             TranscodingException {
-        this.inputFile = new File(inputFile);
-        this.outputFile = new File(outputFile);
+        this.inputFile = new File(inputFilePath);
+        this.outputFile = new File(outputFilePath);
         setUpMediaEncoder();
 
         int percentComplete;
         mBufferInfo = new MediaCodec.BufferInfo();
         codecInputBuffers = mediaCodec.getInputBuffers(); // Note: Array of buffers
         codecOutputBuffers = mediaCodec.getOutputBuffers();
-        fileInputStream = new FileInputStream(inputFile);
+        fileInputStream = new FileInputStream(inputFilePath);
         while (mBufferInfo.flags != MediaCodec.BUFFER_FLAG_END_OF_STREAM) {
             sendAudio();
             drainAudio();

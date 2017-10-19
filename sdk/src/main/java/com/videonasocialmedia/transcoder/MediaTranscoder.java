@@ -47,7 +47,6 @@ public class MediaTranscoder {
     private static final int N_THREADS = 10;
     private static volatile MediaTranscoder sMediaTranscoderInstance;
     private final ListeningExecutorService executorPool;
-    private boolean DEBUG = true;
     private MediaTranscoder() {
         executorPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(N_THREADS));
     }
@@ -266,14 +265,9 @@ public class MediaTranscoder {
         return executorPool.submit(new Callable<Void>() {
             @Override
             public Void call() throws Exception {
-                if(DEBUG){
-                    String debugWavFile = new File(originFilePath).getParent() + File.separator
-                            + new File(originFilePath).getName() + ".wav";
-                    UtilsAudio.copyWaveFile(originFilePath, debugWavFile);
-                }
-                AudioEncoder audioEncoder = new AudioEncoder();
-                audioEncoder.encodeToMp4(originFilePath, destFilePath);
-                return null;
+            AudioEncoder audioEncoder = new AudioEncoder();
+            audioEncoder.encodeToMp4(originFilePath, destFilePath);
+            return null;
             }
         });
     }
