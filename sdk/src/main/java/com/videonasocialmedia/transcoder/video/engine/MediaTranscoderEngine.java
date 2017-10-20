@@ -129,6 +129,7 @@ public class MediaTranscoderEngine {
         }
         try {
             // NOTE: use single extractor to keep from running out audio track fast.
+            releaseExtractor();
             mExtractor = new MediaExtractor();
             mExtractor.setDataSource(mInputFileDescriptor);
             mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
