@@ -156,18 +156,24 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Media video = getMediaItemToMix(
                     new Video(exportedVideoAppendedPath, Video.DEFAULT_VOLUME),
                     vmComposition.getMediaTrack());
-            mediaList.add(video);
+            if(video.getVolume()>0.00f) {
+                mediaList.add(video);
+            }
         }
         // (jliarte): 4/10/17 made a copy of music and voice over objects to not alter its original volume!
         if (vmComposition.hasMusic()) {
             Media music = getMediaItemToMix(new Music(vmComposition.getMusic()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC));
-            mediaList.add(music);
+            if(music.getVolume()>0f) {
+                mediaList.add(music);
+            }
         }
         if (vmComposition.hasVoiceOver()) {
             Media voiceOver = getMediaItemToMix(new Music(vmComposition.getVoiceOver()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
-            mediaList.add(voiceOver);
+            if(voiceOver.getVolume()>0f) {
+                mediaList.add(voiceOver);
+            }
         }
         return mediaList;
     }
