@@ -149,7 +149,6 @@ public class SoundMixer {
         normalizeVolume = normalizeVolume + media.getVolume();
       }
     }
-    normalizeVolume = normalizeVolume / mediaList.size();
     Log.d(LOG_TAG, "normalize volume " + normalizeVolume);
     return normalizeVolume;
   }

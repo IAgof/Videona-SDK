@@ -10,8 +10,10 @@ package com.videonasocialmedia.transcoder.video.format;
  *
  */
 
+import android.media.AudioFormat;
 import android.media.MediaCodecInfo;
 import android.media.MediaFormat;
+import android.media.MediaRecorder;
 
 import com.videonasocialmedia.transcoder.video.exceptions.OutputFormatUnavailableException;
 
@@ -35,6 +37,11 @@ public class VideonaFormat implements MediaFormatStrategy {
     private int videoBitrate = 5000 * 1000;
     private int audioBitrate = 192 * 1000;
     private int audioChannels = 1;
+
+    private int audioSampleRate = 48000;
+    private int audioChannelFormat = AudioFormat.CHANNEL_IN_MONO;
+    private int audioEncodingFormat = AudioFormat.ENCODING_PCM_16BIT;
+    private int audioSource = MediaRecorder.AudioSource.DEFAULT;
 
     public VideonaFormat() {
     }
@@ -119,5 +126,21 @@ public class VideonaFormat implements MediaFormatStrategy {
 
     public int getAudioChannels() {
         return audioChannels;
+    }
+
+    public int getAudioSampleRate() {
+        return audioSampleRate;
+    }
+
+    public int getAudioChannelFormat() {
+        return audioChannelFormat;
+    }
+
+    public int getAudioEncodingFormat() {
+        return audioEncodingFormat;
+    }
+
+    public int getAudioSource() {
+        return audioSource;
     }
 }
