@@ -146,6 +146,7 @@ public class SoundMixer {
       normalizeVolume = 1;
     } else {
       for (Media media : mediaList) {
+        Log.d(LOG_TAG, "media path, volume " + media.getMediaPath() + " - " + media.getVolume());
         normalizeVolume = normalizeVolume + media.getVolume();
       }
     }
@@ -197,6 +198,7 @@ public class SoundMixer {
   }
 
   private byte[] adjustVolume(byte[] audioSamples, float volume) {
+    Log.d(LOG_TAG, "adjustVolume volume " + volume);
     byte[] array = new byte[audioSamples.length];
     for (int i = 0; i < array.length; i += 2) {
       // convert byte pair to int
