@@ -17,8 +17,7 @@ import java.util.List;
  * @author Veronica Lago Fominaya
  */
 public class Appender {
-
-    private static final String TAG = Appender.class.getCanonicalName();
+    private static final String LOG_TAG = Appender.class.getCanonicalName();
 
     public Movie appendVideos(List<String> videoPaths, boolean addOriginalAudio)
             throws IOException, IntermediateFileException {
@@ -53,11 +52,11 @@ public class Appender {
                 Log.d("BUILDING MOVIE", "time spent in millis: " + spent);
                 movieList.add(movie);
             } catch (FileNotFoundException fileError) {
-                Log.e(TAG, "Missing file, index " + videoPaths.indexOf(videoPath) +
+                Log.e(LOG_TAG, "Missing file, index " + videoPaths.indexOf(videoPath) +
                         " path " + videoPath);
                 throw new IntermediateFileException(videoPath, videoPaths.indexOf(videoPath));
             } catch (NullPointerException npe) {
-                Log.e(TAG, "Null pointer while getting movie list for index "
+                Log.e(LOG_TAG, "Null pointer while getting movie list for index "
                         + videoPaths.indexOf(videoPath));
                 throw new IntermediateFileException(videoPath, videoPaths.indexOf(videoPath));
             }
