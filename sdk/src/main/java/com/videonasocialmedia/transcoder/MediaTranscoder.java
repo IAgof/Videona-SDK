@@ -23,18 +23,15 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.videonasocialmedia.sdk.BuildConfig;
 import com.videonasocialmedia.transcoder.audio.AudioEffect;
 import com.videonasocialmedia.transcoder.audio.AudioEncoder;
 import com.videonasocialmedia.transcoder.audio.AudioMixer;
-import com.videonasocialmedia.transcoder.audio.UtilsAudio;
 import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
 import com.videonasocialmedia.transcoder.video.overlay.Overlay;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
-import java.io.File;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -260,14 +257,14 @@ public class MediaTranscoder {
         return transcodingJob;
     }
 
-    public ListenableFuture<Void> transcodeAudioVoiceOver(final String originFilePath,
+    public ListenableFuture<String> transcodeAudioVoiceOver(final String originFilePath,
                                                              final String destFilePath) {
-        return executorPool.submit(new Callable<Void>() {
+        return executorPool.submit(new Callable<String>() {
             @Override
-            public Void call() throws Exception {
+            public String call() throws Exception {
             AudioEncoder audioEncoder = new AudioEncoder();
             audioEncoder.encodeToMp4(originFilePath, destFilePath);
-            return null;
+            return destFilePath;
             }
         });
     }

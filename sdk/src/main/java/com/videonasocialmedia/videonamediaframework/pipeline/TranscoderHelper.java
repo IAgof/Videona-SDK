@@ -290,7 +290,7 @@ public class TranscoderHelper {
     };
   }
 
-  public ListenableFuture<Void> generateOutputAudioVoiceOver(String originFilePath, String
+  public ListenableFuture<String> generateOutputAudioVoiceOver(String originFilePath, String
                                                                    destFilePath){
     return mediaTranscoder.transcodeAudioVoiceOver(originFilePath, destFilePath);
   }
