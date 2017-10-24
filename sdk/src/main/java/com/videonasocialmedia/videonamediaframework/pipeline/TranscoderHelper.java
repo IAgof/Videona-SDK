@@ -290,6 +290,12 @@ public class TranscoderHelper {
     };
   }
 
+  public ListenableFuture<String> generateOutputAudioVoiceOver(String originFilePath, String
+                                                                   destFilePath){
+    return mediaTranscoder.transcodeAudioVoiceOver(originFilePath, destFilePath);
+  }
+
+
   private void waitTranscodingJobAndCheckState(ListenableFuture<Void> chainedTranscodingJob,
                                              TranscoderHelperListener listener, Video videoToEdit) {
     try {
