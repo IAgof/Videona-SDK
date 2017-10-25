@@ -3,3 +3,5 @@ v0.3-RC2
 - Removed callbacks from sound mixing and applying, redesigned to use futures
 - Fixed, player video preview show time of video selected, not video file duration.
 - Fixed audio volume normalization in sound mixer.
+- Added new job transcodeAudioVoiceOver. Generate mp4 file with audio track encoded AAC from PCM file.
+- Added new VideonaFormat parameters for record audio.

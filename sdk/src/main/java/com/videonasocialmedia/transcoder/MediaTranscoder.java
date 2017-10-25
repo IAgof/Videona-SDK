@@ -24,6 +24,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.videonasocialmedia.transcoder.audio.AudioEffect;
+import com.videonasocialmedia.transcoder.audio.AudioEncoder;
 import com.videonasocialmedia.transcoder.audio.AudioMixer;
 import com.videonasocialmedia.transcoder.video.engine.MediaTranscoderEngine;
 import com.videonasocialmedia.transcoder.video.format.MediaFormatStrategy;
@@ -43,7 +44,6 @@ public class MediaTranscoder {
     private static final int N_THREADS = 10;
     private static volatile MediaTranscoder sMediaTranscoderInstance;
     private final ListeningExecutorService executorPool;
-
     private MediaTranscoder() {
         executorPool = MoreExecutors.listeningDecorator(Executors.newFixedThreadPool(N_THREADS));
     }
@@ -255,6 +255,18 @@ public class MediaTranscoder {
         Futures.addCallback(transcodingJob,
                 new LoggerAndListenerNotifierCallback(listener, outputFile, transcodingJob));
         return transcodingJob;
+    }
+
+    public ListenableFuture<String> transcodeAudioVoiceOver(final String originFilePath,
+                                                             final String destFilePath) {
+        return executorPool.submit(new Callable<String>() {
+            @Override
+            public String call() throws Exception {
+            AudioEncoder audioEncoder = new AudioEncoder();
+            audioEncoder.encodeToMp4(originFilePath, destFilePath);
+            return destFilePath;
+            }
+        });
     }
 
     /**
