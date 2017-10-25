@@ -19,6 +19,7 @@ import java.util.List;
  */
 public class Appender {
     private static final String LOG_TAG = Appender.class.getCanonicalName();
+    public static final int AUDIO_SAMPLES_TO_JUMP = 5;
 
     public Movie appendVideos(List<String> videoPaths)
             throws IOException, IntermediateFileException {
@@ -30,7 +31,7 @@ public class Appender {
             for (Track track : m.getTracks()) {
                 if (track.getHandler().equals("soun")) {
                     // removes the first samples and shortens the AAC track by ~22ms per sample
-                    CroppedTrack audioTrackShort = new CroppedTrack(track, 5,
+                    CroppedTrack audioTrackShort = new CroppedTrack(track, AUDIO_SAMPLES_TO_JUMP,
                             track.getSamples().size());
                     audioTracks.add(audioTrackShort);
                 }
