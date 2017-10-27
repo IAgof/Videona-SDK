@@ -19,28 +19,67 @@ import java.util.List;
  */
 public class Appender {
     private static final String LOG_TAG = Appender.class.getCanonicalName();
-    public static final int AUDIO_SAMPLES_TO_JUMP = 5;
+    public static final int MAGIC_NUMBER_AUDIO_SAMPLES_DURATION = 42666;// 2 x 1024(buffer samples) / 48000 (48khz)
 
-    public Movie appendVideos(List<String> videoPaths)
-            throws IOException, IntermediateFileException {
+    public Movie appendVideos(List<String> videoPaths) throws IOException,
+        IntermediateFileException {
         List<Movie> movieList = getMovieList(videoPaths);
         List<Track> videoTracks = new LinkedList<>();
         List<Track> audioTracks = new LinkedList<>();
-
-        for (Movie m : movieList) {
-            for (Track track : m.getTracks()) {
-                if (track.getHandler().equals("soun")) {
-                    // removes the first samples and shortens the AAC track by ~22ms per sample
-                    CroppedTrack audioTrackShort = new CroppedTrack(track, AUDIO_SAMPLES_TO_JUMP,
-                            track.getSamples().size());
-                    audioTracks.add(audioTrackShort);
-                }
-                if (track.getHandler().equals("vide")) {
-                    videoTracks.add(track);
-                }
+        for (Movie movie : movieList) {
+            Track audioTrack = getAudioTrackFromMovie(movie);
+            Track videoTrack = getVideoTrackFromMovie(movie);
+            videoTracks.add(videoTrack);
+            audioTracks.add(audioTrack);
+           /* if(audioTrack == null || videoTrack == null){
+                int index = movieList.indexOf(movie);
+                throw new IntermediateFileException(videoPaths.get(index), index);
             }
+            if(videoTrack.getDuration() > audioTrack.getDuration()) {
+                long diffTrackDuration = videoTrack.getDuration() - audioTrack.getDuration();
+                int diffNumSamples = (int) (diffTrackDuration / MAGIC_NUMBER_AUDIO_SAMPLES_DURATION);
+                if (diffNumSamples > 0) {
+                    CroppedTrack audioTrackShort = new CroppedTrack(audioTrack, diffNumSamples,
+                        audioTrack.getSamples().size());
+                    audioTracks.add(audioTrackShort);
+                } else {
+                    audioTracks.add(audioTrack);
+                }
+                videoTracks.add(videoTrack);
+            } else {
+                long diffTrackDuration = audioTrack.getDuration() - videoTrack.getDuration();
+                int diffNumSamples = (int) (diffTrackDuration / MAGIC_NUMBER_AUDIO_SAMPLES_DURATION);
+                if (diffNumSamples > 0) {
+                    CroppedTrack videoTrackShort = new CroppedTrack(videoTrack, diffNumSamples,
+                        videoTrack.getSamples().size());
+                    videoTracks.add(videoTrackShort);
+                } else {
+                    videoTracks.add(videoTrack);
+                }
+                audioTracks.add(audioTrack);
+            } */
         }
         return createMovie(audioTracks, videoTracks);
+    }
+
+    private Track getVideoTrackFromMovie(Movie movie) {
+        for (Track track : movie.getTracks()) {
+            if (track.getHandler().equals("vide")) {
+                return track;
+            }
+        }
+        Log.d(LOG_TAG, "Video track not found");
+        return null;
+    }
+
+    private Track getAudioTrackFromMovie(Movie movie) {
+        for (Track track : movie.getTracks()) {
+            if (track.getHandler().equals("soun")) {
+                return track;
+            }
+        }
+        Log.d(LOG_TAG, "Audio track not found");
+        return null;
     }
 
     private List<Movie> getMovieList(List<String> videoPaths) throws IOException,
