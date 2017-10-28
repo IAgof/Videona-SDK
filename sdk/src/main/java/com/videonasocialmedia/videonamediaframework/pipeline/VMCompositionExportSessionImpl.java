@@ -248,7 +248,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             InterruptedException {
         Movie movie = null;
         try {
-            movie = appender.appendVideos(videoTranscodedPaths, true);
+            movie = appender.appendVideos(videoTranscodedPaths);
         } catch (final IntermediateFileException intermediateFileError) {
             Log.d(LOG_TAG, "Catched intermediate files error");
             intermediateFileError.printStackTrace();
