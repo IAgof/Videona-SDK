@@ -71,6 +71,9 @@
 -keep class com.videonasocialmedia.transcoder.video.overlay.Filter { public <methods>;}
 -keep class com.videonasocialmedia.transcoder.audio.listener.** { public <methods>;}
 
+# Mp4parser
+-keep class java.awt.image.BufferedImage  { *; }
+-dontwarn com.googlecode.mp4parser.**
 
 -keepattributes Exceptions, InnerClasses
 
