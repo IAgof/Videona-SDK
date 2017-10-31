@@ -126,7 +126,7 @@ public class VMCompositionExportSessionImplTest {
     URL url = Thread.currentThread().getContextClassLoader().getResource("test-pod.m4a");
     ArrayList<String> videoList = new ArrayList<>(Arrays.asList(url.getPath()));
 
-    verify(mockedAppender, never()).appendVideos(videoList, false);
+    verify(mockedAppender, never()).appendVideos(videoList, true);
 
   }
 
