@@ -281,13 +281,13 @@ public class MediaTranscoderEngine {
     }
 
     private void setupAudioTranscoder() {
-//        if (audioOutputFormat == null) {
+        if (audioOutputFormat == null) {
             mAudioTrackTranscoder = new PassThroughTrackTranscoder(mExtractor,
                 trackResult.mAudioTrackIndex, muxer, Muxer.SampleType.AUDIO);
-//        } else {
-//            mAudioTrackTranscoder = new AudioTrackTranscoder(mExtractor,
-//                trackResult.mAudioTrackIndex, audioOutputFormat, muxer);
-//        }
+        } else {
+            mAudioTrackTranscoder = new AudioTrackTranscoder(mExtractor,
+                trackResult.mAudioTrackIndex, audioOutputFormat, muxer);
+        }
         mAudioTrackTranscoder.setup();
         mExtractor.selectTrack(trackResult.mAudioTrackIndex);
     }
