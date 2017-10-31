@@ -1,7 +1,2 @@
-v0.3-RC2
-- Fixed mixing audio error that generated incompleted audio track in export sessions
-- Removed callbacks from sound mixing and applying, redesigned to use futures
-- Fixed, player video preview show time of video selected, not video file duration.
-- Fixed audio volume normalization in sound mixer.
-- Added new job transcodeAudioVoiceOver. Generate mp4 file with audio track encoded AAC from PCM file.
-- Added new VideonaFormat parameters for record audio.
+v0.3-RC3
+- Fixed audio/video sync in export session
