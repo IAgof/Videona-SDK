@@ -379,7 +379,7 @@ public class MediaTranscoderEngine {
         if (mDurationUs <= 0) {
             double progress = PROGRESS_UNKNOWN;
         }
-        while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
+        while (!(mVideoTrackTranscoder.isFinished() || mAudioTrackTranscoder.isFinished())) {
             if (interruptTranscoding) {
                 Log.d(TAG, "interrupt transcoding exit runPipeLines");
                 mVideoTrackTranscoder.setTrackFinished();

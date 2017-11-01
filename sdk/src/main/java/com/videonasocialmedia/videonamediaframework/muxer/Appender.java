@@ -6,6 +6,7 @@ import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+import com.googlecode.mp4parser.authoring.tracks.CroppedTrack;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -19,25 +20,59 @@ import java.util.List;
 public class Appender {
     private static final String LOG_TAG = Appender.class.getCanonicalName();
 
-    public Movie appendVideos(List<String> videoPaths, boolean addOriginalAudio)
+    public Movie appendVideos(List<String> videoPaths, boolean matchTracksLength)
             throws IOException, IntermediateFileException {
         List<Movie> movieList = getMovieList(videoPaths);
-        List<Track> videoTracks = new LinkedList<>();
-        List<Track> audioTracks = new LinkedList<>();
+        LinkedList<Track> videoTracks = new LinkedList<>();
+        LinkedList<Track> audioTracks = new LinkedList<>();
 
         for (Movie m : movieList) {
+            Track audioTrack = null;
+            Track videoTrack = null;
             for (Track t : m.getTracks()) {
-                if(addOriginalAudio) {
-                    if (t.getHandler().equals("soun")) {
-                        audioTracks.add(t);
-                    }
+                if (t.getHandler().equals("soun")) {
+                    audioTracks.add(t);
+                    audioTrack = t;
                 }
                 if (t.getHandler().equals("vide")) {
                     videoTracks.add(t);
+                    videoTrack = t;
                 }
+            }
+            if (matchTracksLength && audioTrack != null && videoTrack != null) {
+                adjustTracksLength(audioTracks, videoTracks, audioTrack, videoTrack);
             }
         }
         return createMovie(audioTracks, videoTracks);
+    }
+
+    private void adjustTracksLength(LinkedList<Track> audioTracks, LinkedList<Track> videoTracks,
+                                    Track audioTrack, Track videoTrack) {
+        float audioDuration = (float) audioTrack.getDuration()
+                / (float) audioTrack.getTrackMetaData().getTimescale();
+        float videoDuration = (float) videoTrack.getDuration()
+                / (float) videoTrack.getTrackMetaData().getTimescale();
+        if (audioDuration > videoDuration) {
+            cropTrack(audioTrack, audioTracks, audioDuration - videoDuration);
+        } else {
+            cropTrack(videoTrack, videoTracks, videoDuration - audioDuration);
+        }
+    }
+
+    private void cropTrack(Track track, LinkedList<Track> tracks, float offset) {
+        float audioSampleDuration = 0;
+        tracks.removeLast();
+        audioSampleDuration = getTrackSampleDuration(audioSampleDuration, track);
+        int toSample = (int) (track.getSamples().size() - (offset / audioSampleDuration));
+        Log.e(LOG_TAG, "Cropping audio to sample " + toSample);
+        tracks.addLast(new CroppedTrack(track, 0, toSample));
+    }
+
+    private float getTrackSampleDuration(float sampleDuration, Track t) {
+        for (long a : t.getSampleDurations()) sampleDuration += a;
+        sampleDuration /= (float) t.getSamples().size();
+        sampleDuration /= (float) t.getTrackMetaData().getTimescale();
+        return sampleDuration;
     }
 
     private List<Movie> getMovieList(List<String> videoPaths) throws IOException,
