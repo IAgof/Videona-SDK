@@ -1,2 +1,3 @@
 v0.3-RC3
 - Fixed audio/video sync in export session
+- Fixed audio mixing export session errors
