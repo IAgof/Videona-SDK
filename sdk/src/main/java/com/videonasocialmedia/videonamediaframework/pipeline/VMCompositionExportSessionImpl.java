@@ -156,7 +156,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Media video = getMediaItemToMix(
                     new Video(exportedVideoAppendedPath, Video.DEFAULT_VOLUME),
                     vmComposition.getMediaTrack());
-            if(video.getVolume()>0.00f) {
+            if (video.getVolume() > 0.00f) {
                 mediaList.add(video);
             }
         }
@@ -396,13 +396,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     protected void mixAudio(List<Media> mediaList, final String videoPath) {
-        // TODO(jliarte): 4/10/17 these two conditions feel strange here, redesign these steps
-        if ((mediaList.size() == 1 && mediaList.get(0).getVolume() == Video.DEFAULT_VOLUME) ||
-            (mediaList.size() == 0)) {
-            FileUtils.moveFile(videoPath, finalVideoExportedFilePath);
-            notifyFinalSuccess(finalVideoExportedFilePath);
-            return;
-        }
         exportListener.onExportProgress("Mixing audio", EXPORT_STAGE_MIX_AUDIO);
         long movieDuration = vmComposition.getDuration() * 1000;
         try {

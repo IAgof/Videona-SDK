@@ -80,7 +80,7 @@ dependencies {
 
     compile 'com.google.android.exoplayer:exoplayer:r1.5.10'
 //    compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
-    compile 'com.googlecode.mp4parser:isoparser:1.1.22'
+    compile 'com.googlecode.mp4parser:isoparser:1.1.7'
     // TODO(jliarte) 20170723: try to upgrade isoparser with new package name for branch 2.x
     // (jliarte) 20171017: unable to get rid of OOM on MovieCreator.build
     // see https://github.com/sannies/mp4parser/issues/151

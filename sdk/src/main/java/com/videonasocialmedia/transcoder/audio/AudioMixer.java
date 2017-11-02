@@ -36,6 +36,10 @@ public class AudioMixer {
 
     public boolean export(List<Media> mediaList, String tempDirectory, String outputFile,
                           long durationOutputFile) throws IOException, TranscodingException {
+        if (mediaList.size() == 0) {
+            return false;
+        }
+
         this.tempDirectory = tempDirectory;
         String outputTempMixAudioPath = this.tempDirectory + File.separator + "mixAudio.pcm";
         this.outputFile = outputFile;
