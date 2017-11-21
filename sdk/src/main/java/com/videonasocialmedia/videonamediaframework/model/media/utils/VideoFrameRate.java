@@ -21,7 +21,7 @@ public class VideoFrameRate {
                 break;
             case NOT_SUPPORTED:
             default:
-                this.videoFrameRate = 0;
+                this.videoFrameRate = 30;
         }
     }
 
