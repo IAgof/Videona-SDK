@@ -16,7 +16,6 @@ package com.videonasocialmedia.videonamediaframework.model.media.utils;
  * Created by jca on 30/3/15.
  */
 public class VideoResolution {
-
     private final int heigth;
     private final int width;
 
@@ -35,7 +34,6 @@ public class VideoResolution {
                 this.width = 1280;
                 this.heigth = 720;
         }
-
     }
 
     public int getHeight() {
@@ -49,6 +47,4 @@ public class VideoResolution {
     public enum Resolution {
         HD720, HD1080, HD4K
     }
-
-
 }
