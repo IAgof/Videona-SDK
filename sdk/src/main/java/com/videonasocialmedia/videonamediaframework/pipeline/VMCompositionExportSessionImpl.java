@@ -145,6 +145,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             } catch (InterruptedException | ExecutionException e) {
                 Log.d(LOG_TAG, "Error applying watermark!");
                 e.printStackTrace();
+                exportListener.onExportError("Error applying watermark");
             }
         }
     }
