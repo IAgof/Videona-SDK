@@ -1,10 +1,10 @@
 package com.videonasocialmedia.videonamediaframework.muxer;
 
-import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.googlecode.mp4parser.authoring.Track;
 import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
 import com.googlecode.mp4parser.authoring.tracks.CroppedTrack;
+import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
 
 import java.io.IOException;
 import java.util.List;

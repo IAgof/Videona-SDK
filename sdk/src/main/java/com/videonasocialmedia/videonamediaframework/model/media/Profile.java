@@ -18,16 +18,10 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResol
 /**
  * Composition profile. Define some characteristics and limitations of the current video
  * composition.
+ * This are the video/audio params that output video will have, and its intended use is in
+ * edit/export areas of the application
  */
 public class Profile {
-    private static Profile INSTANCE;
-
-    public void clear() {
-        if (INSTANCE != null) {
-            INSTANCE = null;
-        }
-    }
-
     /**
      * Resolution of the Video objects in a composition
      */
@@ -37,7 +31,6 @@ public class Profile {
     /**
      * Video bit rate
      */
-
     private VideoQuality videoQuality;
     private VideoQuality.Quality quality;
 
@@ -53,8 +46,6 @@ public class Profile {
      * constructor and therefore is the default constructor. It has all possible atributes for the
      * profile object.
      * <p/>
-     * There can be only a single instance of a profile, and therefore this constructor can only be
-     * accessed through the factory.
      *
      * @param resolution
      * @param quality
@@ -62,7 +53,6 @@ public class Profile {
      */
     public Profile(VideoResolution.Resolution resolution, VideoQuality.Quality quality,
                    VideoFrameRate.FrameRate frameRate) {
-
         this.resolution = resolution;
         this.videoResolution = new VideoResolution(resolution);
         this.quality = quality;
@@ -71,28 +61,18 @@ public class Profile {
         this.videoFrameRate = new VideoFrameRate(frameRate);
     }
 
-    public Profile(Profile profile){
+    /**
+     * Copy constructor. Creates a new profile with the same attributes than the one in parameter
+     *
+     * @param profile the profile to copy from
+     */
+    public Profile(Profile profile) {
         this.resolution = profile.getResolution();
         this.videoResolution = new VideoResolution(resolution);
         this.quality = profile.getQuality();
         this.videoQuality = new VideoQuality(quality);
         this.frameRate = profile.getFrameRate();
         this.videoFrameRate = new VideoFrameRate(frameRate);
-    }
-
-    /**
-     * Profile factory.
-     *
-     * (jliarte): since 21/10/16 Profile stops being a singleton :P
-     * @return - profile instance.
-     */
-    @Deprecated
-    public static Profile getInstance(VideoResolution.Resolution resolution, VideoQuality.Quality quality,
-                                      VideoFrameRate.FrameRate frameRate) {
-        if (INSTANCE == null) {
-            INSTANCE = new Profile(resolution, quality, frameRate);
-        }
-        return INSTANCE;
     }
 
     //getter resolution, width, height values.

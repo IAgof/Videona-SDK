@@ -40,7 +40,6 @@ import java.util.concurrent.ExecutionException;
 import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Matchers.any;
-import static org.mockito.Matchers.anyByte;
 import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.doCallRealMethod;
 import static org.mockito.Mockito.doNothing;
@@ -70,7 +69,7 @@ public class VMCompositionExportSessionImplTest {
   private ListenableFuture mockedListenableFuture;
 
   @Before
-  public void init(){
+  public void init() {
     MockitoAnnotations.initMocks(this);
     PowerMockito.mockStatic(Log.class);
   }
@@ -127,7 +126,7 @@ public class VMCompositionExportSessionImplTest {
     URL url = Thread.currentThread().getContextClassLoader().getResource("test-pod.m4a");
     ArrayList<String> videoList = new ArrayList<>(Arrays.asList(url.getPath()));
 
-    verify(mockedAppender, never()).appendVideos(videoList, false);
+    verify(mockedAppender, never()).appendVideos(videoList, true);
 
   }
 

@@ -53,23 +53,21 @@ public class VideoAudioSwapper implements ExporterVideoSwapAudio {
   private Movie getFinalMovie(String videoFilePath, String newAudioFilePath) throws IOException,
           TranscodingException {
     Movie movie = MovieCreator.build(videoFilePath);
-    File musicFile = new File(newAudioFilePath);
-    if (!musicFile.exists()) {
-      throw new TranscodingException("Error swapping video audio track - Music not found.");
-    }
+//      throw new TranscodingException("Error swapping video audio track - Music not found.");
     return swapAudio(movie, newAudioFilePath);
   }
 
-  private Movie swapAudio(Movie originalMovie, String audioPath)
-          throws IOException {
+  private Movie swapAudio(Movie originalMovie, String audioPath) throws IOException {
     Movie finalMovie = new Movie();
     List<Track> videoTrack = extractVideoTracks(originalMovie);
     finalMovie.addTrack(new AppendTrack(videoTrack.toArray(new Track[videoTrack.size()])));
 
-    Movie audioMovie = MovieCreator.build(audioPath);
-    List<Track> audioTracks = extractAudioTracks(audioMovie);
-    finalMovie.addTrack(new AppendTrack(audioTracks.toArray(new Track[audioTracks.size()])));
-
+    File audioFile = new File(audioPath);
+    if (audioFile.exists()) {
+      Movie audioMovie = MovieCreator.build(audioPath);
+      List<Track> audioTracks = extractAudioTracks(audioMovie);
+      finalMovie.addTrack(new AppendTrack(audioTracks.toArray(new Track[audioTracks.size()])));
+    }
     return finalMovie;
   }
 

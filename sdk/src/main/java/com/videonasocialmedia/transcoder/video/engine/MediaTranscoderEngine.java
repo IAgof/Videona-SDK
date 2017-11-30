@@ -129,6 +129,7 @@ public class MediaTranscoderEngine {
         }
         try {
             // NOTE: use single extractor to keep from running out audio track fast.
+            releaseExtractor();
             mExtractor = new MediaExtractor();
             mExtractor.setDataSource(mInputFileDescriptor);
             mMuxer = new MediaMuxer(outputPath, MediaMuxer.OutputFormat.MUXER_OUTPUT_MPEG_4);
@@ -378,7 +379,7 @@ public class MediaTranscoderEngine {
         if (mDurationUs <= 0) {
             double progress = PROGRESS_UNKNOWN;
         }
-        while (!(mVideoTrackTranscoder.isFinished() && mAudioTrackTranscoder.isFinished())) {
+        while (!(mVideoTrackTranscoder.isFinished() || mAudioTrackTranscoder.isFinished())) {
             if (interruptTranscoding) {
                 Log.d(TAG, "interrupt transcoding exit runPipeLines");
                 mVideoTrackTranscoder.setTrackFinished();

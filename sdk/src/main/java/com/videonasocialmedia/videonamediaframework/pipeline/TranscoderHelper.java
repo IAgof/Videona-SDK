@@ -106,7 +106,7 @@ public class TranscoderHelper {
   public ListenableFuture<Video> updateIntermediateFile(
           Drawable drawableFadeTransition, boolean isVideoFadeActivated,
           boolean isAudioFadeActivated, Video videoToEdit, VideonaFormat format,
-          String intermediatesTempAudioFadeDirectory) {
+          String intermediatesTempAudioFadeDirectory) throws IOException {
     if (videoToEdit.hasText()) {
       if (videoToEdit.isTrimmedVideo()) {
         return generateOutputVideoWithOverlayImageAndTrimmingAsync(drawableFadeTransition,
@@ -124,37 +124,19 @@ public class TranscoderHelper {
     }
   }
 
-  // TODO(jliarte): 18/09/17 check if this method is still needed
   ListenableFuture<Video> generateOutputVideoWithOverlayImageAndTrimmingAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
           final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
-          final String intermediatesTempAudioFadeDirectory) {
-    return generateOutputVideoWithOverlayImageAndTrimming(videoToEdit, fadeTransition,
-            isVideoFadeActivated, format, isAudioFadeActivated,
-            intermediatesTempAudioFadeDirectory);
-  }
-
-  private ListenableFuture<Video> generateOutputVideoWithOverlayImageAndTrimming(
-          Video videoToEdit, Drawable fadeTransition, boolean isVideoFadeActivated,
-          VideonaFormat format, boolean isAudioFadeActivated,
-          String intermediatesTempAudioFadeDirectory) {
+          final String intermediatesTempAudioFadeDirectory) throws IOException {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
         videoToEdit.getClipTextPosition());
 
-    ListenableFuture<Void> transcodingJob;
-    try {
-      transcodingJob = mediaTranscoder
-              .transcodeTrimAndOverlayImageToVideo(fadeTransition, isVideoFadeActivated,
-                      videoToEdit.getMediaPath(), videoToEdit.getTempPath(), format, imageText,
-                      videoToEdit.getStartTime(), videoToEdit.getStopTime());
-    } catch (IOException ex) {
-      ex.printStackTrace();
-//      listener.onErrorTranscoding(videoToEdit, ex.getMessage());
-      // TODO(jliarte): 15/09/17 generate a custom exception here?
-      throw new RuntimeException(ex);
-    }
+    ListenableFuture<Void> transcodingJob = mediaTranscoder.transcodeTrimAndOverlayImageToVideo(
+            fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
+            videoToEdit.getTempPath(), format, imageText, videoToEdit.getStartTime(),
+            videoToEdit.getStopTime());
 
     if (isAudioFadeActivated) {
       transcodingJob = Futures.transform(transcodingJob,
@@ -180,30 +162,15 @@ public class TranscoderHelper {
   public ListenableFuture<Video> generateOutputVideoWithOverlayImageAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
           final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
-          final String intermediatesTempAudioFadeDirectory) {
-    return generateOutputVideoWithOverlayImage(videoToEdit, fadeTransition, isVideoFadeActivated,
-            format, isAudioFadeActivated, intermediatesTempAudioFadeDirectory);
-  }
-
-  private ListenableFuture<Video> generateOutputVideoWithOverlayImage(
-          Video videoToEdit, Drawable fadeTransition, boolean isVideoFadeActivated,
-          VideonaFormat format, boolean isAudioFadeActivated,
-          String intermediatesTempAudioFadeDirectory) {
+          final String intermediatesTempAudioFadeDirectory) throws IOException {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
         videoToEdit.getClipTextPosition());
 
-    ListenableFuture<Void> transcodingTask;
-    try {
-      transcodingTask = mediaTranscoder.transcodeAndOverlayImageToVideo(fadeTransition,
-              isVideoFadeActivated, videoToEdit.getMediaPath(), videoToEdit.getTempPath(),
-              format, imageText);
-    } catch (IOException ex) {
-      ex.printStackTrace();
-      // TODO(jliarte): 15/09/17 generate a custom exception here?
-      throw new RuntimeException(ex);
-    }
+    ListenableFuture<Void> transcodingTask = mediaTranscoder.transcodeAndOverlayImageToVideo(
+            fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
+            videoToEdit.getTempPath(), format, imageText);
 
     if (isAudioFadeActivated) {
       transcodingTask = Futures.transform(transcodingTask,
@@ -218,16 +185,9 @@ public class TranscoderHelper {
 
   public ListenableFuture<Void> generateOutputVideoWithWatermarkImage(
           final String inFilePath, final String outFilePath, final VideonaFormat format,
-          final Image watermark) throws IOException  {
-    ListenableFuture<Void> transcodingJobWatermark = null;
-    Drawable fakeDrawable = Drawable.createFromPath("");
-    try {
-      transcodingJobWatermark = mediaTranscoder.transcodeAndOverlayImageToVideo(fakeDrawable, false,
+          final Image watermark) throws IOException {
+    return mediaTranscoder.transcodeAndOverlayImageToVideo(null, false,
           inFilePath, outFilePath, format, watermark);
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return transcodingJobWatermark;
   }
 
   public ListenableFuture<Boolean> generateTempFileMixAudio(
@@ -240,27 +200,12 @@ public class TranscoderHelper {
   public ListenableFuture<Video> generateOutputVideoWithTrimmingAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
           final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
-          final String intermediatesTempAudioFadeDirectory) {
-    return generateOutputVideoWithTrimming(videoToEdit, fadeTransition, isVideoFadeActivated,
-            format, isAudioFadeActivated, intermediatesTempAudioFadeDirectory);
-  }
-
-  private ListenableFuture<Video> generateOutputVideoWithTrimming(
-          Video videoToEdit, Drawable fadeTransition, boolean isVideoFadeActivated,
-          VideonaFormat format, boolean isAudioFadeActivated,
-          String intermediatesTempAudioFadeDirectory) {
+          final String intermediatesTempAudioFadeDirectory) throws IOException {
     cancelPendingTranscodingTasks(videoToEdit);
 
-    ListenableFuture<Void> transcodingJob;
-    try {
-      transcodingJob = mediaTranscoder.transcodeAndTrimVideo(fadeTransition,
-              isVideoFadeActivated, videoToEdit.getMediaPath(), videoToEdit.getTempPath(),
-              format, videoToEdit.getStartTime(), videoToEdit.getStopTime());
-    } catch (IOException ex) {
-      ex.printStackTrace();
-      // TODO(jliarte): 15/09/17 generate a custom exception here?
-      throw new RuntimeException(ex);
-    }
+    ListenableFuture<Void> transcodingJob = mediaTranscoder.transcodeAndTrimVideo(fadeTransition,
+            isVideoFadeActivated, videoToEdit.getMediaPath(), videoToEdit.getTempPath(),
+            format, videoToEdit.getStartTime(), videoToEdit.getStopTime());
 
     if (isAudioFadeActivated) {
       transcodingJob = Futures.transform(transcodingJob,
@@ -344,6 +289,12 @@ public class TranscoderHelper {
       }
     };
   }
+
+  public ListenableFuture<String> generateOutputAudioVoiceOver(String originFilePath, String
+                                                                   destFilePath){
+    return mediaTranscoder.transcodeAudioVoiceOver(originFilePath, destFilePath);
+  }
+
 
   private void waitTranscodingJobAndCheckState(ListenableFuture<Void> chainedTranscodingJob,
                                              TranscoderHelperListener listener, Video videoToEdit) {

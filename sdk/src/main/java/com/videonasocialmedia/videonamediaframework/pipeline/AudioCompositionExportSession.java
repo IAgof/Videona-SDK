@@ -39,7 +39,7 @@ public class AudioCompositionExportSession {
   private void makeExport(String outputPath, ExportSessionListener listener) {
     ArrayList<String> audioPathList = getAudioPathListFromComposition(avComposition);
     try {
-      Movie merge = appender.appendVideos(audioPathList, true);
+      Movie merge = appender.appendVideos(audioPathList, false);
       createFile(merge, outputPath);
       listener.onSuccess();
     } catch (IOException | NullPointerException | NoSuchElementException errorExportingSession) {

@@ -445,6 +445,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
       clipTimesRanges.add(new Range(clipStartTime, clipStopTime));
       this.totalVideoDuration = clipStopTime;
     }
+    updateUiVideoDuration(totalVideoDuration);
+  }
+  
+  private void updateUiVideoDuration(int totalVideoDuration){
+    textTimeProjectSeekbar.setText(
+        TimeUtils.toFormattedTimeHoursMinutesSecond(totalVideoDuration));
+    seekBar.setMax(totalVideoDuration);
   }
 
   @Override

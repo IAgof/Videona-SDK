@@ -1,5 +1,7 @@
 package com.videonasocialmedia.transcoder.audio;
 
+import android.util.Log;
+
 import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -34,6 +36,10 @@ public class AudioMixer {
 
     public boolean export(List<Media> mediaList, String tempDirectory, String outputFile,
                           long durationOutputFile) throws IOException, TranscodingException {
+        if (mediaList.size() == 0) {
+            return false;
+        }
+
         this.tempDirectory = tempDirectory;
         String outputTempMixAudioPath = this.tempDirectory + File.separator + "mixAudio.pcm";
         this.outputFile = outputFile;
@@ -43,6 +49,8 @@ public class AudioMixer {
         for (Media media : mediaList) {
             // TODO(jliarte): 5/10/17 should we move this parameters to method call, as they aren't
             // collaborators
+            Log.d(LOG_TAG, "AudioMixer export, decoding " + media.getMediaPath() + " volume " +
+            media.getVolume());
             AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile);
             String decodedFilePath = decoder.decode();
             mediaListDecoded.add(new Video(decodedFilePath, media.getVolume()));
