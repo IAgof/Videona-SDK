@@ -11,6 +11,7 @@ import android.view.ViewGroup;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.playback.VideonaPlayerExo;
+import com.videonasocialmedia.videonamediaframework.playback.VideonaPlayerExo2;
 
 
 import java.io.File;
@@ -43,7 +44,7 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
 
   private OnFragmentInteractionListener mListener;
 
-  @BindView(R.id.videona_player) VideonaPlayerExo videonaPlayer;
+  @BindView(R.id.videona_player) VideonaPlayerExo2 videonaPlayer;
 
 
   public PlayerFragment() {

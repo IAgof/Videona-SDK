@@ -73,7 +73,8 @@ dependencies {
     androidTestImplementation 'org.json:json:20140107'
     implementation 'org.jcodec:jcodec:0.1.9'
     implementation 'com.google.code.gson:gson:2.3.1'
-    implementation 'com.google.android.exoplayer:exoplayer:r1.5.10'
+    implementation 'com.bartoszlipinski:exoplayer1:r1.5.10'
+    implementation 'com.google.android.exoplayer:exoplayer:2.6.0'
     //    compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
     implementation 'com.googlecode.mp4parser:isoparser:1.1.7'
     // TODO(jliarte) 20170723: try to upgrade isoparser with new package name for branch 2.x
