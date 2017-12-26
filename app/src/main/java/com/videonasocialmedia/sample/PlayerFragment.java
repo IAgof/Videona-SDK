@@ -11,7 +11,6 @@ import android.view.ViewGroup;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.playback.VideonaPlayerExo;
-import com.videonasocialmedia.videonamediaframework.playback.VideonaPlayerExo2;
 
 
 import java.io.File;
@@ -21,6 +20,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.Unbinder;
 
 import static com.videonasocialmedia.sample.MainActivity.externalDir;
 
@@ -44,7 +44,8 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
 
   private OnFragmentInteractionListener mListener;
 
-  @BindView(R.id.videona_player) VideonaPlayerExo2 videonaPlayer;
+  @BindView(R.id.videona_player) VideonaPlayerExo videonaPlayer;
+  private Unbinder unbinder;
 
 
   public PlayerFragment() {
@@ -85,7 +86,7 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
                            Bundle savedInstanceState) {
     // Inflate the layout for this fragment
     View view = inflater.inflate(R.layout.fragment_player, container, false);
-    ButterKnife.bind(this, view);
+    unbinder = ButterKnife.bind(this, view);
     return view;
   }
 
@@ -107,6 +108,12 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
   public void onPause() {
     super.onPause();
     videonaPlayer.onPause();
+  }
+
+  @Override
+  public void onDestroyView() {
+    super.onDestroyView();
+    unbinder.unbind();
   }
 
   // TODO: Rename method, update argument and hook method into UI event
