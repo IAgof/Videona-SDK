@@ -1,6 +1,2 @@
-v0.3.0
-- Fixed audio/video sync in export session
-- Fixed audio mixing export session errors
-- Manage error applying watermark.
-- VideoFrameRate return default updated to 30 fps if it is not supported.
-- Removed Profile.INSTANCE singleton and related methods
+v0.3.1
+- Update gradle. Prepared to work with Android Studio 3.0.

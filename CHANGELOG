@@ -1,3 +1,10 @@
+v0.3.0
+- Fixed audio/video sync in export session
+- Fixed audio mixing export session errors
+- Manage error applying watermark.
+- VideoFrameRate return default updated to 30 fps if it is not supported.
+- Removed Profile.INSTANCE singleton and related methods
+
 v0.3-RC2
 - Fixed mixing audio error that generated incompleted audio track in export sessions
 - Removed callbacks from sound mixing and applying, redesigned to use futures
