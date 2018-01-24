@@ -17,7 +17,7 @@ public class VideoQuality {
                 this.videoBitRate = 16000000;
                 break;
             case GOOD:
-                this.videoBitRate = 32000000;
+                this.videoBitRate = 25000000;
                 break;
             case HIGH:
             default:
