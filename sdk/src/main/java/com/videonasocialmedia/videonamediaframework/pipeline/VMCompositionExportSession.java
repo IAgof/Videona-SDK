@@ -16,7 +16,9 @@ public interface VMCompositionExportSession {
 
   void exportAsyncronously();
 
-    void export();
+  void export();
+
+  void cancel();
 
     /**
      * Created by jca on 27/5/15.
@@ -25,5 +27,6 @@ public interface VMCompositionExportSession {
         void onExportSuccess(Video video);
         void onExportProgress(String progressMsg, int exportStage);
         void onExportError(String error);
+        void onCancelExport();
     }
 }

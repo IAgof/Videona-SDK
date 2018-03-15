@@ -125,6 +125,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
     }
 
+    @Override
+    public void cancel() {
+        exportListener.onCancelExport();
+    }
+
     private void applyWatermark() throws IOException {
         if (vmComposition.hasWatermark()) {
             Log.d(LOG_TAG, "About to apply watermark!");
