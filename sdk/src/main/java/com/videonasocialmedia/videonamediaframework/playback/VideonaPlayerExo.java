@@ -476,8 +476,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
 
   @Override
   public void setVideoVolume(float volume) {
-    player.sendMessage(rendererBuilder.getAudioRenderer(),
-        MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
+    if (player != null) {
+      player.sendMessage(rendererBuilder.getAudioRenderer(),
+              MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
+    }
   }
 
   @Override
