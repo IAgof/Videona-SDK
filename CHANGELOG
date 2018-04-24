@@ -1,3 +1,6 @@
+v0.3.2
+- Update gradle. Prepared to work with Android Studio 3.0.
+
 v0.3.0
 - Fixed audio/video sync in export session
 - Fixed audio mixing export session errors
