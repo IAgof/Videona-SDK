@@ -121,17 +121,18 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     tempExportFilePath);
             } else {
                 Log.e(LOG_TAG, "Unable to generate appended video!");
-                exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR);
+                exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR,
+                    new Exception("Unable to generate appended video"));
             }
         } catch (IOException exportIOError) {
             Log.e(LOG_TAG, "Caught " +  exportIOError.getClass().getName() + " while exporting, " +
                     "message: " + exportIOError.getMessage());
-            exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR);
+            exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR, exportIOError);
         } catch (IntermediateFileException | ExecutionException | InterruptedException
                 | NullPointerException exportError) {
             Log.e(LOG_TAG, "Caught " +  exportError.getClass().getName() + " while exporting",
                     exportError);
-            exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR);
+            exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR, (Exception) exportError);
         }
     }
 
@@ -175,7 +176,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             } catch (InterruptedException | ExecutionException e) {
                 Log.e(LOG_TAG, "Caught " +  e.getClass().getName() + " Error applying watermark!");
                 e.printStackTrace();
-                exportListener.onExportError(EXPORT_STAGE_APPLY_WATERMARK_ERROR);
+                exportListener.onExportError(EXPORT_STAGE_APPLY_WATERMARK_ERROR, e);
             } catch(CancellationException e) {
                 Log.e(LOG_TAG, "Caught cancellation exception, cancel button ");
                 e.printStackTrace();
@@ -472,10 +473,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Log.d(LOG_TAG, "export, video appended, removed "
                     + videoPath);
             notifyFinalSuccess(finalVideoExportedFilePath);
-        } catch (InterruptedException | ExecutionException e) {
-            e.printStackTrace();
-            Log.e(LOG_TAG, "Caught " +  e.getClass().getName() + "mix audio " + e.getMessage());
-            exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR);
+        } catch (InterruptedException | ExecutionException exception) {
+            exception.printStackTrace();
+            Log.e(LOG_TAG, "Caught " +  exception.getClass().getName()
+                + "mix audio " + exception.getMessage());
+            exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR, exception);
         } catch (CancellationException e) {
                 Log.e(LOG_TAG, "Caught cancellation exception, cancel button ");
                 e.printStackTrace();
@@ -503,7 +505,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         } catch (IOException e) {
             e.printStackTrace();
             Log.e(LOG_TAG, "Caught " +  e.getClass().getName() + "add watermark " + e.getMessage());
-            exportListener.onExportError(EXPORT_STAGE_APPLY_WATERMARK_ERROR);
+            exportListener.onExportError(EXPORT_STAGE_APPLY_WATERMARK_ERROR, e);
             throw e;
         }
         return watermarkFuture;

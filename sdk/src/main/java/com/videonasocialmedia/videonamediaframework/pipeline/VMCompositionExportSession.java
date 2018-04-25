@@ -32,7 +32,7 @@ public interface VMCompositionExportSession {
     interface ExportListener {
         void onExportSuccess(Video video);
         void onExportProgress(int exportProgressStage);
-        void onExportError(int exportErrorStage);
+        void onExportError(int exportErrorStage, Exception exception);
         void onCancelExport();
     }
 }
