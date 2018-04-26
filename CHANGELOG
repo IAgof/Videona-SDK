@@ -1,3 +1,6 @@
+v0.3.3
+- Fix NPE on VideonaPlayerExo.setVideoVolume with null player
+
 v0.3.2
 - Update gradle. Prepared to work with Android Studio 3.0.
 
