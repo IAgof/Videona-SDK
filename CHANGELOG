@@ -1,3 +1,7 @@
+v0.4.0
+Added option to cancel transcoding jobs while project is exporting.
+Added exception to error message and pass it to application, in charge of manage this data.
+
 v0.3.3
 - Fix NPE on VideonaPlayerExo.setVideoVolume with null player
 

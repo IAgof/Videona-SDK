@@ -1,3 +1,2 @@
-v0.4.0
-Added option to cancel transcoding jobs while project is exporting.
-Added exception to error message and pass it to application, in charge of manage this data.
+v0.4.1
+Caught no such element exception on export error.

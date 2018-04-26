@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.NoSuchElementException;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -129,7 +130,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     "message: " + exportIOError.getMessage());
             exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR, exportIOError);
         } catch (IntermediateFileException | ExecutionException | InterruptedException
-                | NullPointerException exportError) {
+                | NullPointerException | NoSuchElementException exportError) {
             Log.e(LOG_TAG, "Caught " +  exportError.getClass().getName() + " while exporting",
                     exportError);
             exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR, (Exception) exportError);
