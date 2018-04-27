@@ -31,6 +31,7 @@ public class VMComposition {
 
   private boolean videoFadeTransitionActivated = false;
   private boolean audioFadeTransitionActivated = false;
+  // TODO(jliarte): 20/04/18 remove android dependency
   private Drawable drawableFadeTransitionVideo = null;
 
   public MediaTrack getMediaTrack() {

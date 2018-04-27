@@ -1,3 +1,20 @@
+v0.4.0
+Added option to cancel transcoding jobs while project is exporting.
+Added exception to error message and pass it to application, in charge of manage this data.
+
+v0.3.3
+- Fix NPE on VideonaPlayerExo.setVideoVolume with null player
+
+v0.3.2
+- Update gradle. Prepared to work with Android Studio 3.0.
+
+v0.3.0
+- Fixed audio/video sync in export session
+- Fixed audio mixing export session errors
+- Manage error applying watermark.
+- VideoFrameRate return default updated to 30 fps if it is not supported.
+- Removed Profile.INSTANCE singleton and related methods
+
 v0.3-RC2
 - Fixed mixing audio error that generated incompleted audio track in export sessions
 - Removed callbacks from sound mixing and applying, redesigned to use futures
