@@ -42,7 +42,7 @@ public class TextToDrawable {
                 textPaint =createPaint(Paint.Align.CENTER, typeFont);
                 break;
             case BOTTOM:
-                typeFont= Typeface.createFromAsset(appContext.getAssets(), "fonts/Roboto-Light.ttf");
+                typeFont= Typeface.createFromAsset(appContext.getAssets(), "fonts/Roboto-Bold.ttf");
                 textPaint= createPaint(Paint.Align.LEFT, typeFont);
                 break;
         }
