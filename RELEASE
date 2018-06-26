@@ -1,2 +1,2 @@
-v0.4.1
-Caught no such element exception on export error.
+v0.4.2
+Unify same font type for all text position.
