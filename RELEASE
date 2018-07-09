@@ -1,2 +1,2 @@
-v0.4.2
-Unify same font type for all text position.
+v0.4.3
+- Fix NPE crash on VideonaPlayerExo.seekToClip
