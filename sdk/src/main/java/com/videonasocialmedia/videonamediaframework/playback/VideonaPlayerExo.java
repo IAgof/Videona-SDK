@@ -552,6 +552,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     if (position >= videoList.size() && position >= clipTimesRanges.size()) {
       position = 0;
     }
+    if (videoList.size() == 0) {
+      return;
+    }
     currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
     initClipPreview(videoList.get(position));
     setSeekBarProgress(currentTimePositionInList);
