@@ -100,7 +100,7 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
   public void onResume(){
     super.onResume();
     videonaPlayer.onShown(getActivity());
-    showPreviewWithVideoMusicAndVoiceOver();
+//    showPreviewWithVideoMusicAndVoiceOver();
     //showPreviewWithVideo();
   }
 
