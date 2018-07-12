@@ -56,6 +56,14 @@
             android:id="@+id/btnMixAudio"
             android:elevation="0dp" />
 
+        <Button
+            android:text="Mix Audios with ffmpeg"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center_horizontal"
+            android:id="@+id/btnMixAudioWithFFmpeg"
+            android:elevation="0dp" />
+
         <ProgressBar
             android:id="@+id/progress_bar"
             style="?android:attr/progressBarStyleHorizontal"

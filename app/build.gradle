@@ -36,4 +36,6 @@ dependencies {
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.4.0'
     implementation 'com.google.guava:guava:19.0'
     implementation 'com.google.android.exoplayer:exoplayer:r1.5.10'
+    implementation 'com.writingminds:FFmpegAndroid:0.3.2'
+
 }

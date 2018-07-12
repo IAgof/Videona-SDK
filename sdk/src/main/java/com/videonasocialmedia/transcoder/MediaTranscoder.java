@@ -18,6 +18,7 @@ package com.videonasocialmedia.transcoder;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -230,6 +231,19 @@ public class MediaTranscoder {
             public Boolean call() throws Exception {
                 AudioMixer mixer = new AudioMixer();
                 return mixer.export(mediaList, tempDirectory, outputFile, outputFileDuration);
+            }
+        });
+    }
+
+    public ListenableFuture<Boolean> mixAudioFilesWithFFmpeg(
+        final List<Media> mediaList, final String tempDirectory, final String outputFile,
+        final long outputFileDuration, final FFmpeg ffmpeg) {
+        return executorPool.submit(new Callable<Boolean>() {
+            @Override
+            public Boolean call() throws Exception {
+                AudioMixer mixer = new AudioMixer();
+                return mixer.exportWithFFmpeg(mediaList, tempDirectory, outputFile,
+                    outputFileDuration, ffmpeg);
             }
         });
     }

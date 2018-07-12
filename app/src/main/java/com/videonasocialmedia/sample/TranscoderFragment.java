@@ -25,6 +25,9 @@ import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 
@@ -90,6 +93,7 @@ public class TranscoderFragment extends Fragment {
   @BindView(R.id.transcode_add_overlay_video) Button overlayVideo;
   @BindView(R.id.transcode_audio_fade_in_out) Button fadeInOutAudio;
   @BindView(R.id.transcode_video_fade_in_out) Button fadeInOutVideo;
+  @BindView(R.id.btnMixAudioWithFFmpeg) Button mixAudioWithFFmpeg;
   @BindView(R.id.progress_bar) ProgressBar progressBar;
 
   String outputAudioFadeInOut = externalDir + File.separator + "AudioFadeInOut_" +
@@ -209,6 +213,14 @@ public class TranscoderFragment extends Fragment {
     mixAudio();
   }
 
+  @OnClick(R.id.btnMixAudioWithFFmpeg)
+  public void onClickMixAudioWithFFmpeg(){
+    textViewInfoProgress.setText("Mezclando audio with FFmpeg ...");
+    mixAudioWithFFmpeg();
+  }
+
+
+
   private boolean getFadeTransitionActivatedFromPreferences() {
 
     return true;
@@ -255,6 +267,56 @@ public class TranscoderFragment extends Fragment {
 
     listenableFuture = MediaTranscoder.getInstance().mixAudioFiles(mediaList,
         tempDir, outputAudio, getDurationFile(inputVideo));
+  }
+
+  private void mixAudioWithFFmpeg() {
+
+    String audioWAV_1 = externalDir + File.separator + "AUD_WAV_Video.pcm";
+    String audioWAV_2 = externalDir + File.separator + "AUD_WAV_Music.pcm";
+    String audioWAV_3 = externalDir + File.separator + "AUD_WAV_VoiceOver.pcm";
+
+    String audioWAV_output = externalDir + File.separator + "AUD_WAV_Output.wav";
+
+    String cmd = "-i " + audioWAV_1 + " -i " + audioWAV_2 + " -i " + audioWAV_3 +
+        " -filter_complex amix=inputs=3:duration=first:dropout_transition=3 " + audioWAV_output ;
+    String[] command = cmd.split(" ");
+
+
+    FFmpeg ffmpeg = FFmpeg.getInstance(this.getContext());
+    try {
+      // to execute "ffmpeg -version" command you just need to pass "-version"
+      ffmpeg.execute(command, new ExecuteBinaryResponseHandler() {
+
+        @Override
+        public void onStart() {
+          Log.d(TAG, "executeFFmpeg, start");
+        }
+
+        @Override
+        public void onProgress(String message) {
+          Log.d(TAG, "executeFFmpeg, progress " + message);
+        }
+
+        @Override
+        public void onFailure(String message) {
+          Log.d(TAG, "executeFFmpeg, failure " + message);
+        }
+
+        @Override
+        public void onSuccess(String message) {
+          Log.d(TAG, "executeFFmpeg, success " + message);
+        }
+
+        @Override
+        public void onFinish() {
+          Log.d(TAG, "executeFFmpeg, finish");
+        }
+      });
+    } catch (FFmpegCommandAlreadyRunningException e) {
+      // Handle if FFmpeg is already running
+      Log.d(TAG, "executeFFmpeg, FFmpegCommandAlreadyRunningException " + e.getMessage());
+    }
+
   }
 
   public static long getDurationFile(String filePath){

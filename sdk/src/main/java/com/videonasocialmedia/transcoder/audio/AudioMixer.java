@@ -1,7 +1,9 @@
 package com.videonasocialmedia.transcoder.audio;
 
+import android.content.Context;
 import android.util.Log;
 
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -60,6 +62,36 @@ public class AudioMixer {
         soundMixer.mixAudio(mediaListDecoded, outputTempMixAudioPath);
         saveDebugWavFile(tempDirectory, outputTempMixAudioPath);
         encodeAudio(outputTempMixAudioPath);
+        return true;
+    }
+
+    public boolean exportWithFFmpeg(List<Media> mediaList, String tempDirectory, String outputFile,
+                                    long durationOutputFile, FFmpeg ffmpeg) throws IOException {
+        if (mediaList.size() == 0) {
+            return false;
+        }
+
+        this.tempDirectory = tempDirectory;
+        String outputTempMixAudioPath = this.tempDirectory + File.separator + "mixAudio.pcm";
+        this.outputFile = outputFile;
+        this.durationOutputFile = durationOutputFile;
+        cleanTempDirectory();
+
+        for (Media media : mediaList) {
+            // TODO(jliarte): 5/10/17 should we move this parameters to method call, as they aren't
+            // collaborators
+            Log.d(LOG_TAG, "AudioMixer export, decoding " + media.getMediaPath() + " volume " +
+                media.getVolume());
+            AudioDecoder decoder = new AudioDecoder(media, tempDirectory, durationOutputFile);
+            String decodedFilePath = decoder.decode();
+            mediaListDecoded.add(new Video(decodedFilePath, media.getVolume()));
+            saveDebugWavFile(tempDirectory, decodedFilePath);
+        }
+        SoundMixer soundMixer = new SoundMixer();
+        soundMixer.mixAudioWithFFmpeg(mediaListDecoded, outputTempMixAudioPath, ffmpeg);
+      //  AudioDecoder decoder = new AudioDecoder(outputTempMixAudioPath + ".", tempDirectory, durationOutputFile);
+      //  String decodedFilePath = decoder.decode();
+
         return true;
     }
 
