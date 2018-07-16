@@ -235,9 +235,10 @@ public class MediaTranscoder {
         });
     }
 
-    public ListenableFuture<Boolean> mixAudioFilesWithFFmpeg(
+    public ListenableFuture<Boolean> mixAudioFilesWithFFmpeg (
         final List<Media> mediaList, final String tempDirectory, final String outputFile,
-        final long outputFileDuration, final FFmpeg ffmpeg) {
+        final long outputFileDuration, final FFmpeg ffmpeg) throws IOException,
+        TranscodingException {
         return executorPool.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {

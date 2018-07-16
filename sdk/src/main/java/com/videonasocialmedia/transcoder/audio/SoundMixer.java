@@ -10,13 +10,9 @@ package com.videonasocialmedia.transcoder.audio;
  *
  */
 
-import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
-import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 
 import java.io.BufferedOutputStream;
@@ -256,73 +252,5 @@ public class SoundMixer {
 //
 //    return bytes;
 //  }
-
-  public boolean mixAudioWithFFmpeg(List<Media> mediaList, String outputTempMixAudioPath,
-                                 FFmpeg ffmpeg) throws FileNotFoundException {
-    //Get normalize volume
-    float normalizeVolume = getNormalizeVolume(mediaList);
-    // Get media list with volume normalize
-    List<byte[]> normalizeMediaList = normalizeSoundSamples(mediaList, normalizeVolume);
-    // Get media list with WAV format
-    for(int i = 0; i < mediaList.size(); i++) {
-      saveBytesToFile(normalizeMediaList.get(i), mediaList.get(i).getMediaPath() + ".wav" );
-    }
-    // Apply FFmpeg to get output WAV file
-    String audioWAV_output = outputTempMixAudioPath + ".wav";
-    String cmdInit = "";
-    for(int i =0; i < mediaList.size(); i++) {
-      cmdInit += " -i " + mediaList.get(i).getMediaPath() + ".wav";
-    }
-    //String cmd = "-i " + audioWAV_1 + " -i " + audioWAV_2 + " -i " + audioWAV_3 +
-    // " -filter_complex amix=inputs=3:duration=first:dropout_transition=3 " + audioWAV_output ;
-    int numOfMediaList = mediaList.size() + 1;
-    String cmd = cmdInit + " -filter_complex amix=inputs=" + numOfMediaList +
-        ":duration=first:dropout_transition=" + numOfMediaList + audioWAV_output;
-    String[] command = cmd.split(" ");
-    final boolean[] resultFFmpeg = {false};
-
-    try {
-      // to execute "ffmpeg -version" command you just need to pass "-version"
-      ffmpeg.execute(command, new ExecuteBinaryResponseHandler() {
-
-        @Override
-        public void onStart() {
-          Log.d(LOG_TAG, "executeFFmpeg, start");
-        }
-
-        @Override
-        public void onProgress(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, progress " + message);
-        }
-
-        @Override
-        public void onFailure(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, failure " + message);
-        }
-
-        @Override
-        public void onSuccess(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, success " + message);
-          resultFFmpeg[0] = true;
-        }
-
-        @Override
-        public void onFinish() {
-          Log.d(LOG_TAG, "executeFFmpeg, finish");
-        }
-      });
-    } catch (FFmpegCommandAlreadyRunningException e) {
-      // Handle if FFmpeg is already running
-      Log.d(LOG_TAG, "executeFFmpeg, FFmpegCommandAlreadyRunningException " + e.getMessage());
-    }
-    // Return audio output PCM file
-    return resultFFmpeg[0];
-  }
-
-  private void convertToWavFile(String tempDirectory, String pcmFilePath) {
-    String debugWavFile = tempDirectory + File.separator
-          + new File(pcmFilePath).getName() + ".wav";
-    UtilsAudio.copyWaveFile(pcmFilePath, debugWavFile);
-  }
 
 }

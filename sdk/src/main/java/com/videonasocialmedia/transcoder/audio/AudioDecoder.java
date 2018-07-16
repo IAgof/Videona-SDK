@@ -19,12 +19,7 @@ import java.nio.ByteBuffer;
 public class AudioDecoder {
     private final static String LOG_TAG = AudioDecoder.class.getSimpleName();
     public static final String DECODED_AUDIO_PREFIX = "AUD_DECOD_";
-    private Media media;
-
     private String inputFile;
-    public String getOutputFile() {
-        return outputFile;
-    }
     private String outputFile;
 
     private long durationFile = 0;
@@ -52,11 +47,16 @@ public class AudioDecoder {
     }
 
     public AudioDecoder(Media media, String tempDirectory, long durationFile) {
-        this.media = media;
         this.inputFile = media.getMediaPath();
         String outputName = File.separator + DECODED_AUDIO_PREFIX + System.currentTimeMillis()
                 + ".pcm";
         this.outputFile = tempDirectory + outputName;
+        this.durationFile = durationFile;
+    }
+
+    public AudioDecoder(AudioHelper audioHelper, long durationFile) {
+        this.inputFile = audioHelper.getMediaPath();
+        this.outputFile = audioHelper.getAudioDecodePcm();
         this.durationFile = durationFile;
     }
 

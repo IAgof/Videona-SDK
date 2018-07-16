@@ -1,5 +1,6 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
 /**
@@ -20,9 +21,9 @@ public interface VMCompositionExportSession {
     int EXPORT_STAGE_WAIT_FOR_TRANSCODING_ERROR = 10;
     int EXPORT_STAGE_JOIN_VIDEOS_ERROR = 11;
 
-  void exportAsyncronously();
+  void exportAsyncronously(FFmpeg ffmpeg);
 
-  void export();
+  void export(FFmpeg ffmpeg);
 
   void cancel();
 

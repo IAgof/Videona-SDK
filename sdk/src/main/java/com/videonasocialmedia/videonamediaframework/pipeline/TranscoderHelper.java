@@ -5,6 +5,7 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -195,6 +196,13 @@ public class TranscoderHelper {
           long audioFileDuration) {
     return mediaTranscoder.mixAudioFiles(mediaList, tempAudioPath, outputFilePath,
             audioFileDuration);
+  }
+
+  public ListenableFuture<Boolean> generateTempFileMixAudioFFmpeg (
+      List<Media> mediaList, String tempAudioPath, String outputFilePath, long audioFileDuration,
+      FFmpeg ffmpeg) throws IOException, TranscodingException {
+    return mediaTranscoder.mixAudioFilesWithFFmpeg(mediaList, tempAudioPath, outputFilePath,
+        audioFileDuration, ffmpeg);
   }
 
   public ListenableFuture<Video> generateOutputVideoWithTrimmingAsync(
