@@ -33,7 +33,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center_horizontal"
-            android:text="Transcode to 1080p" />
+            android:text="Adapt video to default VideonaFormat (720)" />
         <Button
             android:id="@+id/transcode_audio_fade_in_out"
             android:layout_width="wrap_content"

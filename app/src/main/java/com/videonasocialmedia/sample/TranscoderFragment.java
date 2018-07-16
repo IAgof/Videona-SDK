@@ -17,6 +17,7 @@ import android.provider.DocumentsContract;
 import android.provider.MediaStore;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.FileProvider;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -343,19 +344,27 @@ public class TranscoderFragment extends Fragment {
 
       final String inPath = getPath(getActivity(), data.getData());
       final Video videoToEdit = new Video(inPath, 1f);
-      videoToEdit.setTempPath(externalDir);
+      videoToEdit.setTempPath(externalDir + "/VideonaSDK");
       final String exportedPath = videoToEdit.getTempPath();
      // progressBar.setMax(PROGRESS_BAR_MAX);
       final long startTime = SystemClock.uptimeMillis();
       final TranscoderHelperListener listener = new TranscoderHelperListener() {
         @Override
         public void onSuccessTranscoding(Video video) {
-          Log.d(TAG, "transcoding took " + (SystemClock.uptimeMillis() - startTime) + "ms");
-          Log.d(TAG, "transcoded file " + exportedPath);
-          File file = new File(exportedPath);
-          onTranscodeFinished(true, "transcoded file placed on " + file.getAbsolutePath());
-          startActivity(new Intent(Intent.ACTION_VIEW).setDataAndType(Uri.fromFile(file),
-              "video/mp4"));
+          getActivity().runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+              Log.d(TAG, "transcoding took " + (SystemClock.uptimeMillis() - startTime) + "ms");
+              Log.d(TAG, "transcoded file " + exportedPath);
+              File file = new File(exportedPath);
+              onTranscodeFinished(true, "transcoded file placed on " + file.getAbsolutePath());
+              Uri fileUri = FileProvider.getUriForFile(getContext(),
+                      BuildConfig.APPLICATION_ID + ".provider", file);
+              Intent intent = new Intent(Intent.ACTION_VIEW);
+              intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+              startActivity(intent.setDataAndType(fileUri, "video/mp4"));
+            }
+          });
         }
 
         @Override
@@ -388,8 +397,7 @@ public class TranscoderFragment extends Fragment {
         }
         case REQUEST_CODE_TRANSCODE_VIDEO: {
           //Example adapt video to format
-          String destFinalPath = new File(videoToEdit.getMediaPath()).getParent() + File.separator
-              + "videoAdapted.mp4";
+          String destFinalPath = videoToEdit.getTempPath();
           try {
             transcoderHelper.adaptVideoWithRotationToDefaultFormatAsync(videoToEdit, new VideonaFormat(),
                 destFinalPath, rotation, listener, videoToEdit.getTempPath());
