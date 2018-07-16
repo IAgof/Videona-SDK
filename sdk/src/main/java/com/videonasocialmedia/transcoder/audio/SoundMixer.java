@@ -265,7 +265,7 @@ public class SoundMixer {
     List<byte[]> normalizeMediaList = normalizeSoundSamples(mediaList, normalizeVolume);
     // Get media list with WAV format
     for(int i = 0; i < mediaList.size(); i++) {
-      saveBytesToFile(normalizeMediaList.get(i), mediaList.get(i).getMediaPath() + ".wav" );
+      saveBytesToFile(normalizeMediaList.get(i), mediaList.get(i).getMediaPath() + ".wav");
     }
     // Apply FFmpeg to get output WAV file
     String audioWAV_output = outputTempMixAudioPath + ".wav";

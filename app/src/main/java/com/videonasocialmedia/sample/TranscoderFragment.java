@@ -277,8 +277,13 @@ public class TranscoderFragment extends Fragment {
 
     String audioWAV_output = externalDir + File.separator + "AUD_WAV_Output.wav";
 
-    String cmd = "-i " + audioWAV_1 + " -i " + audioWAV_2 + " -i " + audioWAV_3 +
-        " -filter_complex amix=inputs=3:duration=first:dropout_transition=3 " + audioWAV_output ;
+   // String cmd = "-i " + audioWAV_1 + " -i " + audioWAV_2 + " -i " + audioWAV_3 +
+     //   " -filter_complex amix=inputs=3:duration=first:dropout_transition=3 " + audioWAV_output ;
+
+    //Example volume
+    String audioWAV = externalDir + File.separator + "AUD_WAV_Output.wav";
+    String audioWAV_outputVolume = externalDir + File.separator + "AUD_WAV_OutputWithVolume.wav";
+    String cmd = "-i " + audioWAV + " -filter:a volume=0.5" + " "  + audioWAV_outputVolume ;
     String[] command = cmd.split(" ");
 
 
