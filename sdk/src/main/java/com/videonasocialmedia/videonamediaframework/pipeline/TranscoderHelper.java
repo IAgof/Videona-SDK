@@ -126,16 +126,16 @@ public class TranscoderHelper {
 
   ListenableFuture<Video> generateOutputVideoWithOverlayImageAndTrimmingAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
-          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
-          final String intermediatesTempAudioFadeDirectory) throws IOException {
+          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat
+          videonaFormat, final String intermediatesTempAudioFadeDirectory) throws IOException {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
-        videoToEdit.getClipTextPosition());
+        videoToEdit.getClipTextPosition(), videonaFormat);
 
     ListenableFuture<Void> transcodingJob = mediaTranscoder.transcodeTrimAndOverlayImageToVideo(
             fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
-            videoToEdit.getTempPath(), format, imageText, videoToEdit.getStartTime(),
+            videoToEdit.getTempPath(), videonaFormat, imageText, videoToEdit.getStartTime(),
             videoToEdit.getStopTime());
 
     if (isAudioFadeActivated) {
@@ -161,16 +161,16 @@ public class TranscoderHelper {
 
   public ListenableFuture<Video> generateOutputVideoWithOverlayImageAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
-          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
-          final String intermediatesTempAudioFadeDirectory) throws IOException {
+          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat
+          videonaFormat, final String intermediatesTempAudioFadeDirectory) throws IOException {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
-        videoToEdit.getClipTextPosition());
+        videoToEdit.getClipTextPosition(), videonaFormat);
 
     ListenableFuture<Void> transcodingTask = mediaTranscoder.transcodeAndOverlayImageToVideo(
             fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
-            videoToEdit.getTempPath(), format, imageText);
+            videoToEdit.getTempPath(), videonaFormat, imageText);
 
     if (isAudioFadeActivated) {
       transcodingTask = Futures.transform(transcodingTask,
@@ -312,10 +312,14 @@ public class TranscoderHelper {
     }
   }
 
-  private Image getImageFromTextAndPosition(String text, String textPosition) {
+  private Image getImageFromTextAndPosition(String text, String textPosition,
+                                            VideonaFormat videonaFormat) {
+    /*Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
+        videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
+    return new Image(textDrawable, videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());*/
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
-            Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
-    return new Image(textDrawable, Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
+        1280, 720);
+    return new Image(textDrawable, 1280, 720);
   }
 
   void generateFileWithAudioFadeInFadeOutAsync(final String inputFile, final int timeFadeInMs,

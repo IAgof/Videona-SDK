@@ -171,7 +171,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
           Log.d(LOG_TAG, "export, adding watermark to video appended");
           // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
             watermarkingJob = addWatermark(vmComposition.getWatermark(),
-                tempExportFilePath);
+                tempExportFilePath, vmComposition.getVideoFormat());
             try {
                 watermarkingJob.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -491,9 +491,10 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             new Video(finalVideoExportedFilePath, Video.DEFAULT_VOLUME));
     }
 
-    protected ListenableFuture<Void> addWatermark(Watermark watermark, final String inFilePath) throws IOException {
+    protected ListenableFuture<Void> addWatermark(Watermark watermark, final String inFilePath,
+                                                  VideonaFormat videonaFormat) throws IOException {
         Image imageWatermark = new Image(watermark.getResourceWatermarkFilePath(),
-            Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
+            videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
         ListenableFuture watermarkFuture = null;
         tempExportFileWatermark = outputFilesDirectory + File.separator + "V_with_wm.mp4";
         tempExportFilePath = tempExportFileWatermark;

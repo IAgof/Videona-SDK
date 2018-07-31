@@ -57,7 +57,7 @@ import static org.mockito.Mockito.verify;
 public class VMCompositionExportSessionImplTest {
   @Mock private VMCompositionExportSession.ExportListener mockedExportEndedListener;
   @Mock private Trimmer mockedAudioTrimmer;
-  private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
+  private final Profile profile = new Profile(VideoResolution.Resolution.H_720P,
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
   @Mock private Image mockedWatermark;

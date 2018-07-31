@@ -5,6 +5,7 @@
         <attr name="aspect" format="enum">
             <enum name="four_three" value="1"/>
             <enum name="sixteen_nine" value="2"/>
+            <enum name="nine_sixteen" value="3"/>
         </attr>
     </declare-styleable>
 
