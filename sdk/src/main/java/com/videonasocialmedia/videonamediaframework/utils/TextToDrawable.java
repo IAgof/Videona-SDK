@@ -76,11 +76,9 @@ public class TextToDrawable {
 
         final Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         bmp.eraseColor(Color.TRANSPARENT);
-
         final Canvas canvas = new Canvas(bmp);
         int xPos=0;
         int yPos=0;
-
         switch (position){
             case TOP:
                 xPos=10;
@@ -101,7 +99,6 @@ public class TextToDrawable {
 
     private static TextPaint createPaint(final Paint.Align align, final Typeface typeface) {
         final TextPaint textPaint = new TextPaint() {
-
             {
                 setColor(Color.WHITE);
                 setTextAlign(align);
@@ -117,12 +114,10 @@ public class TextToDrawable {
                                       int yPos, TextEffect.TextPosition position) {
         if (text == null) return;
         int numLineTotal = text.split("\n").length;
-
         switch (position){
             case TOP:
                 drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
                 break;
-
             case CENTER:
                 if (numLineTotal<2){
                     drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
@@ -131,7 +126,6 @@ public class TextToDrawable {
                     drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
                 }
                 break;
-
             case BOTTOM:
                 if (numLineTotal<2){
                     drawNumMaxLine(text, textPaint, canvas, xPos, yPos);

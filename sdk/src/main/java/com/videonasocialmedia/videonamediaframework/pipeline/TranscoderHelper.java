@@ -314,12 +314,9 @@ public class TranscoderHelper {
 
   private Image getImageFromTextAndPosition(String text, String textPosition,
                                             VideonaFormat videonaFormat) {
-    /*Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
-        videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
-    return new Image(textDrawable, videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());*/
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
-        1280, 720);
-    return new Image(textDrawable, 1280, 720);
+        videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
+    return new Image(textDrawable, videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
   }
 
   void generateFileWithAudioFadeInFadeOutAsync(final String inputFile, final int timeFadeInMs,
