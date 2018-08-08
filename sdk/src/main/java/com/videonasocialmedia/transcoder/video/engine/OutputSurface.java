@@ -61,8 +61,10 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
     private static final String TAG = "OutputSurface";
     private static final boolean VERBOSE = false;
-    public static final int DEFAULT_VIDEONA_WIDTH = 1280;
-    public static final int DEFAULT_VIDEONA_HEIGHT = 720;
+    private static final int DEFAULT_VIDEONA_WIDTH = 1280;
+    private static final int DEFAULT_VIDEONA_HEIGHT = 720;
+    private static final int DEFAULT_VERTICAL_VIDEONA_WIDTH = 720;
+    private static final int DEFAULT_VERTICAL_VIDEONA_HEIGHT = 1280;
     private EGLDisplay mEGLDisplay = EGL14.EGL_NO_DISPLAY;
     private EGLContext mEGLContext = EGL14.EGL_NO_CONTEXT;
     private EGLSurface mEGLSurface = EGL14.EGL_NO_SURFACE;
@@ -553,8 +555,10 @@ class OutputSurface implements SurfaceTexture.OnFrameAvailableListener {
 
 
     private int[] calculateOverlayImageSize(int width, int height) {
-        int sizeWidth = (videoWidth * width) / DEFAULT_VIDEONA_WIDTH;
-        int sizeHeight = (videoHeight * height) / DEFAULT_VIDEONA_HEIGHT;
+        int defaultWidth = width > height ? DEFAULT_VIDEONA_WIDTH : DEFAULT_VERTICAL_VIDEONA_WIDTH;
+        int defaultHeight = width > height ? DEFAULT_VIDEONA_HEIGHT : DEFAULT_VERTICAL_VIDEONA_HEIGHT;
+        int sizeWidth = (videoWidth * width) / defaultWidth;
+        int sizeHeight = (videoHeight * height) / defaultHeight;
         return new int[]{sizeWidth, sizeHeight};
     }
 

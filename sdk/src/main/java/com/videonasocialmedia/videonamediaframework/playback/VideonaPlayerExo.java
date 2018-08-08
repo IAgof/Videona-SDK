@@ -11,9 +11,11 @@ import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Range;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
@@ -88,7 +90,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   private TrackRenderer videoRenderer;
   private CodecCounters codecCounters;
   private BandwidthMeter bandwidthMeter;
-  private Format videoFormat;
   private Surface surface;
 
   private VideonaAudioPlayerExo musicPlayer;
@@ -360,7 +361,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
       stopPlayer();
     }
     rendererBuilder.cancel();
-    videoFormat = null;
     videoRenderer = null;
     if (nextClipRenderers == null) {
       rendererBuildingState = RENDERER_BUILDING_STATE_BUILDING;
@@ -668,9 +668,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
    * @param text         the text to render
    * @param textPosition the text position
    */
-  public void setImageText(String text, String textPosition) {
+  public void setImageText(String text, String textPosition, int width, int height) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
-        text, textPosition, Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
+        text, textPosition, width, height);
     imageTextPreview.setImageDrawable(textDrawable);
   }
 
@@ -911,7 +911,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
    */
   public void updateClipTextPreview() {
     if (videoList.size() > 0 && getCurrentClip().hasText()) {
-      setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition());
+      setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition(),
+          videoPreview.getMeasuredWidth(), videoPreview.getHeight());
     } else {
       clearImageText();
     }
@@ -1038,4 +1039,19 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     }
   }
 
+  public void setAspectRatioVerticalVideos() {
+    LayoutParams params = (LayoutParams) videoPreview.getLayoutParams();
+    int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+        180, getResources().getDisplayMetrics());
+    double aspectRatio = 0.5625D;
+    int width = (int) (height * aspectRatio);
+    params.height = height;
+    params.width = width;
+    videoPreview.setLayoutParams(params);
+    videoPreview.setAspectRatio(0.5625D);
+  }
+
+  public View getVideoPreview() {
+    return videoPreview;
+  }
 }

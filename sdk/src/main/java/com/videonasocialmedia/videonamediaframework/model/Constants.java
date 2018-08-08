@@ -8,8 +8,6 @@ public class Constants {
   public static final String INTERMEDIATE_FILE_PREFIX = "temp_";
   // TODO(jliarte): 21/11/16 make them class fields and let user initialize them? or maybe get
   //                them from the composition resolution?
-  public static final int DEFAULT_CANVAS_WIDTH = 1280;
-  public static final int DEFAULT_CANVAS_HEIGHT = 720;
   public static final String MIXED_AUDIO_FILE_NAME ="AudioMixed.mp4";
 
   public final static int INDEX_AUDIO_TRACK_MUSIC = 0;

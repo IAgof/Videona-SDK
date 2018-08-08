@@ -25,8 +25,8 @@ public class TextToDrawable {
         this.appContext = appContext;
     }
 
-    public Drawable createDrawableWithTextAndPosition(String text, String positionText, int width, int height) {
-
+    public Drawable createDrawableWithTextAndPosition(String text, String positionText,
+                                                      int width, int height) {
         Drawable drawable;
         TextPaint textPaint = null;
 //        appContext = VimojoApplication.getAppContext();
@@ -34,15 +34,18 @@ public class TextToDrawable {
         TextEffect.TextPosition position = getTypePositionFromString(positionText);
         switch (position){
             case TOP:
-                typeFont= Typeface.createFromAsset(appContext.getAssets(), "fonts/Roboto-Bold.ttf");
+                typeFont= Typeface.createFromAsset(appContext.getAssets(),
+                    "fonts/Roboto-Bold.ttf");
                 textPaint= createPaint(Paint.Align.LEFT, typeFont);
                 break;
             case CENTER:
-                typeFont= Typeface.createFromAsset(appContext.getAssets(), "fonts/Roboto-Bold.ttf");
+                typeFont= Typeface.createFromAsset(appContext.getAssets(),
+                    "fonts/Roboto-Bold.ttf");
                 textPaint =createPaint(Paint.Align.CENTER, typeFont);
                 break;
             case BOTTOM:
-                typeFont= Typeface.createFromAsset(appContext.getAssets(), "fonts/Roboto-Bold.ttf");
+                typeFont= Typeface.createFromAsset(appContext.getAssets(),
+                    "fonts/Roboto-Bold.ttf");
                 textPaint= createPaint(Paint.Align.LEFT, typeFont);
                 break;
         }
@@ -52,6 +55,7 @@ public class TextToDrawable {
 
         return drawable;
     }
+
 
     public static TextEffect.TextPosition getTypePositionFromString(String position) {
         if(position.compareTo(TextEffect.TextPosition.BOTTOM.name()) == 0){
@@ -67,15 +71,14 @@ public class TextToDrawable {
         return TextEffect.TextPosition.CENTER;
     }
 
-    private static Bitmap createCanvas(String text, int width, int height, TextPaint textPaint, TextEffect.TextPosition position) {
+    private static Bitmap createCanvas(String text, int width, int height, TextPaint textPaint,
+                                       TextEffect.TextPosition position) {
 
         final Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         bmp.eraseColor(Color.TRANSPARENT);
-
         final Canvas canvas = new Canvas(bmp);
         int xPos=0;
         int yPos=0;
-
         switch (position){
             case TOP:
                 xPos=10;
@@ -83,7 +86,8 @@ public class TextToDrawable {
                 break;
             case CENTER:
                 xPos = (canvas.getWidth() / 2);
-                yPos = (int) ((canvas.getHeight() / 2) - ((textPaint.descent() + textPaint.ascent()) / 2));
+                yPos = (int) ((canvas.getHeight() / 2) - ((textPaint.descent()
+                    + textPaint.ascent()) / 2));
                 break;
             case BOTTOM:
                 xPos=10;
@@ -95,7 +99,6 @@ public class TextToDrawable {
 
     private static TextPaint createPaint(final Paint.Align align, final Typeface typeface) {
         final TextPaint textPaint = new TextPaint() {
-
             {
                 setColor(Color.WHITE);
                 setTextAlign(align);
@@ -107,31 +110,25 @@ public class TextToDrawable {
         return textPaint;
     }
 
-    private static void drawTextLines(String text, TextPaint textPaint, Canvas canvas, int xPos, int yPos, TextEffect.TextPosition position) {
+    private static void drawTextLines(String text, TextPaint textPaint, Canvas canvas, int xPos,
+                                      int yPos, TextEffect.TextPosition position) {
         if (text == null) return;
         int numLineTotal = text.split("\n").length;
-
         switch (position){
             case TOP:
                 drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
                 break;
-
             case CENTER:
-
                 if (numLineTotal<2){
                     drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
-
                 } else {
                     yPos= (int) (yPos-SIZE_FONT);
                     drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
                 }
                 break;
-
             case BOTTOM:
-
                 if (numLineTotal<2){
                     drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
-
                 } else {
                     yPos= (int) (yPos-SIZE_FONT);
                     drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
@@ -140,12 +137,13 @@ public class TextToDrawable {
         }
     }
 
-    private static void drawNumMaxLine(String text, TextPaint textPaint, Canvas canvas, int xPos, int yPos) {
+    private static void drawNumMaxLine(String text, TextPaint textPaint, Canvas canvas, int xPos,
+                                       int yPos) {
         String[] textLines = text.split("\n");
-        for (int lineIndex = 0; (lineIndex < textLines.length && lineIndex < NUM_MAX_LINES_TO_DRAW); ++lineIndex) {
+        for (int lineIndex = 0; (lineIndex < textLines.length && lineIndex < NUM_MAX_LINES_TO_DRAW);
+             ++lineIndex) {
             canvas.drawText(textLines[lineIndex], xPos, yPos, textPaint);
             yPos += textPaint.descent() - textPaint.ascent();
         }
     }
-
 }
