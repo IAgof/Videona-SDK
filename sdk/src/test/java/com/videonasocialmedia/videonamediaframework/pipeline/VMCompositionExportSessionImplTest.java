@@ -222,7 +222,7 @@ public class VMCompositionExportSessionImplTest {
     doReturn(mockedMovie).when(exportSessionSpy)
         .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
-    doReturn(mockedWatermarkImage).when(exportSessionSpy).getImageWatermark();
+    doReturn(mockedWatermarkImage).when(exportSessionSpy).getWatermarkImage();
 
     exportSessionSpy.export();
 

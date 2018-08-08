@@ -12,7 +12,6 @@ import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
-import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.track.Track;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
@@ -161,13 +160,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             }
             Log.d(LOG_TAG, "About to apply watermark!");
             String tempFileAppended = tempExportFilePath;
-            applyWatermarkToVideoAndWaitForFinish(tempExportFilePath, getImageWatermark());
+            applyWatermarkToVideoAndWaitForFinish(tempExportFilePath, getWatermarkImage());
             FileUtils.removeFile(tempFileAppended);
         }
     }
 
     @NonNull
-    protected Image getImageWatermark() {
+    protected Image getWatermarkImage() {
         return new Image(vmComposition.getWatermark().getResourceWatermarkFilePath(),
             vmComposition.getVideoFormat().getVideoWidth(),
             vmComposition.getVideoFormat().getVideoHeight());
