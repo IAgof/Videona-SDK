@@ -1039,14 +1039,14 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     }
   }
 
-  public void setAspectRatioVerticalVideos() {
+  public void setAspectRatioVerticalVideos(int height) {
     LayoutParams params = (LayoutParams) videoPreview.getLayoutParams();
-    int height = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-        180, getResources().getDisplayMetrics());
+    int heightDp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+        height, getResources().getDisplayMetrics());
     double aspectRatio = 0.5625D;
-    int width = (int) (height * aspectRatio);
-    params.height = height;
-    params.width = width;
+    int widthDp = (int) (heightDp * aspectRatio);
+    params.height = heightDp;
+    params.width = widthDp;
     videoPreview.setLayoutParams(params);
     videoPreview.setAspectRatio(0.5625D);
   }
