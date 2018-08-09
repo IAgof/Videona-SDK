@@ -1,3 +1,7 @@
+v0.5.0
+- Remove default horizontal sdk configurations. SDK prepared to transcode video file with vertical or horizontal orientation.
+- Update player to show vertical videos in horizontal preview, fixed height size to 180dp.
+
 v0.4.3
 - Fix NPE crash on VideonaPlayerExo.seekToClip
 
