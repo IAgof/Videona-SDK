@@ -5,12 +5,17 @@ import android.util.Log;
 
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
-import com.googlecode.mp4parser.authoring.Movie;
-import com.googlecode.mp4parser.authoring.Track;
-import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
-import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
+//import com.googlecode.mp4parser.authoring.Movie;
+//import com.googlecode.mp4parser.authoring.Track;
+//import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
+//import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
 import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
+
+import org.mp4parser.muxer.Movie;
+import org.mp4parser.muxer.Track;
+import org.mp4parser.muxer.container.mp4.MovieCreator;
+import org.mp4parser.muxer.tracks.AppendTrack;
 
 import java.io.File;
 import java.io.IOException;
