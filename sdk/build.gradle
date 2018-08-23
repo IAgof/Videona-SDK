@@ -30,8 +30,8 @@ android {
     defaultConfig {
         minSdkVersion 21 // Fix Clip range in VideoPlayerExo and use api 18
         targetSdkVersion 27
-        versionCode 23 // 20180709
-        versionName "v0.4.3" // 20180709
+        versionCode 24 // 20180808
+        versionName "v0.5.1" // 20180808
         multiDexEnabled true
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }

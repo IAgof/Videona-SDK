@@ -1,2 +1,2 @@
-v0.4.3
-- Fix NPE crash on VideonaPlayerExo.seekToClip
+v0.5.1
+- Fix height for vertical video player by parameter
