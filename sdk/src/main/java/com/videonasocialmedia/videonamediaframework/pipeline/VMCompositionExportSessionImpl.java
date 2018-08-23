@@ -105,7 +105,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         try {
             // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
             waitForVideoTempFilesFinished();
-            if(isExportCanceled) {
+            if (isExportCanceled) {
                 return;
             }
             Log.d(LOG_TAG, "Joining the videos");
@@ -332,7 +332,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     protected void saveFinalVideo(Movie result, String outputFilePath) throws IOException {
-        if(isExportCanceled) {
+        if (isExportCanceled) {
             Log.d(LOG_TAG, "Export canceled return");
             return;
         }
