@@ -21,15 +21,15 @@ public class VideoResolution {
 
     public VideoResolution(Resolution resolution) {
         switch (resolution) {
-            case H_1080P:
+            case HD1080:
                 this.width = 1920;
                 this.heigth = 1080;
                 break;
-            case H_4K:
+            case HD4K:
                 this.width = 3840;
                 this.heigth = 2160;
                 break;
-            case H_720P:
+            case HD720:
                 this.width = 1280;
                 this.heigth = 720;
                 break;
@@ -60,6 +60,6 @@ public class VideoResolution {
     }
 
     public enum Resolution {
-        H_720P, H_1080P, H_4K, V_720P, V_1080P, V_4K
+        HD720, HD1080, HD4K, V_720P, V_1080P, V_4K
     }
 }

@@ -57,7 +57,7 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class VMCompositionExportSessionImplTest {
   @Mock private VMCompositionExportSession.ExportListener mockedExportEndedListener;
   @Mock private Trimmer mockedAudioTrimmer;
-  private final Profile profile = new Profile(VideoResolution.Resolution.H_720P,
+  private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
           VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
   @Mock Image mockedWatermarkImage;
