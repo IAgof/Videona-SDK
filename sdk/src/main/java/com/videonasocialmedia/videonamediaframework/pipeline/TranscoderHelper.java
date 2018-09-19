@@ -28,6 +28,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.List;
 
 public class TranscoderHelper {
+  public static final int FIXED_IMAGE_HEIGHT = 720;
+  public static final int FIXED_IMAGE_WIDTH = 1280;
   private final String TAG = TranscoderHelper.class.getSimpleName();
   private TextToDrawable drawableGenerator;
   private MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
@@ -315,8 +317,8 @@ public class TranscoderHelper {
   private Image getImageFromTextAndPosition(String text, String textPosition,
                                             VideonaFormat videonaFormat) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
-        videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
-    return new Image(textDrawable, videonaFormat.getVideoWidth(), videonaFormat.getVideoHeight());
+        FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT);
+    return new Image(textDrawable, FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT);
   }
 
   void generateFileWithAudioFadeInFadeOutAsync(final String inputFile, final int timeFadeInMs,

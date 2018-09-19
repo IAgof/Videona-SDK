@@ -18,7 +18,6 @@ import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffe
 public class TextToDrawable {
 
     private final static float SIZE_FONT= 90f;
-    private final static int NUM_MAX_LINES_TO_DRAW =2;
     private Context appContext;
 
     public TextToDrawable(Context appContext) {
@@ -77,12 +76,12 @@ public class TextToDrawable {
         final Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         bmp.eraseColor(Color.TRANSPARENT);
         final Canvas canvas = new Canvas(bmp);
-        int xPos=0;
-        int yPos=0;
+        int xPos = 0;
+        int yPos = 0;
         switch (position){
             case TOP:
-                xPos=10;
-                yPos=(int) SIZE_FONT;
+                xPos = 10;
+                yPos = (int) SIZE_FONT;
                 break;
             case CENTER:
                 xPos = (canvas.getWidth() / 2);
@@ -90,10 +89,10 @@ public class TextToDrawable {
                     + textPaint.ascent()) / 2));
                 break;
             case BOTTOM:
-                xPos=10;
-                yPos=height-height/12;
+                xPos = 10;
+                yPos = height - (height/6);
         }
-        drawTextLines(text,textPaint, canvas, xPos, yPos, position);
+        drawTextLines(text,textPaint, canvas, xPos, yPos);
         return bmp;
     }
 
@@ -111,37 +110,9 @@ public class TextToDrawable {
     }
 
     private static void drawTextLines(String text, TextPaint textPaint, Canvas canvas, int xPos,
-                                      int yPos, TextEffect.TextPosition position) {
-        if (text == null) return;
-        int numLineTotal = text.split("\n").length;
-        switch (position){
-            case TOP:
-                drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
-                break;
-            case CENTER:
-                if (numLineTotal<2){
-                    drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
-                } else {
-                    yPos= (int) (yPos-SIZE_FONT);
-                    drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
-                }
-                break;
-            case BOTTOM:
-                if (numLineTotal<2){
-                    drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
-                } else {
-                    yPos= (int) (yPos-SIZE_FONT);
-                    drawNumMaxLine(text, textPaint, canvas, xPos, yPos);
-                }
-                break;
-        }
-    }
-
-    private static void drawNumMaxLine(String text, TextPaint textPaint, Canvas canvas, int xPos,
-                                       int yPos) {
+                                      int yPos) {
         String[] textLines = text.split("\n");
-        for (int lineIndex = 0; (lineIndex < textLines.length && lineIndex < NUM_MAX_LINES_TO_DRAW);
-             ++lineIndex) {
+        for (int lineIndex = 0; lineIndex < textLines.length; ++lineIndex) {
             canvas.drawText(textLines[lineIndex], xPos, yPos, textPaint);
             yPos += textPaint.descent() - textPaint.ascent();
         }
