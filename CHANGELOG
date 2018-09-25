@@ -1,3 +1,6 @@
+v0.5.1
+- Fix height for vertical video player by parameter
+
 v0.5.0
 - Remove default horizontal sdk configurations. SDK prepared to transcode video file with vertical or horizontal orientation.
 - Update player to show vertical videos in horizontal preview, fixed height size to 180dp.

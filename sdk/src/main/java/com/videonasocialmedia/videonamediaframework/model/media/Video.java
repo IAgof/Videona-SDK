@@ -12,12 +12,10 @@
 package com.videonasocialmedia.videonamediaframework.model.media;
 
 import android.media.MediaMetadataRetriever;
-import android.util.Log;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.videonasocialmedia.videonamediaframework.model.Constants.*;
@@ -50,7 +48,6 @@ public class Video extends Media {
     private int duration;
 
     private int numTriesToExportVideo = 0;
-    private String uuid = UUID.randomUUID().toString();
     private ListenableFuture<Video> transcodingTask;
 
     private String videoError;
@@ -183,14 +180,6 @@ public class Video extends Media {
 
     public void increaseNumTriesToExportVideo(){
         numTriesToExportVideo++;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public void setTranscodingTask(ListenableFuture<Video> future) {

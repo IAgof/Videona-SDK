@@ -1,2 +1,6 @@
-v0.5.1
-- Fix height for vertical video player by parameter
+v0.5.2
+- Fixed width, height adding text to videos.
+- Refactor VideoResolution horizontal values.
+- Move UUID field from Video and Music to parent Media class
+- Update isoparser to 1.1.22
+

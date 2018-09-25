@@ -52,7 +52,7 @@ public class VMCompositionExportSessionImplInstrumentationTest extends AssetMana
           throws IllegalItemOnTrack, IOException {
     String originalVideoPath = getAssetPath("vid_.mp4");
     Video video = new Video(originalVideoPath, Video.DEFAULT_VOLUME);
-    Profile profile = new Profile(VideoResolution.Resolution.H_720P, VideoQuality.Quality.GOOD,
+    Profile profile = new Profile(VideoResolution.Resolution.HD720, VideoQuality.Quality.GOOD,
             VideoFrameRate.FrameRate.FPS30);
     VMComposition composition = new VMComposition(null, profile);
     composition.getMediaTrack().insertItem(video);
@@ -78,7 +78,7 @@ public class VMCompositionExportSessionImplInstrumentationTest extends AssetMana
           throws IllegalItemOnTrack, IOException {
     String originalVideoPath = getAssetPath("vid_.mp4");
     Video video = new Video(originalVideoPath, 0.5f);
-    Profile profile = new Profile(VideoResolution.Resolution.H_720P, VideoQuality.Quality.GOOD,
+    Profile profile = new Profile(VideoResolution.Resolution.HD720, VideoQuality.Quality.GOOD,
             VideoFrameRate.FrameRate.FPS30);
     VMComposition composition = new VMComposition(null, profile);
     composition.getMediaTrack().insertItem(video);

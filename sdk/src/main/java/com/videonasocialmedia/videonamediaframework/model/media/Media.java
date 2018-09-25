@@ -20,6 +20,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.utils.ChangeNoti
 import com.videonasocialmedia.videonamediaframework.model.media.utils.ElementChangedListener;
 
 import java.util.ArrayList;
+import java.util.UUID;
 
 /**
  * Abstract representation of any media resource that can be used in
@@ -33,6 +34,7 @@ import java.util.ArrayList;
  */
 
 public abstract class Media extends MediaElement {
+    private String uuid = UUID.randomUUID().toString();
 
     private final ChangeNotifier changeNotifier = new ChangeNotifier();
     /**
@@ -283,4 +285,11 @@ public abstract class Media extends MediaElement {
         changeNotifier.notifyChanges();
     }
 
+    public String getUuid() {
+        return uuid;
+    }
+
+    public void setUuid(String uuid) {
+        this.uuid = uuid;
+    }
 }
