@@ -39,6 +39,7 @@ public class Video extends Media {
     public String tempPath;
     private String clipText;
     private String clipTextPosition;
+    private boolean clipTextShadow;
 
     private boolean isTrimmedVideo = false;
 
@@ -94,6 +95,7 @@ public class Video extends Media {
         stopTime = video.getStopTime();
         clipText = video.getClipText();
         clipTextPosition = video.getClipTextPosition();
+        clipTextShadow = video.clipTextShadow;
         if(video.isEdited()) {
             tempPath = video.getTempPath();
         }
@@ -161,6 +163,14 @@ public class Video extends Media {
         this.clipTextPosition = clipTextPosition;
     }
 
+    public boolean hasClipTextShadow() {
+        return clipTextShadow;
+    }
+
+    public void setClipTextShadow(boolean isShadowChecked) {
+        this.clipTextShadow = isShadowChecked;
+    }
+
     public boolean hasText() {
         return (clipText != null) && (! clipText.isEmpty());
     }
@@ -209,4 +219,5 @@ public class Video extends Media {
     public void setTranscodingTempFileFinished(boolean transcodingTempFileFinished) {
         isTranscodingTempFileFinished = transcodingTempFileFinished;
     }
+
 }
