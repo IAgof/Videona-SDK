@@ -104,7 +104,7 @@ public class TextToDrawable {
                 setTypeface(typeface);
                 setTextSize(SIZE_FONT);
                 setAntiAlias(true);
-                setShadowLayer(16, 0, 0, Color.BLACK);
+                setShadowLayer(1, 4, 4, Color.BLACK);
             }
         };
         return textPaint;
