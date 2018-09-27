@@ -133,7 +133,7 @@ public class TranscoderHelper {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
-        videoToEdit.getClipTextPosition(), videonaFormat);
+        videoToEdit.getClipTextPosition(), videoToEdit.hasClipTextShadow());
 
     ListenableFuture<Void> transcodingJob = mediaTranscoder.transcodeTrimAndOverlayImageToVideo(
             fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
@@ -168,7 +168,7 @@ public class TranscoderHelper {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
-        videoToEdit.getClipTextPosition(), videonaFormat);
+        videoToEdit.getClipTextPosition(), videoToEdit.hasClipTextShadow());
 
     ListenableFuture<Void> transcodingTask = mediaTranscoder.transcodeAndOverlayImageToVideo(
             fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
@@ -314,10 +314,9 @@ public class TranscoderHelper {
     }
   }
 
-  private Image getImageFromTextAndPosition(String text, String textPosition,
-                                            VideonaFormat videonaFormat) {
+  private Image getImageFromTextAndPosition(String text, String textPosition, boolean textShadow) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
-        FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT);
+        textShadow, FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT);
     return new Image(textDrawable, FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT);
   }
 

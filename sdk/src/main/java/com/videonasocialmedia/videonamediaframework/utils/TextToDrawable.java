@@ -25,7 +25,7 @@ public class TextToDrawable {
     }
 
     public Drawable createDrawableWithTextAndPosition(String text, String positionText,
-                                                      int width, int height) {
+                                                      boolean textShadow, int width, int height) {
         Drawable drawable;
         TextPaint textPaint = null;
 //        appContext = VimojoApplication.getAppContext();
@@ -35,17 +35,17 @@ public class TextToDrawable {
             case TOP:
                 typeFont= Typeface.createFromAsset(appContext.getAssets(),
                     "fonts/Roboto-Bold.ttf");
-                textPaint= createPaint(Paint.Align.LEFT, typeFont);
+                textPaint= createPaint(Paint.Align.LEFT, typeFont, textShadow);
                 break;
             case CENTER:
                 typeFont= Typeface.createFromAsset(appContext.getAssets(),
                     "fonts/Roboto-Bold.ttf");
-                textPaint =createPaint(Paint.Align.CENTER, typeFont);
+                textPaint =createPaint(Paint.Align.CENTER, typeFont, textShadow);
                 break;
             case BOTTOM:
                 typeFont= Typeface.createFromAsset(appContext.getAssets(),
                     "fonts/Roboto-Bold.ttf");
-                textPaint= createPaint(Paint.Align.LEFT, typeFont);
+                textPaint= createPaint(Paint.Align.LEFT, typeFont, textShadow);
                 break;
         }
         Bitmap bmp = createCanvas(text, width, height, textPaint, position);
@@ -96,7 +96,8 @@ public class TextToDrawable {
         return bmp;
     }
 
-    private static TextPaint createPaint(final Paint.Align align, final Typeface typeface) {
+    private static TextPaint createPaint(final Paint.Align align, final Typeface typeface,
+                                         final boolean textShadow) {
         final TextPaint textPaint = new TextPaint() {
             {
                 setColor(Color.WHITE);
@@ -104,6 +105,9 @@ public class TextToDrawable {
                 setTypeface(typeface);
                 setTextSize(SIZE_FONT);
                 setAntiAlias(true);
+                if (textShadow) {
+                    setShadowLayer(1, 4, 4, Color.BLACK);
+                }
             }
         };
         return textPaint;

@@ -30,8 +30,8 @@ android {
     defaultConfig {
         minSdkVersion 21 // Fix Clip range in VideoPlayerExo and use api 18
         targetSdkVersion 27
-        versionCode 25 // 20180924
-        versionName "v0.5.2" // 20180924
+        versionCode 26 // 20180927
+        versionName "v0.5.3" // 20180927
         multiDexEnabled true
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
@@ -77,7 +77,7 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.3.1'
     implementation 'com.google.android.exoplayer:exoplayer:r1.5.10'
     //    compile 'com.googlecode.mp4parser:isoparser:1.0.5.4'
-    implementation 'com.googlecode.mp4parser:isoparser:1.1.22'
+    implementation 'com.googlecode.mp4parser:isoparser:1.1.7'
     // TODO(jliarte) 20170723: try to upgrade isoparser with new package name for branch 2.x
     // (jliarte) 20171017: unable to get rid of OOM on MovieCreator.build
     // see https://github.com/sannies/mp4parser/issues/151
