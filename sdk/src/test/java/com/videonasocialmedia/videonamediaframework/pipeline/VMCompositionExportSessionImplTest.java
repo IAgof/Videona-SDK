@@ -1,23 +1,16 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
-import  android.media.MediaMetadataRetriever;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.google.common.util.concurrent.ListenableFuture;
-import com.googlecode.mp4parser.authoring.Movie;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
-import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrameRate;
-import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
-import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResolution;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.IntermediateFileException;
-import com.videonasocialmedia.videonamediaframework.muxer.Trimmer;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 import org.junit.Before;
@@ -26,6 +19,7 @@ import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
+import org.mp4parser.muxer.Movie;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -56,17 +50,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
   @PrepareForTest({FileUtils.class, TranscoderHelper.class, Log.class})
 public class VMCompositionExportSessionImplTest {
   @Mock private VMCompositionExportSession.ExportListener mockedExportEndedListener;
-  @Mock private Trimmer mockedAudioTrimmer;
-  private final Profile profile = new Profile(VideoResolution.Resolution.HD720,
-          VideoQuality.Quality.GOOD, VideoFrameRate.FrameRate.FPS25);
   @Mock private Appender mockedAppender;
   @Mock Image mockedWatermarkImage;
 
-  @Mock MediaMetadataRetriever mockedMediaMetadataRetriever;
-  @Mock
-  private Movie mockedMovie;
-  @Mock
-  private ListenableFuture mockedListenableFuture;
+  @Mock private Movie mockedMovie;
   @Mock Profile mockedProfile;
 
   @Before
