@@ -1,6 +1,5 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
-//import com.googlecode.mp4parser.authoring.Movie;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;

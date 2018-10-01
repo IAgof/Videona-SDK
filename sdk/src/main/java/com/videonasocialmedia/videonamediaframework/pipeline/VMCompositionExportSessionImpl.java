@@ -24,8 +24,6 @@ import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 
-//import com.googlecode.mp4parser.authoring.Movie;
-
 import org.mp4parser.muxer.Movie;
 
 import java.io.File;

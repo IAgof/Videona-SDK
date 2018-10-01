@@ -2,12 +2,6 @@ package com.videonasocialmedia.videonamediaframework.muxer;
 
 import android.util.Log;
 
-//import com.googlecode.mp4parser.authoring.Movie;
-//import com.googlecode.mp4parser.authoring.Track;
-//import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
-//import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
-//import com.googlecode.mp4parser.authoring.tracks.CroppedTrack;
-
 import org.mp4parser.muxer.Movie;
 import org.mp4parser.muxer.Track;
 import org.mp4parser.muxer.container.mp4.MovieCreator;

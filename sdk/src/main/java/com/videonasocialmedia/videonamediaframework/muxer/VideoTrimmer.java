@@ -1,7 +1,5 @@
 package com.videonasocialmedia.videonamediaframework.muxer;
 
-//import com.googlecode.mp4parser.authoring.Movie;
-
 import org.mp4parser.muxer.Movie;
 
 import java.io.IOException;
