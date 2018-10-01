@@ -25,6 +25,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
@@ -47,12 +48,17 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import processing.ffmpeg.videokit.ListenableFutureExecutor;
+import processing.ffmpeg.videokit.ProcessingListener;
+import processing.ffmpeg.videokit.VideoKit;
 
 import static android.app.Activity.RESULT_OK;
+import static com.google.android.gms.internal.zzahn.runOnUiThread;
 import static com.videonasocialmedia.sample.MainActivity.externalDir;
 import static com.videonasocialmedia.sample.MainActivity.tempDir;
 
@@ -63,7 +69,7 @@ import static com.videonasocialmedia.sample.MainActivity.tempDir;
  * Use the {@link TranscoderFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class TranscoderFragment extends Fragment {
+public class TranscoderFragment extends Fragment implements ProcessingListener {
   // TODO: Rename parameter arguments, choose names that match
   // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
   private static final String ARG_PARAM1 = "param1";
@@ -104,6 +110,7 @@ public class TranscoderFragment extends Fragment {
   boolean isVideoFadeActivated;
   boolean isAudioFadeActivated = false;
   int rotation;
+  private VideoKit videoKit = new VideoKit();
 
   public TranscoderFragment() {
     // Required empty public constructor
@@ -211,7 +218,8 @@ public class TranscoderFragment extends Fragment {
   @OnClick(R.id.btnMixAudio)
   public void onClickMixAudio(){
     textViewInfoProgress.setText("Mezclando audio ...");
-    mixAudio();
+    //mixAudio();
+    mixAudioWithFFmpegKit();
   }
 
   @OnClick(R.id.btnMixAudioWithFFmpeg)
@@ -323,6 +331,100 @@ public class TranscoderFragment extends Fragment {
       Log.d(TAG, "executeFFmpeg, FFmpegCommandAlreadyRunningException " + e.getMessage());
     }
 
+  }
+
+  private void mixAudioWithFFmpegKit() {
+
+    String audioWAV_1 = externalDir + File.separator + "AUD_WAV_Music.wav";
+    String audioWAV_1_Output_With_Volume = externalDir + File.separator + "AUD_WAV_Music_With_Vol.wav";
+    float volumeAudio1 = 0.5f;
+    String audioWAV_2 = externalDir + File.separator + "AUD_WAV_Video.wav";
+    String audioWAV_2_Output_With_Volume = externalDir + File.separator + "AUD_WAV_Video_With_Vol.wav";
+    float volumeAudio2 = 0.8f;
+    String audioWAV_3 = externalDir + File.separator + "AUD_WAV_VoiceOver.wav";
+    String audioWAV_3_Output_With_Volume = externalDir + File.separator + "AUD_WAV_VoiceOver_With_Vol.wav";
+    float volumeAudio3 = 0.7f;
+    int inputAudio = 3;
+
+    String audioWAV_output = externalDir + File.separator + "AUD_WAV_Mix_Audio_Output.wav";
+
+    // String cmd = "-i " + audioWAV_1 + " -i " + audioWAV_2 + " -i " + audioWAV_3 +
+    //   " -filter_complex amix=inputs=3:duration=first:dropout_transition=3 " + audioWAV_output ;
+
+   // String videoPath = externalDir + File.separator + "inputvideo.mp4";
+
+
+    // Apply volume
+    final processing.ffmpeg.videokit.Command commandVolume = videoKit.createCommand()
+        .overwriteOutput()
+        .inputPath(audioWAV_3)
+        .outputPath(audioWAV_3_Output_With_Volume)
+        .customCommand("-filter:a volume=" + volumeAudio3)
+        .copyVideoCodec()
+        .experimentalFlag()
+        .build();
+
+    // Mix audio
+    final processing.ffmpeg.videokit.Command commandMix = videoKit.createCommand()
+        .overwriteOutput()
+        .inputPath(audioWAV_1_Output_With_Volume)
+        .inputPath(audioWAV_2_Output_With_Volume)
+        .inputPath(audioWAV_3_Output_With_Volume)
+        .outputPath(audioWAV_output)
+        .customCommand("-filter_complex")
+        .customCommand("amix=inputs=" + inputAudio + ":duration=first:dropout_transition=3")
+        //.copyVideoCodec()
+        .experimentalFlag()
+        .build();
+
+   /* processing.ffmpeg.videokit.AsyncCommandExecutor asyncCommandExecutor =
+        new processing.ffmpeg.videokit.AsyncCommandExecutor(command, this);
+    asyncCommandExecutor.execute(); */
+
+    ListenableFutureExecutor listenableFutureExecutor =
+        new ListenableFutureExecutor();
+
+    ListenableFuture transcoderVolumeTask = listenableFutureExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        commandVolume.execute();
+      }
+    });
+    try {
+      transcoderVolumeTask.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+
+    ListenableFuture transcoderMixTask = listenableFutureExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        commandMix.execute();
+      }
+    });
+    try {
+      transcoderMixTask.get();
+    } catch (InterruptedException e) {
+      e.printStackTrace();
+    } catch (ExecutionException e) {
+      e.printStackTrace();
+    }
+
+    /*String videoPath = externalDir + File.separator + "inputvideo.mp4";
+    final Command command = videoKit.createCommand()
+        .overwriteOutput()
+        .inputPath(videoPath)
+        .outputPath(videoPath + "_trim.mp4")
+        .customCommand("-ss 1 -t 3")
+        .copyVideoCodec()
+        .experimentalFlag()
+        .build();
+
+    AsyncCommandExecutor asyncCommandExecutor =
+        new AsyncCommandExecutor(command, this);
+    asyncCommandExecutor.execute();*/
   }
 
   public static long getDurationFile(String filePath){
@@ -606,6 +708,26 @@ public class TranscoderFragment extends Fragment {
     mixAudio.setEnabled(!isProgress);
     fadeInOutVideo.setEnabled(!isProgress);
     cancelButton.setEnabled(isProgress);
+  }
+
+  @Override
+  public void onSuccess(String path) {
+    runOnUiThread(new Runnable() {
+      public void run() {
+        Toast.makeText(getActivity(), "onSuccess FFmpegKit", Toast.LENGTH_LONG).show();
+      }
+    });
+  }
+
+  @Override
+  public void onFailure(int returnCode) {
+    final int codeReturn = returnCode;
+    runOnUiThread(new Runnable() {
+      public void run() {
+        Toast.makeText(getActivity(), "onFailure FFmpegKit returnCode " + codeReturn,
+            Toast.LENGTH_LONG).show();
+      }
+    });
   }
 
   /**

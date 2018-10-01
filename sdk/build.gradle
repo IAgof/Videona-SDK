@@ -52,6 +52,11 @@ android {
             systemProperty 'robolectric.dependency.dir', "$System.env.ROBOLECTRIC_LIB_PATH"
         }
     }
+
+    sourceSets.main {
+        jniLibs.srcDir 'src/main/libs' //set libs as default directory for .so files inclusion, instead of jniLibs
+        jni.srcDirs = [] //disable automatic ndk-build call
+    }
 }
 
 dependencies {
