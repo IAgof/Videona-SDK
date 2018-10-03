@@ -3,15 +3,12 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.videonasocialmedia.transcoder.video.overlay.Image;
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.googlecode.mp4parser.authoring.Movie;
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Profile;
-import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.IntermediateFileException;
@@ -21,6 +18,7 @@ import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.MockitoAnnotations;
 import org.mp4parser.muxer.Movie;
 import org.powermock.api.mockito.PowerMockito;
@@ -58,10 +56,8 @@ public class VMCompositionExportSessionImplTest {
   @Mock private Appender mockedAppender;
   @Mock Image mockedWatermarkImage;
 
-  @Mock private Movie mockedMovie;
   @Mock Profile mockedProfile;
   @Mock Movie mockedMovie;
-  @Mock FFmpeg mockedFFmpeg;
   @Mock ListenableFuture<Void> mockedListenableFutureVoid;
   @Mock ListenableFuture<Long> mockedListenableFutureLong;
 
@@ -138,7 +134,7 @@ public class VMCompositionExportSessionImplTest {
     PowerMockito.mockStatic(FileUtils.class);
     when(FileUtils.getDurationFileAsync(anyString())).thenReturn(mockedListenableFutureLong);
     PowerMockito.when(mockedListenableFutureLong.get(anyInt(), any(TimeUnit.class))).thenReturn((long) 55000);
-    doCallRealMethod().when(exportSessionSpy).export(mockedFFmpeg);
+    doCallRealMethod().when(exportSessionSpy).export();
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
     exportSessionSpy.export();
@@ -221,7 +217,8 @@ public class VMCompositionExportSessionImplTest {
     doReturn(mockedMovie).when(exportSessionSpy)
         .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
-    doReturn(mockedListenableFutureVoid).when(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
+    doReturn(mockedListenableFutureVoid).when(exportSessionSpy).addWatermark(anyString(),
+        any(Image.class));
     doReturn(mockedWatermarkImage).when(exportSessionSpy).getWatermarkImage();
 
     exportSessionSpy.export();

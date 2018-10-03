@@ -1,6 +1,5 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
 /**

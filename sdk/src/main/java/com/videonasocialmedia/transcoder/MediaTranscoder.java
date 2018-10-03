@@ -18,7 +18,6 @@ package com.videonasocialmedia.transcoder;
 import android.graphics.drawable.Drawable;
 import android.util.Log;
 
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
