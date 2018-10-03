@@ -1,3 +1,20 @@
+v0.5.3
+- Added clip text shadow. Apply shadow in text over image, showed in player and video exported.
+- Revert isoparser to 1.1.7
+
+v0.5.2
+- Fixed width, height adding text to videos.
+- Refactor VideoResolution horizontal values.
+- Move UUID field from Video and Music to parent Media class
+- Update isoparser to 1.1.22
+
+v0.5.1
+- Fix height for vertical video player by parameter
+
+v0.5.0
+- Remove default horizontal sdk configurations. SDK prepared to transcode video file with vertical or horizontal orientation.
+- Update player to show vertical videos in horizontal preview, fixed height size to 180dp.
+
 v0.4.3
 - Fix NPE crash on VideonaPlayerExo.seekToClip
 

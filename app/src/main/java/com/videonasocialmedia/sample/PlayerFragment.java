@@ -32,7 +32,7 @@ import static com.videonasocialmedia.sample.MainActivity.externalDir;
  * Use the {@link PlayerFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class PlayerFragment extends Fragment implements VideonaPlayerExo.VideonaPlayerListener {
+public class PlayerFragment extends Fragment {
   // TODO: Rename parameter arguments, choose names that match
   // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
   private static final String ARG_PARAM1 = "param1";
@@ -93,7 +93,6 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
   @Override
   public void onStart(){
     super.onStart();
-    videonaPlayer.setListener(this);
   }
 
   @Override
@@ -138,11 +137,6 @@ public class PlayerFragment extends Fragment implements VideonaPlayerExo.Videona
   public void onDetach() {
     super.onDetach();
     mListener = null;
-  }
-
-  @Override
-  public void newClipPlayed(int currentClipIndex) {
-
   }
 
   public void showPreviewWithVideoMusicAndVoiceOver() {

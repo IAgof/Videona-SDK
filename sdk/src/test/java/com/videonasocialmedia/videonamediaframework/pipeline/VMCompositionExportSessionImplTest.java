@@ -3,12 +3,14 @@ package com.videonasocialmedia.videonamediaframework.pipeline;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
+import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.googlecode.mp4parser.authoring.Movie;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Profile;
 import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
@@ -20,6 +22,7 @@ import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.mp4parser.muxer.Movie;
 import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
@@ -53,6 +56,10 @@ import static org.powermock.api.mockito.PowerMockito.when;
 public class VMCompositionExportSessionImplTest {
   @Mock private VMCompositionExportSession.ExportListener mockedExportEndedListener;
   @Mock private Appender mockedAppender;
+  @Mock Image mockedWatermarkImage;
+
+  @Mock private Movie mockedMovie;
+  @Mock Profile mockedProfile;
   @Mock Movie mockedMovie;
   @Mock FFmpeg mockedFFmpeg;
   @Mock ListenableFuture<Void> mockedListenableFutureVoid;
@@ -129,12 +136,12 @@ public class VMCompositionExportSessionImplTest {
             getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
     PowerMockito.mockStatic(FileUtils.class);
-    PowerMockito.when(FileUtils.getDurationFileAsync(anyString())).thenReturn(mockedListenableFutureLong);
+    when(FileUtils.getDurationFileAsync(anyString())).thenReturn(mockedListenableFutureLong);
     PowerMockito.when(mockedListenableFutureLong.get(anyInt(), any(TimeUnit.class))).thenReturn((long) 55000);
     doCallRealMethod().when(exportSessionSpy).export(mockedFFmpeg);
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
-    exportSessionSpy.export(mockedFFmpeg);
+    exportSessionSpy.export();
 
     verify(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
   }
@@ -198,7 +205,8 @@ public class VMCompositionExportSessionImplTest {
   @Test
   public void exportCallsAddWatermarkIfWatermarkIsSelectedInComposition() throws IOException,
       IntermediateFileException, ExecutionException, InterruptedException, TimeoutException {
-    VMComposition vmComposition = new VMComposition();
+    String resourceWatermarkFilePath = "fakePath";
+    VMComposition vmComposition = new VMComposition(resourceWatermarkFilePath, mockedProfile);
     vmComposition.setWatermarkActivated(true);
 
     assertThat("Watermark is activated", vmComposition.hasWatermark(), is(true));
@@ -209,14 +217,16 @@ public class VMCompositionExportSessionImplTest {
     PowerMockito.mockStatic(FileUtils.class);
     PowerMockito.when(FileUtils.getDurationFileAsync(anyString())).thenReturn(mockedListenableFutureLong);
     PowerMockito.when(mockedListenableFutureLong.get(anyInt(), any(TimeUnit.class))).thenReturn((long) 55000);
+    when(FileUtils.getDurationFile(Mockito.anyString())).thenReturn((long) 55);
     doReturn(mockedMovie).when(exportSessionSpy)
         .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
     doReturn(mockedListenableFutureVoid).when(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
+    doReturn(mockedWatermarkImage).when(exportSessionSpy).getWatermarkImage();
 
-    exportSessionSpy.export(mockedFFmpeg);
+    exportSessionSpy.export();
 
-    verify(exportSessionSpy).addWatermark(any(Watermark.class), anyString());
+    verify(exportSessionSpy).addWatermark(anyString(), any(Image.class));
   }
 
   @Test
@@ -231,15 +241,15 @@ public class VMCompositionExportSessionImplTest {
         getVmCompositionExportSession(vmComposition);
     VMCompositionExportSessionImpl exportSessionSpy = spy(vmCompositionExportSession);
     PowerMockito.mockStatic(FileUtils.class);
-    PowerMockito.when(FileUtils.getDurationFileAsync(anyString())).thenReturn(mockedListenableFutureLong);
+    when(FileUtils.getDurationFileAsync(anyString())).thenReturn(mockedListenableFutureLong);
     PowerMockito.when(mockedListenableFutureLong.get(anyInt(), any(TimeUnit.class))).thenReturn((long) 55000);
     doReturn(mockedMovie).when(exportSessionSpy)
         .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
-    exportSessionSpy.export(mockedFFmpeg);
+    exportSessionSpy.export();
 
-    verify(exportSessionSpy, never()).addWatermark(any(Watermark.class), anyString());
+    verify(exportSessionSpy, never()).addWatermark(anyString(), any(Image.class));
   }
 
   @NonNull

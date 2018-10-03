@@ -7,8 +7,6 @@
 
 package com.videonasocialmedia.videonamediaframework.model.media;
 
-import java.util.UUID;
-
 public class Music extends Audio {
   //TODO en el futuro no será un recurso sino que se obtendrá
     private int musicResourceId;
@@ -21,8 +19,6 @@ public class Music extends Audio {
     private String musicDuration;
 
     private int iconResourceId;
-
-  private String uuid = UUID.randomUUID().toString();
 
   public static float DEFAULT_VOLUME = 0.5f;
 
@@ -124,11 +120,4 @@ public class Music extends Audio {
         this.volume = volume;
     }
 
-  public String getUuid() {
-    return uuid;
-  }
-
-  public void setUuid(String uuid) {
-    this.uuid = uuid;
-  }
 }

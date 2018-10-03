@@ -1,2 +1,5 @@
-v0.5.0
+v0.5.4
+- Update isoparser to 1.9.38
+
+v0.5.5
 - Improved mix of audio files.

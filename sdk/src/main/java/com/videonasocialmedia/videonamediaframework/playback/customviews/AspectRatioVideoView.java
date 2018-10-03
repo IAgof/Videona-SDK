@@ -25,7 +25,7 @@ public class AspectRatioVideoView extends VideoView {
     private static final int SIXTEEN_NINE_ATTR = 2;
     private static final double FOUR_THREE_VALUE = 1.333333D;
     private static final double SIXTEEN_NINE_VALUE = 1.777778D;
-    private static final String TAG = "AFL";
+    private static final String LOG_TAG = AspectRatioVideoView.class.getCanonicalName();
     private double mTargetAspect = -1.0D;
 
     public AspectRatioVideoView(Context context, AttributeSet attrs) {
@@ -43,6 +43,9 @@ public class AspectRatioVideoView extends VideoView {
                 break;
             case 2:
                 this.mTargetAspect = 1.777778D;
+                break;
+            case 3:
+                this.mTargetAspect = 0.5625D;
         }
 
         a.recycle();
@@ -62,7 +65,8 @@ public class AspectRatioVideoView extends VideoView {
         if (aspectRatio < 0.0D) {
             throw new IllegalArgumentException();
         } else {
-            Log.d("AFL", "Setting aspect ratio to " + aspectRatio + " (was " + this.mTargetAspect + ")");
+            Log.d(LOG_TAG, "Setting aspect ratio to " + aspectRatio + " (was "
+                + this.mTargetAspect + ")");
             if (this.mTargetAspect != aspectRatio) {
                 this.mTargetAspect = aspectRatio;
                 this.requestLayout();
@@ -72,7 +76,9 @@ public class AspectRatioVideoView extends VideoView {
     }
 
     protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-        Log.d("AFL", "onMeasure target=" + this.mTargetAspect + " width=[" + MeasureSpec.toString(widthMeasureSpec) + "] height=[" + MeasureSpec.toString(heightMeasureSpec) + "]");
+        Log.d(LOG_TAG, "onMeasure target=" + this.mTargetAspect + " width=["
+            + MeasureSpec.toString(widthMeasureSpec) + "] height=["
+            + MeasureSpec.toString(heightMeasureSpec) + "]");
         if (this.mTargetAspect > 0.0D) {
             int initialWidth = MeasureSpec.getSize(widthMeasureSpec);
             int initialHeight = MeasureSpec.getSize(heightMeasureSpec);
@@ -83,7 +89,8 @@ public class AspectRatioVideoView extends VideoView {
             double viewAspectRatio = (double) initialWidth / (double) initialHeight;
             double aspectDiff = this.mTargetAspect / viewAspectRatio - 1.0D;
             if (Math.abs(aspectDiff) < 0.01D) {
-                Log.d("AFL", "aspect ratio is good (target=" + this.mTargetAspect + ", view=" + initialWidth + "x" + initialHeight + ")");
+                Log.d(LOG_TAG, "aspect ratio is good (target=" + this.mTargetAspect
+                    + ", view=" + initialWidth + "x" + initialHeight + ")");
             } else {
                 if (aspectDiff > 0.0D) {
                     initialHeight = (int) ( (double) initialWidth / this.mTargetAspect );
@@ -91,7 +98,8 @@ public class AspectRatioVideoView extends VideoView {
                     initialWidth = (int) ( (double) initialHeight * this.mTargetAspect );
                 }
 
-                Log.d("AFL", "new size=" + initialWidth + "x" + initialHeight + " + padding " + horizPadding + "x" + vertPadding);
+                Log.d(LOG_TAG, "new size=" + initialWidth + "x" + initialHeight
+                    + " + padding " + horizPadding + "x" + vertPadding);
                 initialWidth += horizPadding;
                 initialHeight += vertPadding;
                 widthMeasureSpec = MeasureSpec.makeMeasureSpec(initialWidth, 1073741824);

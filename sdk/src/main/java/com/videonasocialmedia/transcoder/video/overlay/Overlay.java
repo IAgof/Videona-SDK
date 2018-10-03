@@ -25,7 +25,7 @@ public abstract class Overlay {
 
     public Overlay(Drawable drawableImage, int width, int height, int positionX, int positionY) {
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
-        Matrix.scaleM(IDENTITY_MATRIX,0,1,-1,-1);
+        Matrix.scaleM(IDENTITY_MATRIX, 0, 1, -1, -1);
         this.drawableImage = drawableImage;
         this.width = width;
         this.height = height;
@@ -35,7 +35,7 @@ public abstract class Overlay {
 
     public Overlay(String drawableImagePath, int width, int height, int positionX, int positionY) {
         Matrix.setIdentityM(IDENTITY_MATRIX, 0);
-        Matrix.scaleM(IDENTITY_MATRIX,0,1,-1,-1);
+        Matrix.scaleM(IDENTITY_MATRIX, 0, 1, -1, -1);
         this.drawableImage = Drawable.createFromPath(drawableImagePath);;
         this.width = width;
         this.height = height;

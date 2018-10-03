@@ -68,6 +68,7 @@ public class VideonaFormat implements MediaFormatStrategy {
         if (videoBitrate == VIDEO_BITRATE_AS_IS || videoWidth == VIDEO_WIDTH_AS_IS ||
                 videoHeight == VIDEO_HEIGHT_AS_IS) return null;
 
+        /** Delete support for transcode only 16/9 videos
         int width = inputFormat.getInteger(MediaFormat.KEY_WIDTH);
         int height = inputFormat.getInteger(MediaFormat.KEY_HEIGHT);
         int longer, shorter, outWidth, outHeight;
@@ -86,7 +87,11 @@ public class VideonaFormat implements MediaFormatStrategy {
             throw new OutputFormatUnavailableException("This video is not 16:9, and is not able to transcode. (" + width + "x" + height + ")");
         }
 
-        MediaFormat format = MediaFormat.createVideoFormat("video/avc", outWidth, outHeight);
+         MediaFormat format = MediaFormat.createVideoFormat("video/avc", outWidth, outHeight);
+         */
+
+        MediaFormat format = MediaFormat.createVideoFormat("video/avc", videoWidth,
+            videoHeight);
         format.setInteger(MediaFormat.KEY_BIT_RATE, videoBitrate);
         format.setInteger(MediaFormat.KEY_FRAME_RATE, DEFAULT_FRAME_RATE);
         format.setInteger(MediaFormat.KEY_I_FRAME_INTERVAL, DEFAULT_KEY_I_FRAME);

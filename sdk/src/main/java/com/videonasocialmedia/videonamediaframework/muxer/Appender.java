@@ -2,11 +2,11 @@ package com.videonasocialmedia.videonamediaframework.muxer;
 
 import android.util.Log;
 
-import com.googlecode.mp4parser.authoring.Movie;
-import com.googlecode.mp4parser.authoring.Track;
-import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
-import com.googlecode.mp4parser.authoring.tracks.AppendTrack;
-import com.googlecode.mp4parser.authoring.tracks.CroppedTrack;
+import org.mp4parser.muxer.Movie;
+import org.mp4parser.muxer.Track;
+import org.mp4parser.muxer.container.mp4.MovieCreator;
+import org.mp4parser.muxer.tracks.AppendTrack;
+import org.mp4parser.muxer.tracks.ClippedTrack;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
@@ -65,7 +65,7 @@ public class Appender {
         audioSampleDuration = getTrackSampleDuration(audioSampleDuration, track);
         int toSample = (int) (track.getSamples().size() - (offset / audioSampleDuration));
         Log.e(LOG_TAG, "Cropping audio to sample " + toSample);
-        tracks.addLast(new CroppedTrack(track, 0, toSample));
+        tracks.addLast(new ClippedTrack(track, 0, toSample));
     }
 
     private float getTrackSampleDuration(float sampleDuration, Track t) {

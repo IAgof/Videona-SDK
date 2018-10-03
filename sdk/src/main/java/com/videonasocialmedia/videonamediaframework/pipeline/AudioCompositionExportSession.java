@@ -1,10 +1,11 @@
 package com.videonasocialmedia.videonamediaframework.pipeline;
 
-import com.googlecode.mp4parser.authoring.Movie;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.IntermediateFileException;
+
+import org.mp4parser.muxer.Movie;
 
 import java.io.IOException;
 import java.util.ArrayList;
