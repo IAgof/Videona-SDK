@@ -2,11 +2,7 @@ package com.videonasocialmedia.transcoder.audio;
 
 import android.util.Log;
 
-import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
-import com.github.hiteshsondhi88.libffmpeg.FFmpegExecuteResponseHandler;
-import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
-import com.google.common.util.concurrent.SettableFuture;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -18,6 +14,11 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
+
+import processing.ffmpeg.videokit.Command;
+import processing.ffmpeg.videokit.CommandBuilder;
+import processing.ffmpeg.videokit.ListenableFutureExecutor;
+import processing.ffmpeg.videokit.VideoKit;
 
 /**
  * Created by alvaro on 19/09/16.
@@ -37,9 +38,13 @@ public class AudioMixer {
 
   private List<AudioHelper> audioHelperList;
   private List<Media> mediaListDecoded;
+  private VideoKit videoKit;
+  private ListenableFutureExecutor listenableFutureExecutor;
 
 
   public AudioMixer() {
+    videoKit = new VideoKit();
+    listenableFutureExecutor = new ListenableFutureExecutor();
   }
 
   public boolean export(List<Media> mediaList, String tempDirectory, String outputFile,
@@ -71,17 +76,30 @@ public class AudioMixer {
   }
 
   public boolean exportWithFFmpeg(List<Media> mediaList, String tempDirectory, String outputFile,
-                                  long durationOutputFile, FFmpeg ffmpeg) throws IOException,
+                                  long durationOutputFile) throws IOException,
       TranscodingException {
     if (mediaList.size() == 0) {
       return false;
     }
     this.tempDirectory = tempDirectory;
-    String outputTempMixAudioPath = this.tempDirectory + File.separator + "mixAudio.pcm";
+    String outputTempMixAudioPath = this.tempDirectory + File.separator + "mixAudio.wav";
     this.outputFile = outputFile;
     this.durationOutputFile = durationOutputFile;
     cleanTempDirectory();
     audioHelperList = new ArrayList<>();
+    // 1.- Decode audio files
+    audioHelperList = decodeAudioMediaList(mediaList, tempDirectory, durationOutputFile);
+
+    // 2.- Apply volume and mix audio files
+    mixAudioWithFFmpeg(audioHelperList, outputTempMixAudioPath);
+
+    // 3.- Transcode and generate exported Audio file
+    encodeAudio(outputTempMixAudioPath);
+    return true;
+  }
+
+  private List<AudioHelper> decodeAudioMediaList(List<Media> mediaList, String tempDirectory, long durationOutputFile) throws IOException {
+    List<AudioHelper> audioHelperList = new ArrayList<>();
     for (Media media : mediaList) {
       // TODO(jliarte): 5/10/17 should we move this parameters to method call, as they aren't
       // collaborators
@@ -93,12 +111,7 @@ public class AudioMixer {
       decoder.decode();
       audioHelperList.add(audioHelper);
     }
-
-    mixAudioWithFFmpeg(audioHelperList, outputTempMixAudioPath,
-        ffmpeg);
-
-    encodeAudio(outputTempMixAudioPath + ".wav");
-    return true;
+    return audioHelperList;
   }
 
   private void saveDebugWavFile(String tempDirectory, String pcmFilePath) {
@@ -109,8 +122,8 @@ public class AudioMixer {
     }
   }
 
-  public void mixAudioWithFFmpeg(List<AudioHelper> audioHelperList, String outputTempMixAudioPath,
-                                 FFmpeg ffmpeg) throws FileNotFoundException, TranscodingException {
+  public void mixAudioWithFFmpeg(List<AudioHelper> audioHelperList, String outputTempMixAudioPath)
+      throws FileNotFoundException, TranscodingException {
     // From pcm to wav
     for (AudioHelper audioHelper : audioHelperList) {
       UtilsAudio.copyWaveFile(audioHelper.getAudioDecodePcm(), audioHelper.getAudioWav());
@@ -118,12 +131,7 @@ public class AudioMixer {
     // Apply volume to every media
     for (AudioHelper audioHelper : audioHelperList) {
       try {
-        if (applyFFmpegVolume(ffmpeg, audioHelper).get()) {
-          Log.d(LOG_TAG, "audio volume success ");
-        } else {
-          Log.d(LOG_TAG, "audio volume fail ");
-          throw new TranscodingException("Error applying volume audio FFmpeg failure");
-        }
+        applyFFmpegVolume(audioHelper).get();
       } catch (InterruptedException interruptedException) {
         Log.e(LOG_TAG, "Caught InterruptedException applyFFmpegVolume " +
             interruptedException.getClass().getName() + " while exporting, " +
@@ -137,12 +145,7 @@ public class AudioMixer {
 
     // Apply FFmpeg to get output mix WAV file
     try {
-      if (applyFFmpegMixAudio(ffmpeg, audioHelperList, outputTempMixAudioPath).get()) {
-        Log.d(LOG_TAG, "audio volume success ");
-      } else {
-        Log.d(LOG_TAG, "Error mixing audio failure");
-        throw new TranscodingException("Error mixing audio FFmpeg failure");
-      }
+      applyFFmpegMixAudio(audioHelperList, outputTempMixAudioPath).get();
     } catch (InterruptedException interruptedException) {
       Log.e(LOG_TAG, "Caught InterruptedException applyFFmpegMixAudio " +
           interruptedException.getClass().getName() + " while exporting, " +
@@ -154,106 +157,46 @@ public class AudioMixer {
     }
   }
 
-  private SettableFuture<Boolean> applyFFmpegVolume(FFmpeg ffmpeg, AudioHelper audioHelper) {
+  private ListenableFuture applyFFmpegVolume(AudioHelper audioHelper) {
+    // Apply volume
+    final processing.ffmpeg.videokit.Command commandVolume = videoKit.createCommand()
+        .overwriteOutput()
+        .inputPath(audioHelper.getAudioWav())
+        .outputPath(audioHelper.getAudioWavWithVolume())
+        .customCommand("-filter:a volume=" + audioHelper.getVolume())
+        .copyVideoCodec()
+        .experimentalFlag()
+        .build();
+    ListenableFuture listenableFuture = listenableFutureExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        commandVolume.execute();
+      }
+    });
 
-    String cmd = "-i " + audioHelper.getAudioWav() + " -filter:a volume=" + audioHelper.getVolume()
-        + " " + audioHelper.getAudioWavWithVolume();
-    String[] command = cmd.split(" ");
-
-    final SettableFuture<Boolean> settableFutureApplyVolume = SettableFuture.create();
-
-    try {
-      ffmpeg.execute(command, new FFmpegExecuteResponseHandler() {
-        @Override
-        public void onStart() {
-          Log.d(LOG_TAG, "executeFFmpeg, start");
-        }
-
-        @Override
-        public void onProgress(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, progress " + message);
-        }
-
-        @Override
-        public void onFailure(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, failure " + message);
-          settableFutureApplyVolume.set(false);
-        }
-
-        @Override
-        public void onSuccess(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, success " + message);
-          settableFutureApplyVolume.set(true);
-        }
-
-        @Override
-        public void onFinish() {
-          Log.d(LOG_TAG, "executeFFmpeg, finish");
-        }
-      });
-    } catch (FFmpegCommandAlreadyRunningException e) {
-      // Handle if FFmpeg is already running
-      Log.d(LOG_TAG, "executeFFmpeg, FFmpegCommandAlreadyRunningException " + e.getMessage());
-    }
-
-    return settableFutureApplyVolume;
+    return listenableFuture;
   }
 
-  private SettableFuture<Boolean> applyFFmpegMixAudio(FFmpeg ffmpeg,
-                                                      List<AudioHelper> audioHelperList,
-                                                      String outputTempMixAudioPath)
+  private ListenableFuture applyFFmpegMixAudio(List<AudioHelper> audioHelperList,
+                                               String outputTempMixAudioPath)
       throws TranscodingException {
-
-    String audioWAV_output = outputTempMixAudioPath + ".wav";
-    String cmdInit = "-i " + audioHelperList.get(0).getAudioWavWithVolume();
-    int mediaListSize = audioHelperList.size();
-    for (int i = 1; i < mediaListSize; i++) {
-      cmdInit += " -i " + audioHelperList.get(i).getAudioWavWithVolume();
+    CommandBuilder commandBuilder = videoKit.createCommand();
+    for( AudioHelper audioHelper: audioHelperList) {
+      commandBuilder.inputPath(audioHelper.getAudioWavWithVolume());
     }
-    String cmd = cmdInit + " -filter_complex amix=inputs=" + mediaListSize +
-        ":duration=first:dropout_transition=" + mediaListSize + " " + audioWAV_output;
-    String[] command = cmd.split(" ");
-
-    final SettableFuture<Boolean> settableFutureMixAudio = SettableFuture.create();
-
-    try {
-      // to execute "ffmpeg -version" command you just need to pass "-version"
-      ffmpeg.execute(command, new ExecuteBinaryResponseHandler() {
-
-        @Override
-        public void onStart() {
-          Log.d(LOG_TAG, "executeFFmpeg, start");
-        }
-
-        @Override
-        public void onProgress(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, progress " + message);
-        }
-
-        @Override
-        public void onFailure(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, failure " + message);
-          settableFutureMixAudio.set(false);
-        }
-
-        @Override
-        public void onSuccess(String message) {
-          Log.d(LOG_TAG, "executeFFmpeg, success " + message);
-          settableFutureMixAudio.set(true);
-        }
-
-        @Override
-        public void onFinish() {
-          Log.d(LOG_TAG, "executeFFmpeg, finish");
-        }
-      });
-    } catch (FFmpegCommandAlreadyRunningException e) {
-      // Handle if FFmpeg is already running
-      Log.d(LOG_TAG, "executeFFmpeg, FFmpegCommandAlreadyRunningException " + e.getMessage());
-      throw new TranscodingException("Error mixing audio FFmpegCommandAlreadyRunningException ");
-    }
-
-    return settableFutureMixAudio;
+    commandBuilder.overwriteOutput();
+    commandBuilder.outputPath(outputTempMixAudioPath);
+    commandBuilder.customCommand("-filter_complex");
+    commandBuilder.customCommand("amix=inputs=" + audioHelperList.size() + ":duration=first:dropout_transition=3");
+    commandBuilder.experimentalFlag();
+    final Command commandMix = commandBuilder.build();
+    ListenableFuture listenableFuture = listenableFutureExecutor.execute(new Runnable() {
+      @Override
+      public void run() {
+        commandMix.execute();
+      }
+    });
+    return listenableFuture;
   }
 
   private void encodeAudio(String inputFileRaw) throws IOException, TranscodingException {

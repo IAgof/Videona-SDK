@@ -4,7 +4,6 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.NonNull;
 import android.util.Log;
 
-import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -91,18 +90,18 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     @Override
-    public void exportAsyncronously(final FFmpeg ffmpeg) {
+    public void exportAsyncronously() {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 isExportCanceled = false;
-                export(ffmpeg);
+                export();
             }
         }).start();
     }
 
     @Override
-    public void export(FFmpeg ffmpeg) {
+    public void export() {
         Log.d(LOG_TAG, "export, waiting for finish temporal files generation ");
 
         // 1.- Wait for video temp files to finished
@@ -158,7 +157,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         // 4.- Apply mix audio
         try {
             mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
-                tempExportFilePath, ffmpeg);
+                tempExportFilePath);
         } catch (IOException ioException) {
             Log.e(LOG_TAG, "Caught " +  ioException.getClass().getName()
                 + " while exporting, " + "message: " + ioException.getMessage());
@@ -469,7 +468,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date()) + ".mp4";
     }
 
-    protected void mixAudio(List<Media> mediaList, final String videoPath, FFmpeg ffmpeg)
+    protected void mixAudio(List<Media> mediaList, final String videoPath)
         throws IOException, TranscodingException {
         if(isExportCanceled) {
             Log.d(LOG_TAG, "Export canceled return");
@@ -490,7 +489,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     outputAudioMixedFile, movieDuration); */
         mixAudioTask =
             transcoderHelper.generateTempFileMixAudioFFmpeg(mediaList, tempAudioPath,
-                outputAudioMixedFile, movieDuration, ffmpeg);
+                outputAudioMixedFile, movieDuration);
 
         AsyncFunction<? super Boolean, ?> swapAudioTask = new AsyncFunction<Boolean, Object>() {
             @Override

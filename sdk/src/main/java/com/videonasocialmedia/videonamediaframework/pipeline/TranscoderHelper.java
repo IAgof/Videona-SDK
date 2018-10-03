@@ -199,10 +199,10 @@ public class TranscoderHelper {
   }
 
   public ListenableFuture<Boolean> generateTempFileMixAudioFFmpeg (
-      List<Media> mediaList, String tempAudioPath, String outputFilePath, long audioFileDuration,
-      FFmpeg ffmpeg) throws IOException, TranscodingException {
+      List<Media> mediaList, String tempAudioPath, String outputFilePath, long audioFileDuration)
+      throws IOException, TranscodingException {
     return mediaTranscoder.mixAudioFilesWithFFmpeg(mediaList, tempAudioPath, outputFilePath,
-        audioFileDuration, ffmpeg);
+        audioFileDuration);
   }
 
   public ListenableFuture<Video> generateOutputVideoWithTrimmingAsync(

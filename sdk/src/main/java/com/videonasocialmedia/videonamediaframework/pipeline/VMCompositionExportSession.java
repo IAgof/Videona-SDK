@@ -21,9 +21,9 @@ public interface VMCompositionExportSession {
     int EXPORT_STAGE_WAIT_FOR_TRANSCODING_ERROR = 10;
     int EXPORT_STAGE_JOIN_VIDEOS_ERROR = 11;
 
-  void exportAsyncronously(FFmpeg ffmpeg);
+  void exportAsyncronously();
 
-  void export(FFmpeg ffmpeg);
+  void export();
 
   void cancel();
 
