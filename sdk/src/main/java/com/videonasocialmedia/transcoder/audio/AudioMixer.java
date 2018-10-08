@@ -3,6 +3,10 @@ package com.videonasocialmedia.transcoder.audio;
 import android.util.Log;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import com.videonasocialmedia.ffmpeg.Command;
+import com.videonasocialmedia.ffmpeg.CommandBuilder;
+import com.videonasocialmedia.ffmpeg.ListenableFutureExecutor;
+import com.videonasocialmedia.ffmpeg.VideoKit;
 import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -15,10 +19,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
-import processing.ffmpeg.videokit.Command;
-import processing.ffmpeg.videokit.CommandBuilder;
-import processing.ffmpeg.videokit.ListenableFutureExecutor;
-import processing.ffmpeg.videokit.VideoKit;
 
 /**
  * Created by alvaro on 19/09/16.
@@ -159,7 +159,7 @@ public class AudioMixer {
 
   private ListenableFuture applyFFmpegVolume(AudioHelper audioHelper) {
     // Apply volume
-    final processing.ffmpeg.videokit.Command commandVolume = videoKit.createCommand()
+    final Command commandVolume = videoKit.createCommand()
         .overwriteOutput()
         .inputPath(audioHelper.getAudioWav())
         .outputPath(audioHelper.getAudioWavWithVolume())
