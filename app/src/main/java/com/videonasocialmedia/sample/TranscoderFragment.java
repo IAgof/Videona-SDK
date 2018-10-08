@@ -25,19 +25,17 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.github.hiteshsondhi88.libffmpeg.ExecuteBinaryResponseHandler;
 import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
 import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegCommandAlreadyRunningException;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.videonasocialmedia.ffmpeg.Command;
+import com.videonasocialmedia.ffmpeg.ListenableFutureExecutor;
+import com.videonasocialmedia.ffmpeg.VideoKit;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
-
-
 import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
-
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
-
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.pipeline.TranscoderHelper;
@@ -53,12 +51,8 @@ import java.util.concurrent.ExecutionException;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import processing.ffmpeg.videokit.ListenableFutureExecutor;
-import processing.ffmpeg.videokit.ProcessingListener;
-import processing.ffmpeg.videokit.VideoKit;
 
 import static android.app.Activity.RESULT_OK;
-import static com.google.android.gms.internal.zzahn.runOnUiThread;
 import static com.videonasocialmedia.sample.MainActivity.externalDir;
 import static com.videonasocialmedia.sample.MainActivity.tempDir;
 
@@ -69,7 +63,7 @@ import static com.videonasocialmedia.sample.MainActivity.tempDir;
  * Use the {@link TranscoderFragment#newInstance} factory method to
  * create an instance of this fragment.
  */
-public class TranscoderFragment extends Fragment implements ProcessingListener {
+public class TranscoderFragment extends Fragment {
   // TODO: Rename parameter arguments, choose names that match
   // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
   private static final String ARG_PARAM1 = "param1";
@@ -355,7 +349,7 @@ public class TranscoderFragment extends Fragment implements ProcessingListener {
 
 
     // Apply volume
-    final processing.ffmpeg.videokit.Command commandVolume = videoKit.createCommand()
+    final Command commandVolume = videoKit.createCommand()
         .overwriteOutput()
         .inputPath(audioWAV_3)
         .outputPath(audioWAV_3_Output_With_Volume)
@@ -365,7 +359,7 @@ public class TranscoderFragment extends Fragment implements ProcessingListener {
         .build();
 
     // Mix audio
-    final processing.ffmpeg.videokit.Command commandMix = videoKit.createCommand()
+    final Command commandMix = videoKit.createCommand()
         .overwriteOutput()
         .inputPath(audioWAV_1_Output_With_Volume)
         .inputPath(audioWAV_2_Output_With_Volume)
@@ -708,26 +702,6 @@ public class TranscoderFragment extends Fragment implements ProcessingListener {
     mixAudio.setEnabled(!isProgress);
     fadeInOutVideo.setEnabled(!isProgress);
     cancelButton.setEnabled(isProgress);
-  }
-
-  @Override
-  public void onSuccess(String path) {
-    runOnUiThread(new Runnable() {
-      public void run() {
-        Toast.makeText(getActivity(), "onSuccess FFmpegKit", Toast.LENGTH_LONG).show();
-      }
-    });
-  }
-
-  @Override
-  public void onFailure(int returnCode) {
-    final int codeReturn = returnCode;
-    runOnUiThread(new Runnable() {
-      public void run() {
-        Toast.makeText(getActivity(), "onFailure FFmpegKit returnCode " + codeReturn,
-            Toast.LENGTH_LONG).show();
-      }
-    });
   }
 
   /**
