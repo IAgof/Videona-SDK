@@ -15,7 +15,8 @@ class VideoCommand implements Command {
 
     private final List<String> arguments;
     private final String outputPath;
-    private final VideoKit videoKit;
+    private VideoKit videoKit = null;
+    private VideoKitInvoke videoKitInvoke = null;
 
     VideoCommand(List<String> flags, String outputPath, VideoKit videoKit) {
         this.arguments = flags;
@@ -24,9 +25,21 @@ class VideoCommand implements Command {
 
     }
 
+    VideoCommand(List<String> flags, String outputPath, VideoKitInvoke videoKitInvoke) {
+        this.arguments = flags;
+        this.outputPath = outputPath;
+        this.videoKitInvoke = videoKitInvoke;
+
+    }
+
     @Override
     public VideoProcessingResult execute() {
-        final int returnCode = videoKit.process(getArgumentsAsArray());
+        int returnCode = 0;
+        if (videoKit != null) {
+            videoKit.process(getArgumentsAsArray());
+        } else {
+            videoKitInvoke.process(videoKitInvoke.getLibPath(), getArgumentsAsArray());
+        }
         if (returnCode == VideoProcessingResult.SUCCESSFUL_RESULT) {
             return new VideoProcessingResult(returnCode, outputPath);
         } else {

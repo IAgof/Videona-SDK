@@ -7,7 +7,7 @@
 
 package com.videonasocialmedia.ffmpeg;
 
-public class VideoKit {
+public final class VideoKit {
     static {
         try {
             System.loadLibrary("avutil");
@@ -18,6 +18,7 @@ public class VideoKit {
             System.loadLibrary("avfilter");
             System.loadLibrary("avdevice");
             System.loadLibrary("videokit");
+            //System.loadLibrary("videokitinvoke");
         } catch (UnsatisfiedLinkError e) {
             e.printStackTrace();
         }
@@ -30,10 +31,13 @@ public class VideoKit {
     }
 
     int process(String[] args) {
-        return run(logLevel.getValue(), args);
+        //return run(logLevel.getValue(), args);
+        return run(args);
     }
 
     private native int run(int loglevel, String[] args);
+
+    private native int run(String[] args);
 
     public CommandBuilder createCommand() {
         return new VideoCommandBuilder(this);

@@ -33,7 +33,8 @@ class VideoCommandBuilder implements CommandBuilder {
 
     private final List<String> flags = new ArrayList<>();
 
-    private final VideoKit videoKit;
+    private VideoKit videoKit;
+    private VideoKitInvoke videoKitInvoke;
 
     private final List<String> inputPaths = new ArrayList<>();
     private String outputPath;
@@ -42,6 +43,10 @@ class VideoCommandBuilder implements CommandBuilder {
 
     VideoCommandBuilder(VideoKit videoKit) {
         this.videoKit = videoKit;
+    }
+
+    VideoCommandBuilder(VideoKitInvoke videoKitInvoke) {
+        this.videoKitInvoke = videoKitInvoke;
     }
 
     @Override
@@ -157,7 +162,11 @@ class VideoCommandBuilder implements CommandBuilder {
 
         newFlags.add(outputPath);
 
-        return new VideoCommand(newFlags, outputPath, videoKit);
+        if (videoKit != null) {
+            return new VideoCommand(newFlags, outputPath, videoKit);
+        } else {
+            return new VideoCommand(newFlags, outputPath, videoKitInvoke);
+        }
     }
 
     private void checkInputPathsAndThrowIfEmpty() {

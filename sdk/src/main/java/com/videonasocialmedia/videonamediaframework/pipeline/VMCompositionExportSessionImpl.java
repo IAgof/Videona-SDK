@@ -89,18 +89,18 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     @Override
-    public void exportAsyncronously() {
+    public void exportAsyncronously(final String nativeLibPath) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 isExportCanceled = false;
-                export();
+                export(nativeLibPath);
             }
         }).start();
     }
 
     @Override
-    public void export() {
+    public void export(String nativeLibPath) {
         Log.d(LOG_TAG, "export, waiting for finish temporal files generation ");
 
         // 1.- Wait for video temp files to finished
@@ -156,7 +156,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         // 4.- Apply mix audio
         try {
             mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
-                tempExportFilePath);
+                tempExportFilePath, nativeLibPath);
         } catch (IOException ioException) {
             Log.e(LOG_TAG, "Caught " +  ioException.getClass().getName()
                 + " while exporting, " + "message: " + ioException.getMessage());
@@ -474,7 +474,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date()) + ".mp4";
     }
 
-    protected void mixAudio(List<Media> mediaList, final String videoPath)
+    protected void mixAudio(List<Media> mediaList, final String videoPath, String nativeLibPath)
         throws IOException, TranscodingException {
         if(isExportCanceled) {
             Log.d(LOG_TAG, "Export canceled return");
@@ -495,7 +495,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     outputAudioMixedFile, movieDuration); */
         mixAudioTask =
             transcoderHelper.generateTempFileMixAudioFFmpeg(mediaList, tempAudioPath,
-                outputAudioMixedFile, movieDuration);
+                outputAudioMixedFile, movieDuration, nativeLibPath);
 
         AsyncFunction<? super Boolean, ?> swapAudioTask = new AsyncFunction<Boolean, Object>() {
             @Override

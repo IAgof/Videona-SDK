@@ -6,7 +6,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.ffmpeg.Command;
 import com.videonasocialmedia.ffmpeg.CommandBuilder;
 import com.videonasocialmedia.ffmpeg.ListenableFutureExecutor;
-import com.videonasocialmedia.ffmpeg.VideoKit;
+import com.videonasocialmedia.ffmpeg.VideoKitInvoke;
 import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
@@ -38,12 +38,13 @@ public class AudioMixer {
 
   private List<AudioHelper> audioHelperList;
   private List<Media> mediaListDecoded;
-  private VideoKit videoKit;
+  private VideoKitInvoke videoKit;
   private ListenableFutureExecutor listenableFutureExecutor;
 
 
-  public AudioMixer() {
-    videoKit = new VideoKit();
+  public AudioMixer(String nativeLibPath) {
+    videoKit = new VideoKitInvoke();
+    videoKit.setLibPath(nativeLibPath);
     listenableFutureExecutor = new ListenableFutureExecutor();
   }
 

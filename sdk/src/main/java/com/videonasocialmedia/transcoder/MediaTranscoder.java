@@ -228,7 +228,7 @@ public class MediaTranscoder {
         return executorPool.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                AudioMixer mixer = new AudioMixer();
+                AudioMixer mixer = new AudioMixer("fakePath");
                 return mixer.export(mediaList, tempDirectory, outputFile, outputFileDuration);
             }
         });
@@ -236,12 +236,12 @@ public class MediaTranscoder {
 
     public ListenableFuture<Boolean> mixAudioFilesWithFFmpeg (
         final List<Media> mediaList, final String tempDirectory, final String outputFile,
-        final long outputFileDuration) throws IOException,
+        final long outputFileDuration, final String nativeLibPath) throws IOException,
         TranscodingException {
         return executorPool.submit(new Callable<Boolean>() {
             @Override
             public Boolean call() throws Exception {
-                AudioMixer mixer = new AudioMixer();
+                AudioMixer mixer = new AudioMixer(nativeLibPath);
                 return mixer.exportWithFFmpeg(mediaList, tempDirectory, outputFile,
                     outputFileDuration);
             }

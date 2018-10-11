@@ -20,9 +20,9 @@ public interface VMCompositionExportSession {
     int EXPORT_STAGE_WAIT_FOR_TRANSCODING_ERROR = 10;
     int EXPORT_STAGE_JOIN_VIDEOS_ERROR = 11;
 
-  void exportAsyncronously();
+  void exportAsyncronously(String nativeLibPath);
 
-  void export();
+  void export(String nativeLibPath);
 
   void cancel();
 

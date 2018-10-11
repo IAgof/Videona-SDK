@@ -33,6 +33,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.ffmpeg.Command;
 import com.videonasocialmedia.ffmpeg.ListenableFutureExecutor;
 import com.videonasocialmedia.ffmpeg.VideoKit;
+import com.videonasocialmedia.ffmpeg.VideoKitInvoke;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
 import com.videonasocialmedia.transcoder.MediaTranscoder.MediaTranscoderListener;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
@@ -104,7 +105,6 @@ public class TranscoderFragment extends Fragment {
   boolean isVideoFadeActivated;
   boolean isAudioFadeActivated = false;
   int rotation;
-  private VideoKit videoKit = new VideoKit();
 
   public TranscoderFragment() {
     // Required empty public constructor
@@ -346,28 +346,20 @@ public class TranscoderFragment extends Fragment {
     //   " -filter_complex amix=inputs=3:duration=first:dropout_transition=3 " + audioWAV_output ;
 
    // String videoPath = externalDir + File.separator + "inputvideo.mp4";
+   // VideoKit videoKit = new VideoKit();
+    VideoKitInvoke videoKitInvoke = new VideoKitInvoke();
 
+    //Get the native libary path
+    String nativeLibPath = getActivity().getApplicationInfo().nativeLibraryDir;
+    videoKitInvoke.setLibPath(nativeLibPath);
 
     // Apply volume
-    final Command commandVolume = videoKit.createCommand()
+    final Command commandVolume = videoKitInvoke.createCommand()
         .overwriteOutput()
         .inputPath(audioWAV_3)
         .outputPath(audioWAV_3_Output_With_Volume)
         .customCommand("-filter:a volume=" + volumeAudio3)
         .copyVideoCodec()
-        .experimentalFlag()
-        .build();
-
-    // Mix audio
-    final Command commandMix = videoKit.createCommand()
-        .overwriteOutput()
-        .inputPath(audioWAV_1_Output_With_Volume)
-        .inputPath(audioWAV_2_Output_With_Volume)
-        .inputPath(audioWAV_3_Output_With_Volume)
-        .outputPath(audioWAV_output)
-        .customCommand("-filter_complex")
-        .customCommand("amix=inputs=" + inputAudio + ":duration=first:dropout_transition=3")
-        //.copyVideoCodec()
         .experimentalFlag()
         .build();
 
@@ -391,6 +383,19 @@ public class TranscoderFragment extends Fragment {
     } catch (ExecutionException e) {
       e.printStackTrace();
     }
+
+    // Mix audio
+    final Command commandMix = videoKitInvoke.createCommand()
+        .overwriteOutput()
+        .inputPath(audioWAV_1_Output_With_Volume)
+        .inputPath(audioWAV_2_Output_With_Volume)
+        .inputPath(audioWAV_3_Output_With_Volume)
+        .outputPath(audioWAV_output)
+        .customCommand("-filter_complex")
+        .customCommand("amix=inputs=" + inputAudio + ":duration=first:dropout_transition=3")
+        //.copyVideoCodec()
+        .experimentalFlag()
+        .build();
 
     ListenableFuture transcoderMixTask = listenableFutureExecutor.execute(new Runnable() {
       @Override
