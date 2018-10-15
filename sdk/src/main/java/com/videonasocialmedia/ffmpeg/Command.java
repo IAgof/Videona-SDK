@@ -8,5 +8,5 @@
 package com.videonasocialmedia.ffmpeg;
 
 public interface Command {
-    VideoProcessingResult execute();
+  VideoProcessingResult execute();
 }

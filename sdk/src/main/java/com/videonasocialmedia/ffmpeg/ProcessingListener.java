@@ -8,6 +8,7 @@
 package com.videonasocialmedia.ffmpeg;
 
 public interface ProcessingListener {
-    void onSuccess(String path);
-    void onFailure(int returnCode);
+  void onSuccess(String path);
+
+  void onFailure(int returnCode);
 }

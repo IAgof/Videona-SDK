@@ -134,10 +134,10 @@ public class VMCompositionExportSessionImplTest {
     PowerMockito.mockStatic(FileUtils.class);
     when(FileUtils.getDurationFileAsync(anyString())).thenReturn(mockedListenableFutureLong);
     PowerMockito.when(mockedListenableFutureLong.get(anyInt(), any(TimeUnit.class))).thenReturn((long) 55000);
-    doCallRealMethod().when(exportSessionSpy).export();
+    doCallRealMethod().when(exportSessionSpy).export(anyString());
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
-    exportSessionSpy.export();
+    exportSessionSpy.export(anyString());
 
     verify(exportSessionSpy).createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
   }
@@ -221,7 +221,7 @@ public class VMCompositionExportSessionImplTest {
         any(Image.class));
     doReturn(mockedWatermarkImage).when(exportSessionSpy).getWatermarkImage();
 
-    exportSessionSpy.export();
+    exportSessionSpy.export(anyString());
 
     verify(exportSessionSpy).addWatermark(anyString(), any(Image.class));
   }
@@ -244,7 +244,7 @@ public class VMCompositionExportSessionImplTest {
         .createMovieFromComposition((ArrayList<String>) any(ArrayList.class));
     doNothing().when(exportSessionSpy).saveFinalVideo(any(Movie.class), anyString());
 
-    exportSessionSpy.export();
+    exportSessionSpy.export(anyString());
 
     verify(exportSessionSpy, never()).addWatermark(anyString(), any(Image.class));
   }

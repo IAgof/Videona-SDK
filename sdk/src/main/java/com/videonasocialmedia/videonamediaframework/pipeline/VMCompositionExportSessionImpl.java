@@ -490,9 +490,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             // Do nothing as duration is already taken from composition first
         }
 
-        /* mixAudioTask =
-            transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath,
-                    outputAudioMixedFile, movieDuration); */
         mixAudioTask =
             transcoderHelper.generateTempFileMixAudioFFmpeg(mediaList, tempAudioPath,
                 outputAudioMixedFile, movieDuration, nativeLibPath);
@@ -522,7 +519,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             exception.printStackTrace();
             Log.e(LOG_TAG, "Caught " +  exception.getClass().getName()
                 + "mix audio " + exception.getMessage());
-            exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR, exception);
+            if (mixAudioTask.isDone()) {
+                exportListener.onExportError(EXPORT_STAGE_APPLY_AUDIO_MIXED_ERROR, exception);
+            } else {
+                exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR, exception);
+            }
         } catch (CancellationException e) {
                 Log.e(LOG_TAG, "Caught cancellation exception, cancel button ");
                 e.printStackTrace();

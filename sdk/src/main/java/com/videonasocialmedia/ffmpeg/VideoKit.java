@@ -8,38 +8,38 @@
 package com.videonasocialmedia.ffmpeg;
 
 public final class VideoKit {
-    static {
-        try {
-            System.loadLibrary("avutil");
-            System.loadLibrary("swresample");
-            System.loadLibrary("avcodec");
-            System.loadLibrary("avformat");
-            System.loadLibrary("swscale");
-            System.loadLibrary("avfilter");
-            System.loadLibrary("avdevice");
-            System.loadLibrary("videokit");
-            //System.loadLibrary("videokitinvoke");
-        } catch (UnsatisfiedLinkError e) {
-            e.printStackTrace();
-        }
+  static {
+    try {
+      System.loadLibrary("avutil");
+      System.loadLibrary("swresample");
+      System.loadLibrary("avcodec");
+      System.loadLibrary("avformat");
+      System.loadLibrary("swscale");
+      System.loadLibrary("avfilter");
+      System.loadLibrary("avdevice");
+      System.loadLibrary("videokit");
+      //System.loadLibrary("videokitinvoke");
+    } catch (UnsatisfiedLinkError e) {
+      e.printStackTrace();
     }
+  }
 
-    private LogLevel logLevel = LogLevel.FULL;
+  private LogLevel logLevel = LogLevel.FULL;
 
-    public void setLogLevel(LogLevel level) {
-        logLevel = level;
-    }
+  public void setLogLevel(LogLevel level) {
+    logLevel = level;
+  }
 
-    int process(String[] args) {
-        //return run(logLevel.getValue(), args);
-        return run(args);
-    }
+  int process(String[] args) {
+    //return run(logLevel.getValue(), args);
+    return run(args);
+  }
 
-    private native int run(int loglevel, String[] args);
+  private native int run(int loglevel, String[] args);
 
-    private native int run(String[] args);
+  private native int run(String[] args);
 
-    public CommandBuilder createCommand() {
-        return new VideoCommandBuilder(this);
-    }
+  /*public CommandBuilder createCommand() {
+    return new VideoCommandBuilder(this);
+  }*/
 }

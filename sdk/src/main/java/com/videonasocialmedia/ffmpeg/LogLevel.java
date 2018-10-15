@@ -9,15 +9,15 @@ package com.videonasocialmedia.ffmpeg;
 
 @SuppressWarnings("unused")
 public enum LogLevel {
-    NO_LOG(0), ERRORS_ONLY(1), FULL(2);
+  NO_LOG(0), ERRORS_ONLY(1), FULL(2);
 
-    private final int integerValue;
+  private final int integerValue;
 
-    LogLevel(int value) {
-        integerValue = value;
-    }
+  LogLevel(int value) {
+    integerValue = value;
+  }
 
-    public int getValue() {
-        return integerValue;
-    }
+  public int getValue() {
+    return integerValue;
+  }
 }
