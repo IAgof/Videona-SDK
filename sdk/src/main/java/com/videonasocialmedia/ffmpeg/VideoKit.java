@@ -18,7 +18,6 @@ public final class VideoKit {
       System.loadLibrary("avfilter");
       System.loadLibrary("avdevice");
       System.loadLibrary("videokit");
-      //System.loadLibrary("videokitinvoke");
     } catch (UnsatisfiedLinkError e) {
       e.printStackTrace();
     }
