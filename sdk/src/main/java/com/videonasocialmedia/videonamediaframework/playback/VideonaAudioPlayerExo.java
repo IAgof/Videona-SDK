@@ -52,7 +52,7 @@ public class VideonaAudioPlayerExo implements VideonaAudioPlayer{
     userAgent = Util.getUserAgent(context, "VideonaExoAudioPlayer");
   }
 
-  private void initClipPreview(Context context, Music clipToPlay) {
+  public void initClipPreview(Context context, Music clipToPlay) {
     if (rendererBuildingState == RENDERER_BUILDING_STATE_BUILT) {
       player.stop();
     }

@@ -38,6 +38,7 @@ import com.google.android.exoplayer.util.Util;
 
 
 import com.videonasocialmedia.sdk.R;
+import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.playback.customviews.AspectRatioVideoView;
@@ -53,9 +54,8 @@ import java.util.List;
 /**
  * Created by jliarte on 25/08/16.
  */
-public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, VideonaAudioPlayer,
-    SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener,
-        RendererBuilder.RendererBuilderListener {
+public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPlayer,
+    SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener, RendererBuilder.RendererBuilderListener {
   private static final String TAG = "VideonaPlayerExo";
   private static final int BUFFER_LENGTH_MIN = 50;
   private static final int REBUFFER_LENGTH_MIN = 100;
@@ -81,7 +81,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   LinearLayout seekBarLayout;
 
   private final View videonaPlayerView;
-  private VideonaPlayerListener videonaPlayerListener;
+  private VMCompositionPlayer.VMCompositionPlayerListener vmCompositionPlayerListener;
   private ExoPlayer player;
   private RendererBuilder rendererBuilder;
   private TrackRenderer videoRenderer;
@@ -249,6 +249,255 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     }
   }
 
+  /**
+   * VMCompositionPlayer methods starts.
+   **/
+
+  @Override
+  public void initComponents(Context context) {
+    if (player == null) {
+      initVideonaPlayerComponents(context);
+    }
+  }
+
+  // TODO: 18/10/18 Study if it is needed @Override
+  private void destroyPlayer() {
+    seekBarUpdaterHandler.removeCallbacksAndMessages(null);
+    mainHandler.removeCallbacksAndMessages(null);
+  }
+
+  // TODO: 18/10/18 Study if it is needed @Override
+  private void onPause() {
+    pausePreview();
+    releasePlayerView();
+  }
+
+  @Override
+  public void setListener(VMCompositionPlayerListener vmCompositionPlayerListener) {
+    this.vmCompositionPlayerListener = vmCompositionPlayerListener;
+  }
+
+  @Override
+  public void init(VMComposition vmComposition) {
+    if (vmComposition.hasVideos()) {
+      List videoList = vmComposition.getMediaTrack().getItems();
+      bindVideoList(videoList);
+    }
+    if (vmComposition.hasMusic()) {
+      musicPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getMusic());
+    }
+    if (vmComposition.hasVoiceOver()) {
+      voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getVoiceOver());
+    }
+  }
+
+  @Override
+  public void initSingleClip(VMComposition vmComposition, int clipPosition) {
+    if (vmComposition.hasVideos()) {
+      List<Video> videoList = new ArrayList();
+      videoList.add((Video) vmComposition.getMediaTrack().getItems().get(clipPosition));
+      bindVideoList(videoList);
+    }
+    if (vmComposition.hasMusic()) {
+      musicPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getMusic());
+    }
+    if (vmComposition.hasVoiceOver()) {
+      voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getVoiceOver());
+    }
+  }
+
+  @Override
+  public void playPreview() {
+    playPlayer();
+    showPauseButton();
+    seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
+  }
+
+  @Override
+  public void pausePreview() {
+    pausePlayer();
+    showPlayButton();
+    seekBarUpdaterHandler.removeCallbacksAndMessages(null);
+  }
+
+  // TODO: 18/10/18 Study if it is needed @Override
+  private void seekClipToTime(int seekTimeInMsec) {
+    if (player != null) {
+      currentTimePositionInList = seekTimeInMsec
+          - videoList.get(currentClipIndex()).getStartTime()
+          + (int) clipTimesRanges.get(currentClipIndex()).getLower();
+      setSeekBarProgress(currentTimePositionInList);
+      player.seekTo(seekTimeInMsec);
+      seekTo(currentTimePositionInList);
+    }
+  }
+
+  // TODO: 18/10/18 Study if it is needed @Override
+  private void updatePreviewTimeLists() {
+    totalVideoDuration = 0;
+    clipTimesRanges.clear();
+    for (Video clip : videoList) {
+      if (videoList.indexOf(clip) != 0) {
+        totalVideoDuration++;
+      }
+      int clipStartTime = this.totalVideoDuration;
+      int clipStopTime = this.totalVideoDuration + clip.getDuration();
+      clipTimesRanges.add(new Range(clipStartTime, clipStopTime));
+      this.totalVideoDuration = clipStopTime;
+    }
+    updateUiVideoDuration(totalVideoDuration);
+  }
+
+  @Override
+  public void seekTo(int seekTimeInMsec) {
+    if (player != null && seekTimeInMsec < totalVideoDuration) {
+      currentTimePositionInList = seekTimeInMsec;
+      setSeekBarProgress(currentTimePositionInList);
+      int clipIndex = getClipIndexByProgress(currentTimePositionInList);
+      if (currentClipIndex() != clipIndex) {
+        // (jliarte): 26/04/17 moved into seekToClip
+//        clearNextBufferedClip();
+        seekToClip(clipIndex);
+      } else {
+        player.seekTo(getClipPositionFromTimeLineTime());
+        if (videoHasMusic()) {
+          seekAudioTo(currentTimePositionInList);
+        }
+      }
+    }
+  }
+
+  @Override
+  public void seekToClip(int position) {
+    Log.d(TAG, "onClipClicked: " + position);
+    pausePreview();
+    clearNextBufferedClip();
+    currentClipIndex = position;
+    // TODO(jliarte): 6/09/16 (hot)fix for Pablo's Index out of bonds
+    if (position >= videoList.size() && position >= clipTimesRanges.size()) {
+      position = 0;
+    }
+    if (videoList.size() == 0) {
+      return;
+    }
+    currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
+    initClipPreview(videoList.get(position));
+    setSeekBarProgress(currentTimePositionInList);
+    if (videoHasMusic()) {
+      seekAudioTo(currentTimePositionInList);
+    }
+  }
+
+  @Override
+  public int getCurrentPosition() {
+    return currentTimePositionInList;
+  }
+
+  @Override
+  public void setSeekBarLayoutEnabled(boolean seekBarEnabled) {
+    if (seekBarEnabled) {
+      seekBarLayout.setVisibility(VISIBLE);
+    } else {
+      seekBarLayout.setVisibility(GONE);
+    }
+  }
+
+  /**
+   * VMCompositionPlayer methods ends.
+   **/
+
+  private void releasePlayerView() {
+    if (player != null) {
+      currentTimePositionInList = getCurrentPosition();
+      player.release();
+      player = null;
+      clearNextBufferedClip();
+    }
+    if (videoHasMusic()) {
+      releaseAudio();
+    }
+  }
+
+  private void bindVideoList(List<Video> videoList) {
+    initPreviewLists(videoList);
+    initPreview(currentTimePositionInList);
+  }
+
+  private void initPreviewLists(List<Video> videoList) {
+    this.videoList = videoList;
+    updatePreviewTimeLists();
+    setSeekBarTotalVideoDuration();
+  }
+
+  private void setSeekBarTotalVideoDuration() {
+    seekBar.setMax(totalVideoDuration);
+    updateTextProjectDuration(totalVideoDuration);
+  }
+
+  private void updateTextProjectDuration(int totalProjectDuration) {
+    textTimeProjectSeekbar.setText(
+        TimeUtils.toFormattedTimeHoursMinutesSecond(totalProjectDuration));
+  }
+
+  private void initPreview(int instantTime) {
+    if (playerHasVideos()) {
+      this.currentTimePositionInList = instantTime;
+      setSeekBarProgress(currentTimePositionInList);
+      Video clipToPlay = videoList.get(getClipIndexByProgress(this.currentTimePositionInList));
+      videoVolume = clipToPlay.getVolume();
+      initClipPreview(clipToPlay);
+    }
+  }
+
+  private void setSeekBarProgress(int progress) {
+    seekBar.setProgress(progress);
+    textTimeCurrentSeekbar.setText(TimeUtils.toFormattedTimeHoursMinutesSecond(progress));
+  }
+
+  private void playPlayer() {
+    if (player != null) {
+      player.setPlayWhenReady(true);
+    }
+    if (videoHasMusic()) {
+      if (musicPlayer != null) {
+        musicPlayer.playAudio();
+      }
+      if (voiceOverPlayer != null) {
+        voiceOverPlayer.playAudio();
+      }
+    }
+  }
+
+  private void pausePlayer() {
+    if (player != null) {
+      player.setPlayWhenReady(false);
+    }
+    if (videoHasMusic()) {
+      if (musicPlayer != null) {
+        musicPlayer.pauseAudio();
+      }
+      if (voiceOverPlayer != null) {
+        voiceOverPlayer.pauseAudio();
+      }
+    }
+  }
+
+  private void showPlayButton() {
+    playButton.setImageResource(R.drawable.common_icon_play_normal);
+  }
+
+  private void showPauseButton() {
+    playButton.setImageResource(R.drawable.common_icon_pause_normal);
+  }
+
+  private void setBlackBackgroundColor() {
+    videoPreview.setBackgroundColor(Color.BLACK);
+  }
+
+  private void clearImageText() {
+    imageTextPreview.setImageDrawable(null);
+  }
+
   private void previewAVTransitions(int progress) {
     if (isSetVideoTransitionFadeActivated || isSetAudioTransitionFadeActivated) {
       if (isPlaying() && shouldLaunchStartTransition(progress)) {
@@ -287,52 +536,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     return ((seekBarProgress > timeStartLastClip) && (seekBarProgress < (timeStartLastClip + TIME_TRANSITION_FADE)));
   }
 
-  /***
-   * VideonaPlayer methods.
-   ***/
-
-  @Override
-  public void onShown(Context context) {
-    if (player == null) {
-      initVideonaPlayerComponents(context);
-    }
-  }
-
-  @Override
-  public void onDestroy() {
-    seekBarUpdaterHandler.removeCallbacksAndMessages(null);
-    mainHandler.removeCallbacksAndMessages(null);
-  }
-
-  @Override
-  public void onPause() {
-    pausePreview();
-    releaseVideoView();
-  }
-
-  private void releaseVideoView() {
-    if (player != null) {
-      currentTimePositionInList = getCurrentPosition();
-      player.release();
-      player = null;
-      clearNextBufferedClip();
-    }
-    if (videoHasMusic()) {
-      releaseAudio();
-    }
-  }
-
-  /**
-   * Sets listener activity to send back player events.
-   *
-   * @param videonaPlayerListener the activity or class that implements VideonaPlayerListener
-   *                              interface
-   */
-  @Override
-  public void setListener(VideonaPlayerListener videonaPlayerListener) {
-    this.videonaPlayerListener = videonaPlayerListener;
-  }
-
   private void initClipList() {
     this.videoList = new ArrayList<>();
   }
@@ -342,18 +545,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     seekBar.setOnSeekBarChangeListener(this);
   }
 
-  @Override
-  public void initPreview(int instantTime) {
-    if (playerHasVideos()) {
-      this.currentTimePositionInList = instantTime;
-      setSeekBarProgress(currentTimePositionInList);
-      Video clipToPlay = videoList.get(getClipIndexByProgress(this.currentTimePositionInList));
-      videoVolume = clipToPlay.getVolume();
-      initClipPreview(clipToPlay);
-    }
-  }
-
   private void initClipPreview(Video clipToPlay) {
+    // Init video player
     if (rendererBuildingState == RENDERER_BUILDING_STATE_BUILT) {
       stopPlayer();
     }
@@ -367,16 +560,18 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     } else {
       onRenderers(nextClipRenderers, (DefaultBandwidthMeter) bandwidthMeter);
     }
+
+    // init Music Players
+    if (videoHasMusic()) {
+      seekAudioTo(currentTimePositionInList);
+    }
+
   }
 
   private void stopPlayer() {
     if (player != null) {
       player.stop();
     }
-  }
-
-  public void clearImageText() {
-    imageTextPreview.setImageDrawable(null);
   }
 
   private boolean playerHasVideos() {
@@ -406,72 +601,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     //        }
   }
 
-  @Override
-  public void initPreviewLists(List<Video> videoList) {
-    this.videoList = videoList;
-    this.updatePreviewTimeLists();
-    this.setSeekBarTotalVideoDuration();
-  }
-
-  private void setSeekBarTotalVideoDuration() {
-    seekBar.setMax(totalVideoDuration);
-    updateTextProjectDuration(totalVideoDuration);
-  }
-
-  private void updateTextProjectDuration(int totalProjectDuration) {
-    textTimeProjectSeekbar.setText(
-        TimeUtils.toFormattedTimeHoursMinutesSecond(totalProjectDuration));
-  }
-
-  @Override
-  public void bindVideoList(List<Video> videoList) {
-    this.initPreviewLists(videoList);
-    this.initPreview(currentTimePositionInList);
-  }
-
-  @Override
-  public void updatePreviewTimeLists() {
-    totalVideoDuration = 0;
-    clipTimesRanges.clear();
-    for (Video clip : videoList) {
-      if (videoList.indexOf(clip) != 0) {
-        totalVideoDuration++;
-      }
-      int clipStartTime = this.totalVideoDuration;
-      int clipStopTime = this.totalVideoDuration + clip.getDuration();
-      clipTimesRanges.add(new Range(clipStartTime, clipStopTime));
-      this.totalVideoDuration = clipStopTime;
-    }
-    updateUiVideoDuration(totalVideoDuration);
-  }
-  
   private void updateUiVideoDuration(int totalVideoDuration){
     textTimeProjectSeekbar.setText(
         TimeUtils.toFormattedTimeHoursMinutesSecond(totalVideoDuration));
     seekBar.setMax(totalVideoDuration);
   }
 
-  @Override
-  public void playPreview() {
-    if (player != null) {
-      player.setPlayWhenReady(true);
-    }
-    if (videoHasMusic()) {
-      playAudio();
-    }
-    // TODO(jliarte): 31/08/16 else??? - player should not ever be null!!
-    showPauseButton();
-    seekBarUpdaterHandler.postDelayed(updateTimeTask, 20);
-  }
-
-  @Override
-  public void pausePreview() {
-    pauseVideo();
-    seekBarUpdaterHandler.removeCallbacksAndMessages(null);
-    showPlayButton();
-  }
-
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void setVideoVolume(float volume) {
     if (player != null) {
       player.sendMessage(rendererBuilder.getAudioRenderer(),
@@ -479,47 +615,17 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     }
   }
 
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void setMusicVolume(float volume) {
     if (musicPlayer != null) {
       musicPlayer.setAudioVolume(volume);
     }
   }
 
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void setVoiceOverVolume(float volume) {
     if (voiceOverPlayer != null) {
       voiceOverPlayer.setAudioVolume(volume);
-    }
-  }
-
-  private void pauseVideo() {
-    if (player != null) {
-      player.setPlayWhenReady(false);
-    }
-    if (videoHasMusic()) {
-      pauseAudio();
-    }
-  }
-
-
-  @Override
-  public void seekTo(int seekTimeInMsec) {
-    if (player != null && seekTimeInMsec < totalVideoDuration) {
-      currentTimePositionInList = seekTimeInMsec;
-      setSeekBarProgress(currentTimePositionInList);
-      int clipIndex = getClipIndexByProgress(currentTimePositionInList);
-      if (currentClipIndex() != clipIndex) {
-        // (jliarte): 26/04/17 moved into seekToClip
-//        clearNextBufferedClip();
-        seekToClip(clipIndex);
-      } else {
-        player.seekTo(getClipPositionFromTimeLineTime());
-      }
-
-      if (videoHasMusic()) {
-        seekAudioTo(currentTimePositionInList);
-      }
     }
   }
 
@@ -527,58 +633,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     nextClipRenderers = null;
   }
 
-  @Override
-  public void seekClipToTime(int seekTimeInMsec) {
-    if (player != null) {
-      currentTimePositionInList = seekTimeInMsec
-          - videoList.get(currentClipIndex()).getStartTime()
-          + (int) clipTimesRanges.get(currentClipIndex()).getLower();
-      setSeekBarProgress(currentTimePositionInList);
-      player.seekTo(seekTimeInMsec);
-      seekTo(currentTimePositionInList);
-    }
-  }
-
-  @Override
-  public void seekToClip(int position) {
-    Log.d(TAG, "onClipClicked: " + position);
-    pausePreview();
-    clearNextBufferedClip();
-    currentClipIndex = position;
-    // TODO(jliarte): 6/09/16 (hot)fix for Pablo's Index out of bonds
-    if (position >= videoList.size() && position >= clipTimesRanges.size()) {
-      position = 0;
-    }
-    if (videoList.size() == 0) {
-      return;
-    }
-    currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
-    initClipPreview(videoList.get(position));
-    setSeekBarProgress(currentTimePositionInList);
-  }
-
-  /** VideonaAudioPlayer interface, Music and VoiceOver have the same behaviour **/
-  @Override
-  public void playAudio() {
-    if (musicPlayer != null) {
-      musicPlayer.playAudio();
-    }
-    if (voiceOverPlayer != null) {
-      voiceOverPlayer.playAudio();
-    }
-  }
-
-  @Override
-  public void pauseAudio() {
-    if (musicPlayer != null) {
-      musicPlayer.pauseAudio();
-    }
-    if (voiceOverPlayer != null) {
-      voiceOverPlayer.pauseAudio();
-    }
-  }
-
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void releaseAudio() {
     if (musicPlayer != null) {
       musicPlayer.releaseAudio();
@@ -590,7 +645,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     }
   }
 
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void seekAudioTo(long timeInMs) {
     if (musicPlayer != null) {
       musicPlayer.seekAudioTo(timeInMs);
@@ -604,59 +659,25 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     return musicPlayer != null || voiceOverPlayer != null;
   }
 
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void setVideoTransitionFade() {
     isSetVideoTransitionFadeActivated = true;
   }
 
-  @Override
+
+  // TODO: 18/10/18 Move to VMCompositionPlayer   @Override
   public void setAudioTransitionFade() {
     isSetAudioTransitionFadeActivated = true;
   }
 
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void setMusic(Music music) {
     musicPlayer = new VideonaAudioPlayerExo(getContext(), music);
   }
 
-  @Override
+  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
   public void setVoiceOver(Music voiceOver) {
     voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), voiceOver);
-  }
-
-  @Override
-  public int getCurrentPosition() {
-    return currentTimePositionInList;
-  }
-
-
-  @Override
-  public void setSeekBarProgress(int progress) {
-    seekBar.setProgress(progress);
-    textTimeCurrentSeekbar.setText(TimeUtils.toFormattedTimeHoursMinutesSecond(progress));
-  }
-
-  @Override
-  public void setSeekBarLayoutEnabled(boolean seekBarEnabled) {
-    if (seekBarEnabled) {
-      seekBarLayout.setVisibility(VISIBLE);
-    } else {
-      seekBarLayout.setVisibility(GONE);
-    }
-  }
-
-  @Override
-  public void resetPreview() {
-    setBlackBackgroundColor();
-    showPlayButton();
-    initPreview(0);
-    setSeekBarProgress(0);
-    updateTextProjectDuration(0);
-    clearImageText();
-  }
-
-  private void setBlackBackgroundColor() {
-    videoPreview.setBackgroundColor(Color.BLACK);
   }
 
   /**
@@ -816,16 +837,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     }
   }
 
-  private void showPlayButton() {
-    //playButton.setVisibility(View.VISIBLE);
-    playButton.setImageResource(R.drawable.common_icon_play_normal);
-  }
-
-  public void showPauseButton() {
-    //playButton.setVisibility(View.INVISIBLE);
-    playButton.setImageResource(R.drawable.common_icon_pause_normal);
-  }
-
   @Override
   public void onStartTrackingTouch(SeekBar seekBar) {
   }
@@ -861,8 +872,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   }
 
   private void notifyNewClipPlayed() {
-    if (videonaPlayerListener != null) {
-      videonaPlayerListener.newClipPlayed(currentClipIndex());
+    if (vmCompositionPlayerListener != null) {
+      vmCompositionPlayerListener.newClipPlayed(currentClipIndex());
     }
   }
 
@@ -906,8 +917,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   }
 
   private void notifyPlayerReady() {
-   if (videonaPlayerListener != null) {
-     videonaPlayerListener.playerReady();
+   if (vmCompositionPlayerListener != null) {
+     vmCompositionPlayerListener.playerReady();
    }
   }
 
