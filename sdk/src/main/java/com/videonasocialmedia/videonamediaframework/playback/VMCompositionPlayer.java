@@ -16,9 +16,9 @@ import com.videonasocialmedia.videonamediaframework.model.VMComposition;
  */
 
 public interface VMCompositionPlayer {
-  void initComponents(Context context);
+  void attachView(Context context);
   //void destroyPlayer();
-  //void onPause();
+  void detachView();
   void setListener(VMCompositionPlayerListener vmCompositionPlayerListener);
   void init(VMComposition vmComposition);
   void initSingleClip(VMComposition vmComposition, int clipPosition);
@@ -30,6 +30,7 @@ public interface VMCompositionPlayer {
   void seekToClip(int position);
   int getCurrentPosition();
   void setSeekBarLayoutEnabled(boolean seekBarEnabled);
+  void setAspectRatioVerticalVideos(int height);
 
   /**
    * Created by jliarte on 13/05/16.

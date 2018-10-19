@@ -59,10 +59,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private static final String TAG = "VideonaPlayerExo";
   private static final int BUFFER_LENGTH_MIN = 50;
   private static final int REBUFFER_LENGTH_MIN = 100;
-  public static final int TYPE_VIDEO = 0;
-  public static final int TYPE_AUDIO = 1;
-  public static final int TYPE_TEXT = 2;
-  public static final int TYPE_METADATA = 3;
+  protected static final int TYPE_VIDEO = 0;
+  protected static final int TYPE_AUDIO = 1;
+  protected static final int TYPE_TEXT = 2;
+  protected static final int TYPE_METADATA = 3;
   private static final int DISABLED_TRACK = -1;
 
   private static final int RENDERER_BUILDING_STATE_IDLE = 1;
@@ -254,7 +254,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
    **/
 
   @Override
-  public void initComponents(Context context) {
+  public void attachView(Context context) {
     if (player == null) {
       initVideonaPlayerComponents(context);
     }
@@ -266,8 +266,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     mainHandler.removeCallbacksAndMessages(null);
   }
 
-  // TODO: 18/10/18 Study if it is needed @Override
-  private void onPause() {
+
+  @Override
+  public void detachView() {
     pausePreview();
     releasePlayerView();
   }
@@ -400,6 +401,19 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     } else {
       seekBarLayout.setVisibility(GONE);
     }
+  }
+
+  @Override
+  public void setAspectRatioVerticalVideos(int height) {
+    LayoutParams params = (LayoutParams) videoPreview.getLayoutParams();
+    int heightDp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+        height, getResources().getDisplayMetrics());
+    double aspectRatio = 0.5625D;
+    int widthDp = (int) (heightDp * aspectRatio);
+    params.height = heightDp;
+    params.width = widthDp;
+    videoPreview.setLayoutParams(params);
+    videoPreview.setAspectRatio(aspectRatio);
   }
 
   /**
@@ -671,12 +685,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  public void setMusic(Music music) {
+  private void setMusic(Music music) {
     musicPlayer = new VideonaAudioPlayerExo(getContext(), music);
   }
 
   // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  public void setVoiceOver(Music voiceOver) {
+  private void setVoiceOver(Music voiceOver) {
     voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), voiceOver);
   }
 
@@ -686,7 +700,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
    * @param text         the text to render
    * @param textPosition the text position
    */
-  public void setImageText(String text, String textPosition, boolean textShadow, int width,
+  private void setImageText(String text, String textPosition, boolean textShadow, int width,
                            int height) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
         text, textPosition, textShadow, width, height);
@@ -784,7 +798,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
    * End of VideonaPlayer methods.
    ***/
 
-  public void onClickPlayPauseButton() {
+  private void onClickPlayPauseButton() {
     if (playerHasVideos()) {
       if (isPlaying()) {
         pausePreview();
@@ -800,7 +814,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
    * @param event received @{@link MotionEvent}
    * @return true if event has beeen processed
    */
-  public boolean onTouchPreview(MotionEvent event) {
+  private boolean onTouchPreview(MotionEvent event) {
     boolean eventProcessed = false;
     if (event.getAction() == MotionEvent.ACTION_DOWN) {
       onClickPlayPauseButton();
@@ -925,7 +939,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   /**
    * Renders text if has been set for current clip.
    */
-  public void updateClipTextPreview() {
+  private void updateClipTextPreview() {
     if (videoList.size() > 0 && getCurrentClip().hasText()) {
       setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition(),
           getCurrentClip().hasClipTextShadow(), videoPreview.getMeasuredWidth(),
@@ -954,7 +968,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
    *
    * @param shouldMute true if preview should mute
    */
-  public void muteVideo(boolean shouldMute) {
+  private void muteVideo(boolean shouldMute) {
        /* // TODO(jliarte): 1/09/16 test mute
         if (player != null)
             if (shouldMute) {
@@ -978,7 +992,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   public void onPlayerError(ExoPlaybackException error) {
   }
 
-  public Handler getMainHandler() {
+  private Handler getMainHandler() {
     return mainHandler;
   }
 
@@ -1056,19 +1070,4 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     }
   }
 
-  public void setAspectRatioVerticalVideos(int height) {
-    LayoutParams params = (LayoutParams) videoPreview.getLayoutParams();
-    int heightDp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
-        height, getResources().getDisplayMetrics());
-    double aspectRatio = 0.5625D;
-    int widthDp = (int) (heightDp * aspectRatio);
-    params.height = heightDp;
-    params.width = widthDp;
-    videoPreview.setLayoutParams(params);
-    videoPreview.setAspectRatio(0.5625D);
-  }
-
-  public View getVideoPreview() {
-    return videoPreview;
-  }
 }
