@@ -186,7 +186,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     protected void applyWatermark() throws IOException {
         if (vmComposition.hasWatermark()) {
-            if(isExportCanceled) {
+            if (isExportCanceled) {
                 Log.d(LOG_TAG, "Export canceled return");
                 return;
             }
@@ -238,14 +238,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         if (vmComposition.hasMusic()) {
             Media music = getMediaItemToMix(new Music(vmComposition.getMusic()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC));
-            if(music.getVolume()>0f) {
+            if (music.getVolume()>0f) {
                 mediaList.add(music);
             }
         }
         if (vmComposition.hasVoiceOver()) {
             Media voiceOver = getMediaItemToMix(new Music(vmComposition.getVoiceOver()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
-            if(voiceOver.getVolume()>0f) {
+            if (voiceOver.getVolume()>0f) {
                 mediaList.add(voiceOver);
             }
         }
@@ -476,8 +476,13 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     protected void mixAudio(List<Media> mediaList, final String videoPath, String nativeLibPath)
         throws IOException, TranscodingException {
-        if(isExportCanceled) {
+        if (isExportCanceled) {
             Log.d(LOG_TAG, "Export canceled return");
+            return;
+        }
+        if (mediaList.size() == 1 && mediaList.get(0).getVolume() == 1) {
+            Log.d(LOG_TAG, "Just one media with volume 1.0, nothing to do");
+            notifyFinalSuccess(finalVideoExportedFilePath);
             return;
         }
         Log.d(LOG_TAG, "Mixing audio");
