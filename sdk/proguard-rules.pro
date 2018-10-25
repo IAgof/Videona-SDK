@@ -73,7 +73,7 @@
 
 # Mp4parser
 -keep class java.awt.image.BufferedImage  { *; }
--dontwarn com.googlecode.mp4parser.**
+-dontwarn org.mp4parser.**
 
 -keepattributes Exceptions, InnerClasses
 
@@ -85,3 +85,6 @@
 # -printmapping mapping.txt # ensure this is NOT present!!!
 -keep class com.crashlytics.** { *; }
 -dontwarn com.crashlytics.**
+
+#################################### SLF4J #####################################
+-dontwarn org.slf4j.**
