@@ -14,11 +14,15 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentPagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 
 
+import com.github.hiteshsondhi88.libffmpeg.FFmpeg;
+import com.github.hiteshsondhi88.libffmpeg.LoadBinaryResponseHandler;
+import com.github.hiteshsondhi88.libffmpeg.exceptions.FFmpegNotSupportedException;
 import com.karumi.dexter.Dexter;
 import com.karumi.dexter.MultiplePermissionsReport;
 import com.karumi.dexter.PermissionToken;
@@ -31,7 +35,10 @@ import java.util.List;
 import butterknife.ButterKnife;
 
 
-public class MainActivity extends AppCompatActivity implements PlayerFragment.OnFragmentInteractionListener, TranscoderFragment.OnFragmentInteractionListener {
+public class MainActivity extends AppCompatActivity implements
+    PlayerFragment.OnFragmentInteractionListener, TranscoderFragment.OnFragmentInteractionListener {
+
+  private String LOG_TAG = MainActivity.class.getCanonicalName();
 
   /**
    * The {@link android.support.v4.view.PagerAdapter} that will provide
@@ -47,7 +54,6 @@ public class MainActivity extends AppCompatActivity implements PlayerFragment.On
    * The {@link ViewPager} that will host the section contents.
    */
   private ViewPager mViewPager;
-
   public static String externalDir = Environment.getExternalStoragePublicDirectory(
       Environment.DIRECTORY_MOVIES) + File.separator + "VideonaSDK";
   public static String tempDir = externalDir + File.separator + ".temp";
@@ -86,6 +92,38 @@ public class MainActivity extends AppCompatActivity implements PlayerFragment.On
     checkManifestPermission();
     checkPaths();
 
+    initFFmpeg();
+  }
+
+  private void initFFmpeg() {
+    FFmpeg ffmpeg = FFmpeg.getInstance(this);
+    try {
+      ffmpeg.loadBinary(new LoadBinaryResponseHandler() {
+
+        @Override
+        public void onStart() {
+          Log.d(LOG_TAG, "initFFmpeg, start");
+        }
+
+        @Override
+        public void onFailure() {
+          Log.d(LOG_TAG, "initFFmpeg, failure");
+        }
+
+        @Override
+        public void onSuccess() {
+          Log.d(LOG_TAG, "initFFmpeg, success");
+        }
+
+        @Override
+        public void onFinish() {
+          Log.d(LOG_TAG, "initFFmpeg, finish");
+        }
+      });
+    } catch (FFmpegNotSupportedException e) {
+      // Handle if FFmpeg is not supported by device
+      Log.d(LOG_TAG, "initFFmpeg, FFmpegNotSupportedException " + e.getMessage());
+    }
   }
 
   private void checkManifestPermission() {
