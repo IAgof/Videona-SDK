@@ -38,9 +38,13 @@ import com.google.android.exoplayer.util.Util;
 
 
 import com.videonasocialmedia.sdk.R;
+import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
-import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
+import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
+import com.videonasocialmedia.videonamediaframework.model.media.track.MediaTrack;
+import com.videonasocialmedia.videonamediaframework.model.media.track.Track;
 import com.videonasocialmedia.videonamediaframework.playback.customviews.AspectRatioVideoView;
 import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 import com.videonasocialmedia.videonamediaframework.utils.TimeUtils;
@@ -91,7 +95,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
 
   private VideonaAudioPlayerExo musicPlayer;
   private VideonaAudioPlayerExo voiceOverPlayer;
-  private List<Video> videoList;
+  //private List<Video> videoList;
+  private MediaTrack mediaTrack;
   private int currentClipIndex = 0;
   private int currentTimePositionInList = 0;
   private int totalVideoDuration = 0;
@@ -100,6 +105,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private List<Range> clipTimesRanges;
   private Handler mainHandler;
   private Handler seekBarUpdaterHandler = new Handler();
+
+  private boolean isASingleClip = false;
+  private int timeStartSingleVideoInVideoList = 0;
 
   private final Runnable updateTimeTask = new Runnable() {
     @Override
@@ -121,7 +129,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private boolean isSetAudioTransitionFadeActivated = false;
   private boolean isInAnimatorLaunched;
   private boolean isOutAnimatorLaunched;
-  private float videoVolume;
+
+  private static final float VOLUME_MUTE = 0f;
 
   /**
    * Default constructor.
@@ -212,17 +221,15 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     initClipList();
     initSeekBar();
     clipTimesRanges = new ArrayList<>();
-    setupInAnimator();
-    setupOutAnimator();
   }
 
   private void updateSeekBarProgress() {
     if (player != null && isPlaying()) {
       try {
-        if (currentClipIndex() < videoList.size()) {
+        if (currentClipIndex() < mediaTrack.getItems().size()) {
           int progress = ((int) player.getCurrentPosition())
               + (int) clipTimesRanges.get(currentClipIndex()).getLower()
-              - videoList.get(currentClipIndex()).getStartTime();
+              - mediaTrack.getItems().get(currentClipIndex()).getStartTime();
           setSeekBarProgress(progress);
           currentTimePositionInList = progress;
           previewAVTransitions(progress);
@@ -260,51 +267,87 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     }
   }
 
-  // TODO: 18/10/18 Study if it is needed @Override
-  private void destroyPlayer() {
-    seekBarUpdaterHandler.removeCallbacksAndMessages(null);
-    mainHandler.removeCallbacksAndMessages(null);
-  }
-
-
   @Override
   public void detachView() {
     pausePreview();
     releasePlayerView();
+    seekBarUpdaterHandler.removeCallbacksAndMessages(null);
+    mainHandler.removeCallbacksAndMessages(null);
   }
 
   @Override
-  public void setListener(VMCompositionPlayerListener vmCompositionPlayerListener) {
+  public void setVMCompositionPlayerListener(VMCompositionPlayerListener vmCompositionPlayerListener) {
     this.vmCompositionPlayerListener = vmCompositionPlayerListener;
   }
 
   @Override
   public void init(VMComposition vmComposition) {
     if (vmComposition.hasVideos()) {
-      List videoList = vmComposition.getMediaTrack().getItems();
-      bindVideoList(videoList);
+      bindMediaTrack(vmComposition.getMediaTrack());
+      setMediaTrackVolume();
     }
     if (vmComposition.hasMusic()) {
       musicPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getMusic());
+      Track musicTrack = vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC);
+      setMusicTrackVolume(musicTrack);
     }
     if (vmComposition.hasVoiceOver()) {
       voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getVoiceOver());
+      Track voiceOverTrack = vmComposition.getAudioTracks()
+          .get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER);
+      setVoiceOverTrackVolume(voiceOverTrack);
     }
   }
 
   @Override
   public void initSingleClip(VMComposition vmComposition, int clipPosition) {
+    isASingleClip = true;
+    Video singleVideo = (Video) vmComposition.getMediaTrack().getItems().get(clipPosition);
     if (vmComposition.hasVideos()) {
-      List<Video> videoList = new ArrayList();
-      videoList.add((Video) vmComposition.getMediaTrack().getItems().get(clipPosition));
-      bindVideoList(videoList);
+      MediaTrack mediaTrack = vmComposition.getMediaTrack();
+      MediaTrack mediaTrackSingleVideo = new MediaTrack(mediaTrack.getId(), mediaTrack.getVolume(),
+          mediaTrack.isMuted(), mediaTrack.getPosition());
+      try {
+        mediaTrackSingleVideo.insertItem(singleVideo);
+      } catch (IllegalItemOnTrack illegalItemOnTrack) {
+        illegalItemOnTrack.printStackTrace();
+      }
+      bindMediaTrack(mediaTrackSingleVideo);
+      if (mediaTrackSingleVideo.isMuted()) {
+        setVideoVolume(VOLUME_MUTE);
+      } else {
+        setVideoVolume(mediaTrackSingleVideo.getVolume());
+      }
+    }
+    for(int i = 0; i < clipPosition; i++) {
+      timeStartSingleVideoInVideoList = timeStartSingleVideoInVideoList +
+          vmComposition.getMediaTrack().getItems().get(i).getDuration();
     }
     if (vmComposition.hasMusic()) {
       musicPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getMusic());
+      musicPlayer.seekAudioTo(timeStartSingleVideoInVideoList);
+      Track musicTrack = vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC);
+      setMusicTrackVolume(musicTrack);
     }
     if (vmComposition.hasVoiceOver()) {
       voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), vmComposition.getVoiceOver());
+      voiceOverPlayer.seekAudioTo(timeStartSingleVideoInVideoList);
+      Track voiceOverTrack = vmComposition.getAudioTracks()
+          .get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER);
+      setVoiceOverTrackVolume(voiceOverTrack);
     }
+  }
+
+  @Override
+  public void initSingleVideo(Video video) {
+    MediaTrack mediaTrack = new MediaTrack();
+    try {
+      mediaTrack.insertItem(video);
+    } catch (IllegalItemOnTrack illegalItemOnTrack) {
+      illegalItemOnTrack.printStackTrace();
+    }
+    bindMediaTrack(mediaTrack);
+    setVideoVolume(video.getVolume());
   }
 
   @Override
@@ -325,7 +368,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private void seekClipToTime(int seekTimeInMsec) {
     if (player != null) {
       currentTimePositionInList = seekTimeInMsec
-          - videoList.get(currentClipIndex()).getStartTime()
+          - mediaTrack.getItems().get(currentClipIndex()).getStartTime()
           + (int) clipTimesRanges.get(currentClipIndex()).getLower();
       setSeekBarProgress(currentTimePositionInList);
       player.seekTo(seekTimeInMsec);
@@ -337,8 +380,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private void updatePreviewTimeLists() {
     totalVideoDuration = 0;
     clipTimesRanges.clear();
-    for (Video clip : videoList) {
-      if (videoList.indexOf(clip) != 0) {
+    for (Media clip : mediaTrack.getItems()) {
+      if (mediaTrack.getItems().indexOf(clip) != 0) {
         totalVideoDuration++;
       }
       int clipStartTime = this.totalVideoDuration;
@@ -361,9 +404,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
         seekToClip(clipIndex);
       } else {
         player.seekTo(getClipPositionFromTimeLineTime());
-        if (videoHasMusic()) {
+        if (videoHasMusicOrVoiceOver()) {
           seekAudioTo(currentTimePositionInList);
         }
+
       }
     }
   }
@@ -375,24 +419,25 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     clearNextBufferedClip();
     currentClipIndex = position;
     // TODO(jliarte): 6/09/16 (hot)fix for Pablo's Index out of bonds
-    if (position >= videoList.size() && position >= clipTimesRanges.size()) {
+    if (position >= mediaTrack.getItems().size() && position >= clipTimesRanges.size()) {
       position = 0;
     }
-    if (videoList.size() == 0) {
+    if (mediaTrack.getItems().size() == 0) {
       return;
     }
     currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
-    initClipPreview(videoList.get(position));
+    initClipPreview((Video) mediaTrack.getItems().get(position));
+    setMediaTrackVolume();
     setSeekBarProgress(currentTimePositionInList);
-    if (videoHasMusic()) {
+    if (videoHasMusicOrVoiceOver()) {
       seekAudioTo(currentTimePositionInList);
     }
   }
 
-  @Override
+  /* Delete, not needed @Override
   public int getCurrentPosition() {
     return currentTimePositionInList;
-  }
+  }*/
 
   @Override
   public void setSeekBarLayoutEnabled(boolean seekBarEnabled) {
@@ -417,30 +462,85 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   /**
+   * Sets text and text position for video preview.
+   *
+   * @param text         the text to render
+   * @param textPosition the text position
+   */
+  @Override
+  public void setImageText(String text, String textPosition, boolean textWithShadow, int width,
+                           int height) {
+    Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
+        text, textPosition, textWithShadow, width, height);
+    imageTextPreview.setImageDrawable(textDrawable);
+  }
+
+  @Override
+  public void setVideoVolume(float volume) {
+    if (player != null) {
+      player.sendMessage(rendererBuilder.getAudioRenderer(),
+          MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
+    }
+  }
+
+  @Override
+  public void setMusicVolume(float volume) {
+    if (musicPlayer != null) {
+      musicPlayer.setAudioVolume(volume);
+    }
+  }
+
+  @Override
+  public void setVoiceOverVolume(float volume) {
+    if (voiceOverPlayer != null) {
+      voiceOverPlayer.setAudioVolume(volume);
+    }
+  }
+
+  /**
    * VMCompositionPlayer methods ends.
    **/
 
   private void releasePlayerView() {
     if (player != null) {
-      currentTimePositionInList = getCurrentPosition();
       player.release();
       player = null;
       clearNextBufferedClip();
     }
-    if (videoHasMusic()) {
+    if (videoHasMusicOrVoiceOver()) {
       releaseAudio();
     }
   }
 
-  private void bindVideoList(List<Video> videoList) {
-    initPreviewLists(videoList);
+  private void bindMediaTrack(MediaTrack mediaTrack) {
+    this.mediaTrack = mediaTrack;
+    updatePreviewTimeLists();
+    setSeekBarTotalVideoDuration();
     initPreview(currentTimePositionInList);
   }
 
-  private void initPreviewLists(List<Video> videoList) {
-    this.videoList = videoList;
-    updatePreviewTimeLists();
-    setSeekBarTotalVideoDuration();
+  private void setMediaTrackVolume() {
+    if (mediaTrack.isMuted()) {
+      setVideoVolume(VOLUME_MUTE);
+    } else {
+      setVideoVolume(mediaTrack.getVolume());
+    }
+  }
+
+  private void setMusicTrackVolume(Track musicTrack) {
+    if (musicTrack.isMuted()) {
+      musicPlayer.setAudioVolume(VOLUME_MUTE);
+    } else {
+      musicPlayer.setAudioVolume(musicTrack.getVolume());
+    }
+  }
+
+  private void setVoiceOverTrackVolume(Track voiceOverTrack) {
+    if (voiceOverTrack.isMuted()) {
+      voiceOverPlayer.setAudioVolume(VOLUME_MUTE);
+    } else {
+      voiceOverPlayer.setAudioVolume(voiceOverTrack.getVolume());
+    }
   }
 
   private void setSeekBarTotalVideoDuration() {
@@ -457,8 +557,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     if (playerHasVideos()) {
       this.currentTimePositionInList = instantTime;
       setSeekBarProgress(currentTimePositionInList);
-      Video clipToPlay = videoList.get(getClipIndexByProgress(this.currentTimePositionInList));
-      videoVolume = clipToPlay.getVolume();
+      Video clipToPlay = (Video) mediaTrack.getItems()
+          .get(getClipIndexByProgress(this.currentTimePositionInList));
       initClipPreview(clipToPlay);
     }
   }
@@ -472,7 +572,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     if (player != null) {
       player.setPlayWhenReady(true);
     }
-    if (videoHasMusic()) {
+    if (videoHasMusicOrVoiceOver()) {
       if (musicPlayer != null) {
         musicPlayer.playAudio();
       }
@@ -486,13 +586,19 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     if (player != null) {
       player.setPlayWhenReady(false);
     }
-    if (videoHasMusic()) {
+    if (videoHasMusicOrVoiceOver()) {
       if (musicPlayer != null) {
         musicPlayer.pauseAudio();
       }
       if (voiceOverPlayer != null) {
         voiceOverPlayer.pauseAudio();
       }
+    }
+  }
+
+  private void stopPlayer() {
+    if (player != null) {
+      player.stop();
     }
   }
 
@@ -551,7 +657,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void initClipList() {
-    this.videoList = new ArrayList<>();
+    this.mediaTrack = new MediaTrack();
   }
 
   private void initSeekBar() {
@@ -574,22 +680,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     } else {
       onRenderers(nextClipRenderers, (DefaultBandwidthMeter) bandwidthMeter);
     }
-
-    // init Music Players
-    if (videoHasMusic()) {
-      seekAudioTo(currentTimePositionInList);
-    }
-
-  }
-
-  private void stopPlayer() {
-    if (player != null) {
-      player.stop();
-    }
   }
 
   private boolean playerHasVideos() {
-    return this.videoList.size() > 0;
+    return mediaTrack.getItems().size() > 0;
   }
 
   private int getClipIndexByProgress(int progress) {
@@ -621,34 +715,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     seekBar.setMax(totalVideoDuration);
   }
 
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  public void setVideoVolume(float volume) {
-    if (player != null) {
-      player.sendMessage(rendererBuilder.getAudioRenderer(),
-              MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
-    }
-  }
-
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  public void setMusicVolume(float volume) {
-    if (musicPlayer != null) {
-      musicPlayer.setAudioVolume(volume);
-    }
-  }
-
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  public void setVoiceOverVolume(float volume) {
-    if (voiceOverPlayer != null) {
-      voiceOverPlayer.setAudioVolume(volume);
-    }
-  }
-
   private void clearNextBufferedClip() {
     nextClipRenderers = null;
   }
 
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  public void releaseAudio() {
+  private void releaseAudio() {
     if (musicPlayer != null) {
       musicPlayer.releaseAudio();
       musicPlayer = null;
@@ -659,52 +730,34 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     }
   }
 
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  public void seekAudioTo(long timeInMs) {
+  private void seekAudioTo(long timeInMs) {
     if (musicPlayer != null) {
+      if (isASingleClip) {
+        timeInMs = timeStartSingleVideoInVideoList + timeInMs;
+      }
       musicPlayer.seekAudioTo(timeInMs);
     }
     if (voiceOverPlayer != null) {
+      if (isASingleClip) {
+        timeInMs = timeStartSingleVideoInVideoList + timeInMs;
+      }
       voiceOverPlayer.seekAudioTo(timeInMs);
     }
   }
 
-  private boolean videoHasMusic() {
+  private boolean videoHasMusicOrVoiceOver() {
     return musicPlayer != null || voiceOverPlayer != null;
   }
 
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
+  // TODO: 18/10/18 Future use player with audio transitions
   public void setVideoTransitionFade() {
     isSetVideoTransitionFadeActivated = true;
   }
 
 
-  // TODO: 18/10/18 Move to VMCompositionPlayer   @Override
+  // TODO: 18/10/18 Future use player with audio transitions
   public void setAudioTransitionFade() {
     isSetAudioTransitionFadeActivated = true;
-  }
-
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  private void setMusic(Music music) {
-    musicPlayer = new VideonaAudioPlayerExo(getContext(), music);
-  }
-
-  // TODO: 18/10/18 Move to VMCompositionPlayer @Override
-  private void setVoiceOver(Music voiceOver) {
-    voiceOverPlayer = new VideonaAudioPlayerExo(getContext(), voiceOver);
-  }
-
-  /**
-   * Sets text and text position for video preview.
-   *
-   * @param text         the text to render
-   * @param textPosition the text position
-   */
-  private void setImageText(String text, String textPosition, boolean textShadow, int width,
-                           int height) {
-    Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
-        text, textPosition, textShadow, width, height);
-    imageTextPreview.setImageDrawable(textDrawable);
   }
 
   private void setupInAnimator() {
@@ -718,7 +771,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
           imageTransitionFade.setAlpha(value);
         }
         if (isSetAudioTransitionFadeActivated) {
-          setVideoVolume(value * videoVolume);
+          //setVideoVolume(value * videoVolume);
         }
       }
     });
@@ -760,10 +813,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
       public void onAnimationUpdate(ValueAnimator animation) {
         float value = (Float) animation.getAnimatedValue();
         Log.d(TAG, "setupOutAnimator value " + value);
-        if(isSetVideoTransitionFadeActivated)
+        if (isSetVideoTransitionFadeActivated) {
           imageTransitionFade.setAlpha(value);
-        if(isSetAudioTransitionFadeActivated)
-          setVideoVolume(value*videoVolume);
+        }
+        if (isSetAudioTransitionFadeActivated) {
+          //setVideoVolume(value*videoVolume);
+        }
       }
     });
     outAnimator.addListener(new Animator.AnimatorListener() {
@@ -867,8 +922,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private void playNextClip() {
     currentClipIndex++;
     if (hasNextClipToPlay()) {
-      Video video = videoList.get(currentClipIndex());
-      videoVolume = video.getVolume();
+      Video video = (Video) mediaTrack.getItems().get(currentClipIndex());
       currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
       initClipPreview(video);
     } else {
@@ -879,10 +933,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
       imageTransitionFade.setVisibility(INVISIBLE);
     }
     notifyNewClipPlayed();
+    setMediaTrackVolume();
   }
 
   private boolean hasNextClipToPlay() {
-    return currentClipIndex < videoList.size();
+    return currentClipIndex < mediaTrack.getItems().size();
   }
 
   private void notifyNewClipPlayed() {
@@ -940,7 +995,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
    * Renders text if has been set for current clip.
    */
   private void updateClipTextPreview() {
-    if (videoList.size() > 0 && getCurrentClip().hasText()) {
+    if (mediaTrack.getItems().size() > 0 && getCurrentClip().hasText()) {
       setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition(),
           getCurrentClip().hasClipTextShadow(), videoPreview.getMeasuredWidth(),
           videoPreview.getHeight());
@@ -950,15 +1005,15 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private int currentClipIndex() {
-    if (currentClipIndex >= videoList.size()) {
+    if (currentClipIndex >= mediaTrack.getItems().size()) {
       return 0;
     }
     return currentClipIndex;
   }
 
   private Video getCurrentClip() {
-    if (videoList.size() > 0) {
-      return videoList.get(currentClipIndex());
+    if (mediaTrack.getItems().size() > 0) {
+      return (Video) mediaTrack.getItems().get(currentClipIndex());
     }
     return null;
   }
@@ -1020,19 +1075,18 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     pushSurface(false);
     player.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
     player.seekTo(getClipPositionFromTimeLineTime());
-    if (videoHasMusic()) {
+    if (videoHasMusicOrVoiceOver()) {
       seekAudioTo(currentTimePositionInList);
     }
-    setVideoVolume(videoVolume);
     rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
   }
 
 
   private void prebufferNextClip() {
-    if (currentClipIndex < videoList.size() - 1) {
+    if (currentClipIndex < mediaTrack.getItems().size() - 1) {
       clearNextBufferedClip();
       RendererBuilder nextClipRendererBuilder = new RendererBuilder(getContext(), userAgent);
-      Video nextClipToPlay = videoList.get(currentClipIndex + 1);
+      Video nextClipToPlay = (Video) mediaTrack.getItems().get(currentClipIndex + 1);
       nextClipRendererBuilder
               .buildRenderers(new RendererBuilder.RendererBuilderListener() {
                 @Override
@@ -1048,12 +1102,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
 
   protected int getClipPositionFromTimeLineTime() {
     int clipIndex = getClipIndexByProgress(currentTimePositionInList);
-    if (clipIndex >= videoList.size()) {
+    if (clipIndex >= mediaTrack.getItems().size()) {
       return 0;
     }
     return currentTimePositionInList
         - (int) clipTimesRanges.get(clipIndex).getLower()
-        + videoList.get(clipIndex).getStartTime();
+        + mediaTrack.getItems().get(clipIndex).getStartTime();
   }
 
   private void pushSurface(boolean blockForSurfacePush) {

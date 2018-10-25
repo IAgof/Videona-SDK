@@ -25,21 +25,18 @@ import static com.videonasocialmedia.videonamediaframework.playback.RendererBuil
  * Created by jliarte on 25/08/16.
  */
 public class VideonaAudioPlayerExo implements VideonaAudioPlayer{
+
   private static final String TAG = "VideonaAudioPlayerExo";
   private static final int BUFFER_LENGTH_MIN = 50;
   private static final int REBUFFER_LENGTH_MIN = 100;
-
-
   private static final int RENDERER_BUILDING_STATE_IDLE = 1;
   private static final int RENDERER_BUILDING_STATE_BUILDING = 2;
   private static final int RENDERER_BUILDING_STATE_BUILT = 3;
   private int rendererBuildingState;
-
   private ExoPlayer player;
   private String userAgent;
   private MediaCodecAudioTrackRenderer audioRenderer;
   private int NUM_RENDERERS = 1;
-
 
   public VideonaAudioPlayerExo(Context context, Music music) {
     initAudioPlayerComponents(context);
@@ -101,6 +98,12 @@ public class VideonaAudioPlayerExo implements VideonaAudioPlayer{
   public void seekAudioTo(long positionMs){
     if (player != null) {
       player.seekTo(positionMs);
+    }
+  }
+
+  public void stop() {
+    if (player != null) {
+      player.stop();
     }
   }
 }
