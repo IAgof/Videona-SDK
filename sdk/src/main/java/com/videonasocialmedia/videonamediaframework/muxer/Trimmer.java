@@ -1,10 +1,11 @@
 package com.videonasocialmedia.videonamediaframework.muxer;
 
-import com.googlecode.mp4parser.authoring.Movie;
-import com.googlecode.mp4parser.authoring.Track;
-import com.googlecode.mp4parser.authoring.container.mp4.MovieCreator;
-import com.googlecode.mp4parser.authoring.tracks.CroppedTrack;
 import com.videonasocialmedia.videonamediaframework.muxer.utils.Utils;
+
+import org.mp4parser.muxer.Movie;
+import org.mp4parser.muxer.Track;
+import org.mp4parser.muxer.container.mp4.MovieCreator;
+import org.mp4parser.muxer.tracks.ClippedTrack;
 
 import java.io.IOException;
 import java.util.List;
@@ -47,7 +48,7 @@ public abstract class Trimmer {
         result = new Movie();
         for (Track track : tracks) {
             long samples[] = Utils.getStartAndStopSamples(track, startTime, endTime);
-            result.addTrack(new CroppedTrack(track, samples[0], samples[1]));
+            result.addTrack(new ClippedTrack(track, samples[0], samples[1]));
         }
         return result;
     }

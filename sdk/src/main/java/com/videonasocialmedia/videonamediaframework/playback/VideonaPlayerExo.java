@@ -11,6 +11,7 @@ import android.os.Handler;
 import android.util.AttributeSet;
 import android.util.Log;
 import android.util.Range;
+import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
@@ -30,7 +31,6 @@ import com.google.android.exoplayer.MediaCodecAudioTrackRenderer;
 import com.google.android.exoplayer.MediaCodecTrackRenderer;
 import com.google.android.exoplayer.MediaCodecVideoTrackRenderer;
 import com.google.android.exoplayer.TrackRenderer;
-import com.google.android.exoplayer.chunk.Format;
 import com.google.android.exoplayer.upstream.BandwidthMeter;
 import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer.util.Util;
@@ -38,7 +38,6 @@ import com.google.android.exoplayer.util.Util;
 
 
 import com.videonasocialmedia.sdk.R;
-import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.playback.customviews.AspectRatioVideoView;
@@ -88,7 +87,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
   private TrackRenderer videoRenderer;
   private CodecCounters codecCounters;
   private BandwidthMeter bandwidthMeter;
-  private Format videoFormat;
   private Surface surface;
 
   private VideonaAudioPlayerExo musicPlayer;
@@ -360,7 +358,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
       stopPlayer();
     }
     rendererBuilder.cancel();
-    videoFormat = null;
     videoRenderer = null;
     if (nextClipRenderers == null) {
       rendererBuildingState = RENDERER_BUILDING_STATE_BUILDING;
@@ -552,6 +549,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     if (position >= videoList.size() && position >= clipTimesRanges.size()) {
       position = 0;
     }
+    if (videoList.size() == 0) {
+      return;
+    }
     currentTimePositionInList = (int) clipTimesRanges.get(currentClipIndex()).getLower();
     initClipPreview(videoList.get(position));
     setSeekBarProgress(currentTimePositionInList);
@@ -665,9 +665,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
    * @param text         the text to render
    * @param textPosition the text position
    */
-  public void setImageText(String text, String textPosition) {
+  public void setImageText(String text, String textPosition, boolean textShadow, int width,
+                           int height) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
-        text, textPosition, Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
+        text, textPosition, textShadow, width, height);
     imageTextPreview.setImageDrawable(textDrawable);
   }
 
@@ -897,10 +898,17 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
         if (playWhenReady) {
           // player.seekAudioTo(getClipPositionFromTimeLineTime());
         }
+        notifyPlayerReady();
         break;
       default:
         break;
     }
+  }
+
+  private void notifyPlayerReady() {
+   if (videonaPlayerListener != null) {
+     videonaPlayerListener.playerReady();
+   }
   }
 
   /**
@@ -908,7 +916,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
    */
   public void updateClipTextPreview() {
     if (videoList.size() > 0 && getCurrentClip().hasText()) {
-      setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition());
+      setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition(),
+          getCurrentClip().hasClipTextShadow(), videoPreview.getMeasuredWidth(),
+          videoPreview.getHeight());
     } else {
       clearImageText();
     }
@@ -1035,4 +1045,19 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer, V
     }
   }
 
+  public void setAspectRatioVerticalVideos(int height) {
+    LayoutParams params = (LayoutParams) videoPreview.getLayoutParams();
+    int heightDp = (int) TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP,
+        height, getResources().getDisplayMetrics());
+    double aspectRatio = 0.5625D;
+    int widthDp = (int) (heightDp * aspectRatio);
+    params.height = heightDp;
+    params.width = widthDp;
+    videoPreview.setLayoutParams(params);
+    videoPreview.setAspectRatio(0.5625D);
+  }
+
+  public View getVideoPreview() {
+    return videoPreview;
+  }
 }

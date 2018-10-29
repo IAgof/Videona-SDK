@@ -28,6 +28,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.List;
 
 public class TranscoderHelper {
+  public static final int FIXED_IMAGE_HEIGHT = 720;
+  public static final int FIXED_IMAGE_WIDTH = 1280;
   private final String TAG = TranscoderHelper.class.getSimpleName();
   private TextToDrawable drawableGenerator;
   private MediaTranscoder mediaTranscoder = MediaTranscoder.getInstance();
@@ -126,16 +128,16 @@ public class TranscoderHelper {
 
   ListenableFuture<Video> generateOutputVideoWithOverlayImageAndTrimmingAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
-          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
-          final String intermediatesTempAudioFadeDirectory) throws IOException {
+          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat
+          videonaFormat, final String intermediatesTempAudioFadeDirectory) throws IOException {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
-        videoToEdit.getClipTextPosition());
+        videoToEdit.getClipTextPosition(), videoToEdit.hasClipTextShadow());
 
     ListenableFuture<Void> transcodingJob = mediaTranscoder.transcodeTrimAndOverlayImageToVideo(
             fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
-            videoToEdit.getTempPath(), format, imageText, videoToEdit.getStartTime(),
+            videoToEdit.getTempPath(), videonaFormat, imageText, videoToEdit.getStartTime(),
             videoToEdit.getStopTime());
 
     if (isAudioFadeActivated) {
@@ -161,16 +163,16 @@ public class TranscoderHelper {
 
   public ListenableFuture<Video> generateOutputVideoWithOverlayImageAsync(
           final Drawable fadeTransition, final boolean isVideoFadeActivated,
-          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat format,
-          final String intermediatesTempAudioFadeDirectory) throws IOException {
+          final boolean isAudioFadeActivated, final Video videoToEdit, final VideonaFormat
+          videonaFormat, final String intermediatesTempAudioFadeDirectory) throws IOException {
     cancelPendingTranscodingTasks(videoToEdit);
 
     Image imageText = getImageFromTextAndPosition(videoToEdit.getClipText(),
-        videoToEdit.getClipTextPosition());
+        videoToEdit.getClipTextPosition(), videoToEdit.hasClipTextShadow());
 
     ListenableFuture<Void> transcodingTask = mediaTranscoder.transcodeAndOverlayImageToVideo(
             fadeTransition, isVideoFadeActivated, videoToEdit.getMediaPath(),
-            videoToEdit.getTempPath(), format, imageText);
+            videoToEdit.getTempPath(), videonaFormat, imageText);
 
     if (isAudioFadeActivated) {
       transcodingTask = Futures.transform(transcodingTask,
@@ -195,6 +197,14 @@ public class TranscoderHelper {
           long audioFileDuration) {
     return mediaTranscoder.mixAudioFiles(mediaList, tempAudioPath, outputFilePath,
             audioFileDuration);
+  }
+
+  public ListenableFuture<Boolean> generateTempFileMixAudioFFmpeg (
+      List<Media> mediaList, String tempAudioPath, String outputFilePath, long audioFileDuration,
+      String nativeLibPath)
+      throws IOException, TranscodingException {
+    return mediaTranscoder.mixAudioFilesWithFFmpeg(mediaList, tempAudioPath, outputFilePath,
+        audioFileDuration, nativeLibPath);
   }
 
   public ListenableFuture<Video> generateOutputVideoWithTrimmingAsync(
@@ -312,10 +322,10 @@ public class TranscoderHelper {
     }
   }
 
-  private Image getImageFromTextAndPosition(String text, String textPosition) {
+  private Image getImageFromTextAndPosition(String text, String textPosition, boolean textShadow) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(text, textPosition,
-            Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
-    return new Image(textDrawable, Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
+        textShadow, FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT);
+    return new Image(textDrawable, FIXED_IMAGE_WIDTH, FIXED_IMAGE_HEIGHT);
   }
 
   void generateFileWithAudioFadeInFadeOutAsync(final String inputFile, final int timeFadeInMs,

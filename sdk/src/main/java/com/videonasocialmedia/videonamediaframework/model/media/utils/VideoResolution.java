@@ -30,6 +30,21 @@ public class VideoResolution {
                 this.heigth = 2160;
                 break;
             case HD720:
+                this.width = 1280;
+                this.heigth = 720;
+                break;
+            case V_1080P:
+                this.width = 1080;
+                this.heigth = 1920;
+                break;
+            case V_4K:
+                this.width = 2160;
+                this.heigth = 3840;
+                break;
+            case V_720P:
+                this.width = 720;
+                this.heigth = 1280;
+                break;
             default:
                 this.width = 1280;
                 this.heigth = 720;
@@ -45,6 +60,6 @@ public class VideoResolution {
     }
 
     public enum Resolution {
-        HD720, HD1080, HD4K
+        HD720, HD1080, HD4K, V_720P, V_1080P, V_4K
     }
 }

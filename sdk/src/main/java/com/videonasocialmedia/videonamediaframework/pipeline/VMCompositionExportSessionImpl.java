@@ -8,11 +8,11 @@ import com.google.common.util.concurrent.AsyncFunction;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.videonasocialmedia.transcoder.MediaTranscoder;
+import com.videonasocialmedia.transcoder.TranscodingException;
 import com.videonasocialmedia.transcoder.video.format.VideonaFormat;
 import com.videonasocialmedia.transcoder.video.overlay.Image;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
-import com.videonasocialmedia.videonamediaframework.model.media.Watermark;
 import com.videonasocialmedia.videonamediaframework.model.media.track.Track;
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.AudioTrimmer;
@@ -25,7 +25,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
 
 
-import com.googlecode.mp4parser.authoring.Movie;
+import org.mp4parser.muxer.Movie;
 
 import java.io.File;
 import java.io.IOException;
@@ -89,23 +89,36 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     @Override
-    public void exportAsyncronously() {
+    public void exportAsyncronously(final String nativeLibPath) {
         new Thread(new Runnable() {
             @Override
             public void run() {
                 isExportCanceled = false;
-                export();
+                export(nativeLibPath);
             }
         }).start();
     }
 
     @Override
-    public void export() {
+    public void export(String nativeLibPath) {
         Log.d(LOG_TAG, "export, waiting for finish temporal files generation ");
+
+        // 1.- Wait for video temp files to finished
+        try {
+            waitForVideoTempFilesFinished();
+        } catch (ExecutionException executionException) {
+            Log.e(LOG_TAG, "Caught " +  executionException.getClass().getName()
+                + " while exporting, " + "message: " + executionException.getMessage());
+            exportListener.onExportError(EXPORT_STAGE_WAIT_FOR_TRANSCODING_ERROR, executionException);
+        } catch (InterruptedException interruptedException) {
+            Log.e(LOG_TAG, "Caught " +  interruptedException.getClass().getName()
+                + " while exporting, " + "message: " + interruptedException.getMessage());
+            exportListener.onExportError(EXPORT_STAGE_WAIT_FOR_TRANSCODING_ERROR, interruptedException);
+        }
+        // 2.- Append videos
         try {
             // TODO:(alvaro.martinez) 24/03/17 Add ListenableFuture AllAsList and Future isDone properties
-            waitForVideoTempFilesFinished();
-            if(isExportCanceled) {
+            if (isExportCanceled) {
                 return;
             }
             Log.d(LOG_TAG, "Joining the videos");
@@ -117,9 +130,6 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             if (result != null) {
                 tempExportFilePath = outputFilesDirectory + File.separator + "V_Appended.mp4";
                 saveFinalVideo(result, tempExportFilePath);
-                applyWatermark();
-                mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
-                    tempExportFilePath);
             } else {
                 Log.e(LOG_TAG, "Unable to generate appended video!");
                 exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR,
@@ -134,6 +144,27 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             Log.e(LOG_TAG, "Caught " +  exportError.getClass().getName() + " while exporting",
                     exportError);
             exportListener.onExportError(EXPORT_STAGE_JOIN_VIDEOS_ERROR, (Exception) exportError);
+        }
+        // 3.-  Apply watermark
+        try {
+            applyWatermark();
+        } catch (IOException exportIOError) {
+            Log.e(LOG_TAG, "Caught " +  exportIOError.getClass().getName() + " while exporting, " +
+                "message: " + exportIOError.getMessage());
+            exportListener.onExportError(EXPORT_STAGE_APPLY_WATERMARK_ERROR, exportIOError);
+        }
+        // 4.- Apply mix audio
+        try {
+            mixAudio(getMediasAndVolumesToMixFromProjectTracks(tempExportFilePath),
+                tempExportFilePath, nativeLibPath);
+        } catch (IOException ioException) {
+            Log.e(LOG_TAG, "Caught " +  ioException.getClass().getName()
+                + " while exporting, " + "message: " + ioException.getMessage());
+            exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR, ioException);
+        } catch (TranscodingException transcodingException) {
+            Log.e(LOG_TAG, "Caught " +  transcodingException.getClass().getName()
+                + " while exporting, " + "message: " + transcodingException.getMessage());
+            exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR, transcodingException);
         }
     }
 
@@ -153,25 +184,32 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     }
 
-    private void applyWatermark() throws IOException {
+    protected void applyWatermark() throws IOException {
         if (vmComposition.hasWatermark()) {
-            if(isExportCanceled) {
+            if (isExportCanceled) {
                 Log.d(LOG_TAG, "Export canceled return");
                 return;
             }
             Log.d(LOG_TAG, "About to apply watermark!");
             String tempFileAppended = tempExportFilePath;
-            applyWatermarkToVideoAndWaitForFinish(tempExportFilePath);
+            applyWatermarkToVideoAndWaitForFinish(tempExportFilePath, getWatermarkImage());
             FileUtils.removeFile(tempFileAppended);
         }
     }
 
-    private void applyWatermarkToVideoAndWaitForFinish(String tempExportFilePath) throws IOException {
+    @NonNull
+    protected Image getWatermarkImage() {
+        return new Image(vmComposition.getWatermark().getResourceWatermarkFilePath(),
+            vmComposition.getVideoFormat().getVideoWidth(),
+            vmComposition.getVideoFormat().getVideoHeight());
+    }
+
+    private void applyWatermarkToVideoAndWaitForFinish(String tempExportFilePath,
+                                                       Image imageWatermark) throws IOException {
         if (vmComposition.hasWatermark()) {
           Log.d(LOG_TAG, "export, adding watermark to video appended");
           // TODO:(alvaro.martinez) 27/02/17 implement addWatermarkToGeneratedVideo feature
-            watermarkingJob = addWatermark(vmComposition.getWatermark(),
-                tempExportFilePath);
+            watermarkingJob = addWatermark(tempExportFilePath, imageWatermark);
             try {
                 watermarkingJob.get();
             } catch (InterruptedException | ExecutionException e) {
@@ -200,14 +238,14 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         if (vmComposition.hasMusic()) {
             Media music = getMediaItemToMix(new Music(vmComposition.getMusic()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_MUSIC));
-            if(music.getVolume()>0f) {
+            if (music.getVolume()>0f) {
                 mediaList.add(music);
             }
         }
         if (vmComposition.hasVoiceOver()) {
             Media voiceOver = getMediaItemToMix(new Music(vmComposition.getVoiceOver()),
                     vmComposition.getAudioTracks().get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER));
-            if(voiceOver.getVolume()>0f) {
+            if (voiceOver.getVolume()>0f) {
                 mediaList.add(voiceOver);
             }
         }
@@ -332,7 +370,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
     }
 
     protected void saveFinalVideo(Movie result, String outputFilePath) throws IOException {
-        if(isExportCanceled) {
+        if (isExportCanceled) {
             Log.d(LOG_TAG, "Export canceled return");
             return;
         }
@@ -436,9 +474,15 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 + new SimpleDateFormat("yyyyMMdd_HHmmss.SSS").format(new Date()) + ".mp4";
     }
 
-    protected void mixAudio(List<Media> mediaList, final String videoPath) {
-        if(isExportCanceled) {
+    protected void mixAudio(List<Media> mediaList, final String videoPath, String nativeLibPath)
+        throws IOException, TranscodingException {
+        if (isExportCanceled) {
             Log.d(LOG_TAG, "Export canceled return");
+            return;
+        }
+        if (mediaList.size() == 1 && mediaList.get(0).getVolume() == 1) {
+            Log.d(LOG_TAG, "Just one media with volume 1.0, nothing to do");
+            notifyFinalSuccess(finalVideoExportedFilePath);
             return;
         }
         Log.d(LOG_TAG, "Mixing audio");
@@ -452,8 +496,9 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
 
         mixAudioTask =
-            transcoderHelper.generateTempFileMixAudio(mediaList, tempAudioPath,
-                    outputAudioMixedFile, movieDuration);
+            transcoderHelper.generateTempFileMixAudioFFmpeg(mediaList, tempAudioPath,
+                outputAudioMixedFile, movieDuration, nativeLibPath);
+
         AsyncFunction<? super Boolean, ?> swapAudioTask = new AsyncFunction<Boolean, Object>() {
             @Override
             public ListenableFuture<Object> apply(Boolean input) throws Exception {
@@ -462,7 +507,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                 Log.d(LOG_TAG, "export, swapping audio mixed in video appended");
                 // TODO(jliarte): 5/10/17 move to constructor to allow dependency injection?
                 VideoAudioSwapper videoAudioSwapper = new VideoAudioSwapper();
-                return videoAudioSwapper.exportAsync(videoPath, outputAudioMixedFile, finalVideoExportedFilePath);
+                return videoAudioSwapper.exportAsync(videoPath, outputAudioMixedFile,
+                    finalVideoExportedFilePath);
             }
         };
         chainedTask = Futures.transform(mixAudioTask, swapAudioTask);
@@ -478,7 +524,11 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             exception.printStackTrace();
             Log.e(LOG_TAG, "Caught " +  exception.getClass().getName()
                 + "mix audio " + exception.getMessage());
-            exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR, exception);
+            if (mixAudioTask.isDone()) {
+                exportListener.onExportError(EXPORT_STAGE_APPLY_AUDIO_MIXED_ERROR, exception);
+            } else {
+                exportListener.onExportError(EXPORT_STAGE_MIX_AUDIO_ERROR, exception);
+            }
         } catch (CancellationException e) {
                 Log.e(LOG_TAG, "Caught cancellation exception, cancel button ");
                 e.printStackTrace();
@@ -491,9 +541,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
             new Video(finalVideoExportedFilePath, Video.DEFAULT_VOLUME));
     }
 
-    protected ListenableFuture<Void> addWatermark(Watermark watermark, final String inFilePath) throws IOException {
-        Image imageWatermark = new Image(watermark.getResourceWatermarkFilePath(),
-            Constants.DEFAULT_CANVAS_WIDTH, Constants.DEFAULT_CANVAS_HEIGHT);
+    protected ListenableFuture<Void> addWatermark( final String inFilePath,
+        Image imageWatermark ) throws IOException {
         ListenableFuture watermarkFuture = null;
         tempExportFileWatermark = outputFilesDirectory + File.separator + "V_with_wm.mp4";
         tempExportFilePath = tempExportFileWatermark;
@@ -505,7 +554,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
                     vmComposition.getVideoFormat(), imageWatermark);
         } catch (IOException e) {
             e.printStackTrace();
-            Log.e(LOG_TAG, "Caught " +  e.getClass().getName() + "add watermark " + e.getMessage());
+            Log.e(LOG_TAG, "Caught " +  e.getClass().getName() + "add watermark "
+                + e.getMessage());
             exportListener.onExportError(EXPORT_STAGE_APPLY_WATERMARK_ERROR, e);
             throw e;
         }

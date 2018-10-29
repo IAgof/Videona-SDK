@@ -41,5 +41,6 @@ public interface VideonaPlayer {
    */
   interface VideonaPlayerListener {
     void newClipPlayed(int currentClipIndex);
+    void playerReady();
   }
 }

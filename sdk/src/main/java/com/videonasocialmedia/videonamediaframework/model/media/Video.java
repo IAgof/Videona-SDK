@@ -12,12 +12,10 @@
 package com.videonasocialmedia.videonamediaframework.model.media;
 
 import android.media.MediaMetadataRetriever;
-import android.util.Log;
 
 import com.google.common.util.concurrent.ListenableFuture;
 
 import java.io.File;
-import java.util.UUID;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.videonasocialmedia.videonamediaframework.model.Constants.*;
@@ -41,6 +39,7 @@ public class Video extends Media {
     public String tempPath;
     private String clipText;
     private String clipTextPosition;
+    private boolean clipTextShadow;
 
     private boolean isTrimmedVideo = false;
 
@@ -50,7 +49,6 @@ public class Video extends Media {
     private int duration;
 
     private int numTriesToExportVideo = 0;
-    private String uuid = UUID.randomUUID().toString();
     private ListenableFuture<Video> transcodingTask;
 
     private String videoError;
@@ -97,6 +95,7 @@ public class Video extends Media {
         stopTime = video.getStopTime();
         clipText = video.getClipText();
         clipTextPosition = video.getClipTextPosition();
+        clipTextShadow = video.clipTextShadow;
         if(video.isEdited()) {
             tempPath = video.getTempPath();
         }
@@ -164,6 +163,14 @@ public class Video extends Media {
         this.clipTextPosition = clipTextPosition;
     }
 
+    public boolean hasClipTextShadow() {
+        return clipTextShadow;
+    }
+
+    public void setClipTextShadow(boolean isShadowChecked) {
+        this.clipTextShadow = isShadowChecked;
+    }
+
     public boolean hasText() {
         return (clipText != null) && (! clipText.isEmpty());
     }
@@ -183,14 +190,6 @@ public class Video extends Media {
 
     public void increaseNumTriesToExportVideo(){
         numTriesToExportVideo++;
-    }
-
-    public String getUuid() {
-        return uuid;
-    }
-
-    public void setUuid(String uuid) {
-        this.uuid = uuid;
     }
 
     public void setTranscodingTask(ListenableFuture<Video> future) {
@@ -220,4 +219,5 @@ public class Video extends Media {
     public void setTranscodingTempFileFinished(boolean transcodingTempFileFinished) {
         isTranscodingTempFileFinished = transcodingTempFileFinished;
     }
+
 }
