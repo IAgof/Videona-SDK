@@ -44,6 +44,8 @@
 -keep class com.videonasocialmedia.videonamediaframework.utils.TimeUtils { public <methods>;}
 
 -keep class com.videonasocialmedia.videonamediaframework.playback.VideonaPlayerExo** { *;}
+-keep interface com.videonasocialmedia.videonamediaframework.playback.VideonaMediaPlayer { *;}
+-keep interface com.videonasocialmedia.videonamediaframework.playback.VideonaMediaPlayer$* { *; }
 -keep interface com.videonasocialmedia.videonamediaframework.playback.VideonaPlayer { *;}
 -keep interface com.videonasocialmedia.videonamediaframework.playback.VideonaPlayer$* { *; }
 -keep class com.videonasocialmedia.videonamediaframework.playback.customviews.AspectRatioVideoView

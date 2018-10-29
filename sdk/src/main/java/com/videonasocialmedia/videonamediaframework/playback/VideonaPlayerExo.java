@@ -1,10 +1,7 @@
 package com.videonasocialmedia.videonamediaframework.playback;
 
-import android.animation.Animator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.content.Context;
-import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Handler;
@@ -15,7 +12,6 @@ import android.util.TypedValue;
 import android.view.MotionEvent;
 import android.view.Surface;
 import android.view.View;
-import android.view.animation.LinearInterpolator;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -34,9 +30,6 @@ import com.google.android.exoplayer.TrackRenderer;
 import com.google.android.exoplayer.upstream.BandwidthMeter;
 import com.google.android.exoplayer.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer.util.Util;
-
-
-
 import com.videonasocialmedia.sdk.R;
 import com.videonasocialmedia.videonamediaframework.model.Constants;
 import com.videonasocialmedia.videonamediaframework.model.VMComposition;
@@ -58,7 +51,7 @@ import java.util.List;
 /**
  * Created by jliarte on 25/08/16.
  */
-public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPlayer,
+public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     SeekBar.OnSeekBarChangeListener, ExoPlayer.Listener, RendererBuilder.RendererBuilderListener {
   private static final String TAG = "VideonaPlayerExo";
   private static final int BUFFER_LENGTH_MIN = 50;
@@ -75,27 +68,26 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private static final int TIME_TRANSITION_FADE = 500; // 500ms
   private final TextToDrawable drawableGenerator;
 
-  AspectRatioVideoView videoPreview;
-  SeekBar seekBar;
-  ImageButton playButton;
-  ImageView imageTransitionFade;
-  ImageView imageTextPreview;
-  TextView textTimeCurrentSeekbar;
-  TextView textTimeProjectSeekbar;
-  LinearLayout seekBarLayout;
-
   private final View videonaPlayerView;
-  private VMCompositionPlayer.VMCompositionPlayerListener vmCompositionPlayerListener;
-  private ExoPlayer player;
+  private AspectRatioVideoView videoPreview;
+  private SeekBar seekBar;
+  private ImageButton playButton;
+  private ImageView imageTransitionFade;
+  private ImageView imageTextPreview;
+  private TextView textTimeCurrentSeekbar;
+  private TextView textTimeProjectSeekbar;
+  private LinearLayout seekBarLayout;
+
+  private VideonaPlayerListener videonaPlayerListener;
+  private ExoPlayer videoListPlayer;
+  private VideonaAudioPlayerExo musicPlayer;
+  private VideonaAudioPlayerExo voiceOverPlayer;
   private RendererBuilder rendererBuilder;
   private TrackRenderer videoRenderer;
+  private TrackRenderer audioRenderer;
   private CodecCounters codecCounters;
   private BandwidthMeter bandwidthMeter;
   private Surface surface;
-
-  private VideonaAudioPlayerExo musicPlayer;
-  private VideonaAudioPlayerExo voiceOverPlayer;
-  //private List<Video> videoList;
   private MediaTrack mediaTrack;
   private int currentClipIndex = 0;
   private int currentTimePositionInList = 0;
@@ -105,10 +97,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   private List<Range> clipTimesRanges;
   private Handler mainHandler;
   private Handler seekBarUpdaterHandler = new Handler();
-
   private boolean isASingleClip = false;
   private int timeStartSingleVideoInVideoList = 0;
-
   private final Runnable updateTimeTask = new Runnable() {
     @Override
     public void run() {
@@ -121,14 +111,15 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     }
   };
 
-  private ValueAnimator outAnimator;
-  private ValueAnimator inAnimator;
+  // TODO: 26/10/18   Future use fade video transitions
+  //private ValueAnimator outAnimator;
+  //private ValueAnimator inAnimator;
+  //private boolean isSetVideoTransitionFadeActivated = false;
+  //private boolean isSetAudioTransitionFadeActivated = false;
+  //private boolean isInAnimatorLaunched;
+  //private boolean isOutAnimatorLaunched;
   private String userAgent;
   private TrackRenderer[] nextClipRenderers;
-  private boolean isSetVideoTransitionFadeActivated = false;
-  private boolean isSetAudioTransitionFadeActivated = false;
-  private boolean isInAnimatorLaunched;
-  private boolean isOutAnimatorLaunched;
 
   private static final float VOLUME_MUTE = 0f;
 
@@ -207,9 +198,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
    */
   private void initVideonaPlayerComponents(Context context) {
     mainHandler = new Handler();
-    player = ExoPlayer.Factory.newInstance(RendererBuilder.RENDERER_COUNT, BUFFER_LENGTH_MIN, REBUFFER_LENGTH_MIN);
-    player.addListener(this);
-    player.setSelectedTrack(TYPE_TEXT, DISABLED_TRACK);
+    videoListPlayer = ExoPlayer.Factory.newInstance(RendererBuilder.RENDERER_COUNT, BUFFER_LENGTH_MIN, REBUFFER_LENGTH_MIN);
+    videoListPlayer.addListener(this);
+    videoListPlayer.setSelectedTrack(TYPE_TEXT, DISABLED_TRACK);
     surface = videoPreview.getHolder().getSurface();
     rendererBuildingState = RENDERER_BUILDING_STATE_IDLE;
     userAgent = Util.getUserAgent(context, "VideonaExoPlayer");
@@ -224,15 +215,15 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void updateSeekBarProgress() {
-    if (player != null && isPlaying()) {
+    if (videoListPlayer != null && isPlaying()) {
       try {
         if (currentClipIndex() < mediaTrack.getItems().size()) {
-          int progress = ((int) player.getCurrentPosition())
+          int progress = ((int) videoListPlayer.getCurrentPosition())
               + (int) clipTimesRanges.get(currentClipIndex()).getLower()
               - mediaTrack.getItems().get(currentClipIndex()).getStartTime();
           setSeekBarProgress(progress);
           currentTimePositionInList = progress;
-          previewAVTransitions(progress);
+          //previewAVTransitions(progress);
 
           // detect end of trimming and play next clip or stop
           if (isCurrentClipEnded()) {
@@ -257,12 +248,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   /**
-   * VMCompositionPlayer methods starts.
+   * VideonaPlayer methods starts.
    **/
 
   @Override
   public void attachView(Context context) {
-    if (player == null) {
+    if (videoListPlayer == null) {
       initVideonaPlayerComponents(context);
     }
   }
@@ -276,8 +267,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   @Override
-  public void setVMCompositionPlayerListener(VMCompositionPlayerListener vmCompositionPlayerListener) {
-    this.vmCompositionPlayerListener = vmCompositionPlayerListener;
+  public void setVideonaPlayerListener(VideonaPlayerListener videonaPlayerListener) {
+    this.videonaPlayerListener = videonaPlayerListener;
   }
 
   @Override
@@ -364,37 +355,9 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     seekBarUpdaterHandler.removeCallbacksAndMessages(null);
   }
 
-  // TODO: 18/10/18 Study if it is needed @Override
-  private void seekClipToTime(int seekTimeInMsec) {
-    if (player != null) {
-      currentTimePositionInList = seekTimeInMsec
-          - mediaTrack.getItems().get(currentClipIndex()).getStartTime()
-          + (int) clipTimesRanges.get(currentClipIndex()).getLower();
-      setSeekBarProgress(currentTimePositionInList);
-      player.seekTo(seekTimeInMsec);
-      seekTo(currentTimePositionInList);
-    }
-  }
-
-  // TODO: 18/10/18 Study if it is needed @Override
-  private void updatePreviewTimeLists() {
-    totalVideoDuration = 0;
-    clipTimesRanges.clear();
-    for (Media clip : mediaTrack.getItems()) {
-      if (mediaTrack.getItems().indexOf(clip) != 0) {
-        totalVideoDuration++;
-      }
-      int clipStartTime = this.totalVideoDuration;
-      int clipStopTime = this.totalVideoDuration + clip.getDuration();
-      clipTimesRanges.add(new Range(clipStartTime, clipStopTime));
-      this.totalVideoDuration = clipStopTime;
-    }
-    updateUiVideoDuration(totalVideoDuration);
-  }
-
   @Override
   public void seekTo(int seekTimeInMsec) {
-    if (player != null && seekTimeInMsec < totalVideoDuration) {
+    if (videoListPlayer != null && seekTimeInMsec < totalVideoDuration) {
       currentTimePositionInList = seekTimeInMsec;
       setSeekBarProgress(currentTimePositionInList);
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
@@ -403,11 +366,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
 //        clearNextBufferedClip();
         seekToClip(clipIndex);
       } else {
-        player.seekTo(getClipPositionFromTimeLineTime());
+        videoListPlayer.seekTo(getClipPositionFromTimeLineTime());
         if (videoHasMusicOrVoiceOver()) {
           seekAudioTo(currentTimePositionInList);
         }
-
       }
     }
   }
@@ -433,11 +395,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
       seekAudioTo(currentTimePositionInList);
     }
   }
-
-  /* Delete, not needed @Override
-  public int getCurrentPosition() {
-    return currentTimePositionInList;
-  }*/
 
   @Override
   public void setSeekBarLayoutEnabled(boolean seekBarEnabled) {
@@ -477,9 +434,16 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
 
   @Override
   public void setVideoVolume(float volume) {
-    if (player != null) {
-      player.sendMessage(rendererBuilder.getAudioRenderer(),
-          MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
+    Log.d(TAG, "setVideoVolume ");
+    if (videoListPlayer != null && audioRenderer != null) {
+      Log.d(TAG, "volume " + volume);
+      if (volume == 0f) {
+        mediaTrack.setMute(true);
+      } else {
+        mediaTrack.setVolume(volume);
+      }
+      videoListPlayer.sendMessage(audioRenderer,
+            MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
     }
   }
 
@@ -498,13 +462,129 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   /**
-   * VMCompositionPlayer methods ends.
+   * VideonaPlayer methods ends.
    **/
 
+  /**
+   * Seekbar listener methods.
+   **/
+  @Override
+  public void onProgressChanged(SeekBar seekBar, final int progress, boolean fromUser) {
+    if (fromUser) {
+      if (isPlaying()) {
+        pausePreview();
+      }
+      if (playerHasVideos()) {
+        showPauseButton();
+        seekTo(progress);
+        notifyNewClipPlayed();
+      } else {
+        setSeekBarProgress(0);
+      }
+    }
+  }
+
+  @Override
+  public void onStartTrackingTouch(SeekBar seekBar) {
+  }
+
+  @Override
+  public void onStopTrackingTouch(SeekBar seekBar) {
+    showPlayButton();
+  }
+
+  /***
+   * end of Seekbar listener methods.
+   ***/
+
+  /***
+   * exo videoListPlayer listener.
+   ***/
+
+  @Override
+  public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
+    Log.d(TAG, "Playwhenready: " + playWhenReady + " state: " + playbackState);
+    clearImageText();
+    switch (playbackState) {
+      case ExoPlayer.STATE_BUFFERING: // state 3
+        break;
+      case ExoPlayer.STATE_ENDED: // state 5
+        clearNextBufferedClip();
+        if (playWhenReady) {
+          // (jliarte): 14/10/16 as playNextClip() was called from both here and
+          // updateSeekbarProgress thread, sometimes it's called twice in a clip end, causing
+          // a double currentClipIndex++ and thus skipping a clip
+          // (jliarte): 18/07/17 recovered again playNextClip here as some clips duration is
+          // reported less than actual causing VideonaMediaPlayer not reaching end of clips, now we stop
+          // the videoListPlayer if end of clip is detected and in both cases we end up here!
+//                    playNextClip();
+        }
+        break;
+      case ExoPlayer.STATE_IDLE: // state 1
+        break;
+      case ExoPlayer.STATE_PREPARING: // state 2
+        break;
+      case ExoPlayer.STATE_READY: // state 4
+        updateClipTextPreview();
+        Log.d(TAG, "STATE_READY AudioRenderer " + rendererBuilder.getAudioRenderer().toString());
+        if (playWhenReady) {
+          // videoListPlayer.seekAudioTo(getClipPositionFromTimeLineTime());
+          setMediaTrackVolume();
+        }
+        notifyPlayerReady();
+        break;
+      default:
+        break;
+    }
+  }
+
+  @Override
+  public void onPlayWhenReadyCommitted() {
+  }
+
+  @Override
+  public void onPlayerError(ExoPlaybackException error) {
+  }
+
+  private Handler getMainHandler() {
+    return mainHandler;
+  }
+
+  @Override
+  public void onRenderers(TrackRenderer[] renderers, DefaultBandwidthMeter bandwidthMeter) {
+    prebufferNextClip();
+    for (int i = 0; i < RendererBuilder.RENDERER_COUNT; i++) {
+      if (renderers[i] == null) {
+        // Convert a null renderer to a dummy renderer.
+        renderers[i] = new DummyTrackRenderer();
+      }
+    }
+    // Complete preparation.
+    this.videoRenderer = renderers[TYPE_VIDEO];
+    this.audioRenderer = renderers[TYPE_AUDIO];
+    this.codecCounters = videoRenderer instanceof MediaCodecTrackRenderer
+        ? ((MediaCodecTrackRenderer) videoRenderer).codecCounters
+        : renderers[TYPE_AUDIO] instanceof MediaCodecTrackRenderer
+        ? ((MediaCodecTrackRenderer) renderers[TYPE_AUDIO]).codecCounters : null;
+    this.bandwidthMeter = bandwidthMeter;
+
+    if (videoListPlayer == null) {
+      // TODO(jliarte): 25/07/17 should reinit components?
+      return;
+    }
+    pushSurface(false);
+    videoListPlayer.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
+    videoListPlayer.seekTo(getClipPositionFromTimeLineTime());
+    if (videoHasMusicOrVoiceOver()) {
+      seekAudioTo(currentTimePositionInList);
+    }
+    rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
+  }
+
   private void releasePlayerView() {
-    if (player != null) {
-      player.release();
-      player = null;
+    if (videoListPlayer != null) {
+      videoListPlayer.release();
+      videoListPlayer = null;
       clearNextBufferedClip();
     }
     if (videoHasMusicOrVoiceOver()) {
@@ -519,7 +599,24 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     initPreview(currentTimePositionInList);
   }
 
+  private void updatePreviewTimeLists() {
+    totalVideoDuration = 0;
+    clipTimesRanges.clear();
+    for (Media clip : mediaTrack.getItems()) {
+      if (mediaTrack.getItems().indexOf(clip) != 0) {
+        totalVideoDuration++;
+      }
+      int clipStartTime = this.totalVideoDuration;
+      int clipStopTime = this.totalVideoDuration + clip.getDuration();
+      clipTimesRanges.add(new Range(clipStartTime, clipStopTime));
+      this.totalVideoDuration = clipStopTime;
+    }
+    updateUiVideoDuration(totalVideoDuration);
+  }
+
+
   private void setMediaTrackVolume() {
+    Log.d(TAG, "setMediaTrackVolume");
     if (mediaTrack.isMuted()) {
       setVideoVolume(VOLUME_MUTE);
     } else {
@@ -569,8 +666,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void playPlayer() {
-    if (player != null) {
-      player.setPlayWhenReady(true);
+    if (videoListPlayer != null) {
+      videoListPlayer.setPlayWhenReady(true);
     }
     if (videoHasMusicOrVoiceOver()) {
       if (musicPlayer != null) {
@@ -583,8 +680,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void pausePlayer() {
-    if (player != null) {
-      player.setPlayWhenReady(false);
+    if (videoListPlayer != null) {
+      videoListPlayer.setPlayWhenReady(false);
     }
     if (videoHasMusicOrVoiceOver()) {
       if (musicPlayer != null) {
@@ -597,8 +694,8 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void stopPlayer() {
-    if (player != null) {
-      player.stop();
+    if (videoListPlayer != null) {
+      videoListPlayer.stop();
     }
   }
 
@@ -610,50 +707,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     playButton.setImageResource(R.drawable.common_icon_pause_normal);
   }
 
-  private void setBlackBackgroundColor() {
-    videoPreview.setBackgroundColor(Color.BLACK);
-  }
-
   private void clearImageText() {
     imageTextPreview.setImageDrawable(null);
   }
 
-  private void previewAVTransitions(int progress) {
-    if (isSetVideoTransitionFadeActivated || isSetAudioTransitionFadeActivated) {
-      if (isPlaying() && shouldLaunchStartTransition(progress)) {
-        if (!isInAnimatorLaunched) {
-          Log.d(TAG, "updateSeekBarProgress inAnimator start ");
-          isInAnimatorLaunched = true;
-          inAnimator.start();
-        }
-      }
-      if (isPlaying() && shouldLaunchEndTransition(progress)) {
-        if (!isOutAnimatorLaunched) {
-          Log.d(TAG, "updateSeekBarProgress outAnimator start ");
-          isOutAnimatorLaunched = true;
-          outAnimator.start();
-        }
-      }
-    }
-  }
-
   private boolean isCurrentClipEnded() {
     return seekBar.getProgress() >= (int) clipTimesRanges.get(currentClipIndex()).getUpper();
-  }
-
-  private boolean shouldLaunchEndTransition(int seekBarProgress) {
-    int timeEndClip = (int) clipTimesRanges.get(currentClipIndex()).getUpper();
-    return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE) );
-  }
-
-  private boolean shouldLaunchStartTransition(int seekBarProgress) {
-    int timeStartLastClip;
-    if (currentClipIndex() > 0) {
-      timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
-    } else {
-      timeStartLastClip = 0;
-    }
-    return ((seekBarProgress > timeStartLastClip) && (seekBarProgress < (timeStartLastClip + TIME_TRANSITION_FADE)));
   }
 
   private void initClipList() {
@@ -666,7 +725,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void initClipPreview(Video clipToPlay) {
-    // Init video player
+    // Init video videoListPlayer
     if (rendererBuildingState == RENDERER_BUILDING_STATE_BUILT) {
       stopPlayer();
     }
@@ -697,7 +756,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
 
   private void maybeReportPlayerState() {
     // TODO(jliarte): 31/08/16 is this necessary?
-    //        boolean playWhenReady = player.getPlayWhenReady();
+    //        boolean playWhenReady = videoListPlayer.getPlayWhenReady();
     //        int playbackState = getPlaybackState();
     //        if (lastReportedPlayWhenReady != playWhenReady
     //                || lastReportedPlaybackState != playbackState) {
@@ -749,110 +808,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     return musicPlayer != null || voiceOverPlayer != null;
   }
 
-  // TODO: 18/10/18 Future use player with audio transitions
-  public void setVideoTransitionFade() {
-    isSetVideoTransitionFadeActivated = true;
-  }
-
-
-  // TODO: 18/10/18 Future use player with audio transitions
-  public void setAudioTransitionFade() {
-    isSetAudioTransitionFadeActivated = true;
-  }
-
-  private void setupInAnimator() {
-    inAnimator = ValueAnimator.ofFloat(1f, 0f);
-    inAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-      @Override
-      public void onAnimationUpdate(ValueAnimator animation) {
-        float value = (Float) animation.getAnimatedValue();
-        Log.d(TAG, "setupInAnimator value " + value);
-        if (isSetVideoTransitionFadeActivated) {
-          imageTransitionFade.setAlpha(value);
-        }
-        if (isSetAudioTransitionFadeActivated) {
-          //setVideoVolume(value * videoVolume);
-        }
-      }
-    });
-
-    inAnimator.addListener(new Animator.AnimatorListener() {
-      @Override
-      public void onAnimationStart(Animator animation) {
-        if (imageTransitionFade.getVisibility() == INVISIBLE) {
-            imageTransitionFade.setVisibility(VISIBLE);
-        }
-      }
-
-      @Override
-      public void onAnimationEnd(Animator animation) {
-          isInAnimatorLaunched = false;
-        Log.d(TAG, "AnimatorListener onAnimationEnd ");
-      }
-
-      @Override
-      public void onAnimationCancel(Animator animation) {
-
-      }
-
-      @Override
-      public void onAnimationRepeat(Animator animation) {
-
-      }
-    });
-
-    inAnimator.setDuration(TIME_TRANSITION_FADE);
-    inAnimator.setInterpolator(new LinearInterpolator());
-    inAnimator.setRepeatCount(0);
-  }
-
-  private void setupOutAnimator() {
-    outAnimator = ValueAnimator.ofFloat(0f, 1f);
-    outAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-      @Override
-      public void onAnimationUpdate(ValueAnimator animation) {
-        float value = (Float) animation.getAnimatedValue();
-        Log.d(TAG, "setupOutAnimator value " + value);
-        if (isSetVideoTransitionFadeActivated) {
-          imageTransitionFade.setAlpha(value);
-        }
-        if (isSetAudioTransitionFadeActivated) {
-          //setVideoVolume(value*videoVolume);
-        }
-      }
-    });
-    outAnimator.addListener(new Animator.AnimatorListener() {
-      @Override
-      public void onAnimationStart(Animator animation) {
-
-      }
-
-      @Override
-      public void onAnimationEnd(Animator animation) {
-        isOutAnimatorLaunched = false;
-        Log.d(TAG, "AnimatorListener onAnimationEnd ");
-      }
-
-      @Override
-      public void onAnimationCancel(Animator animation) {
-
-      }
-
-      @Override
-      public void onAnimationRepeat(Animator animation) {
-
-      }
-    });
-
-    outAnimator.setDuration(TIME_TRANSITION_FADE);
-    outAnimator.setInterpolator(new LinearInterpolator());
-    outAnimator.setRepeatCount(0);
-  }
-
-  /***
-   * End of VideonaPlayer methods.
-   ***/
-
   private void onClickPlayPauseButton() {
     if (playerHasVideos()) {
       if (isPlaying()) {
@@ -878,46 +833,13 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     return eventProcessed;
   }
 
-  /***
-   * Seekbar listener methods.
-   ***/
-
-  @Override
-  public void onProgressChanged(SeekBar seekBar, final int progress, boolean fromUser) {
-    if (fromUser) {
-      if (isPlaying()) {
-        pausePreview();
-      }
-      if (playerHasVideos()) {
-        showPauseButton();
-        seekTo(progress);
-        notifyNewClipPlayed();
-      } else {
-        setSeekBarProgress(0);
-      }
-    }
-  }
-
   private boolean isPlaying() {
-    if (player == null) {
+    if (videoListPlayer == null) {
       return false;
     } else {
-      return player.getPlayWhenReady();
+      return videoListPlayer.getPlayWhenReady();
     }
   }
-
-  @Override
-  public void onStartTrackingTouch(SeekBar seekBar) {
-  }
-
-  @Override
-  public void onStopTrackingTouch(SeekBar seekBar) {
-    showPlayButton();
-  }
-
-  /***
-   * end of Seekbar listener methods.
-   ***/
 
   private void playNextClip() {
     currentClipIndex++;
@@ -929,11 +851,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
       pausePreview();
       clearNextBufferedClip();
       seekToClip(0);
-      // avoid black frame, imageTransitionFade over player
+      // avoid black frame, imageTransitionFade over videoListPlayer
       imageTransitionFade.setVisibility(INVISIBLE);
     }
     notifyNewClipPlayed();
-    setMediaTrackVolume();
   }
 
   private boolean hasNextClipToPlay() {
@@ -941,53 +862,14 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void notifyNewClipPlayed() {
-    if (vmCompositionPlayerListener != null) {
-      vmCompositionPlayerListener.newClipPlayed(currentClipIndex());
-    }
-  }
-
-  /***
-   * exo player listener.
-   ***/
-
-  @Override
-  public void onPlayerStateChanged(boolean playWhenReady, int playbackState) {
-    Log.d(TAG, "Playwhenready: " + playWhenReady + " state: " + playbackState);
-    clearImageText();
-    switch (playbackState) {
-      case ExoPlayer.STATE_BUFFERING: // state 3
-        break;
-      case ExoPlayer.STATE_ENDED: // state 5
-        clearNextBufferedClip();
-        if (playWhenReady) {
-          // (jliarte): 14/10/16 as playNextClip() was called from both here and
-          // updateSeekbarProgress thread, sometimes it's called twice in a clip end, causing
-          // a double currentClipIndex++ and thus skipping a clip
-          // (jliarte): 18/07/17 recovered again playNextClip here as some clips duration is
-          // reported less than actual causing VideonaPlayer not reaching end of clips, now we stop
-          // the player if end of clip is detected and in both cases we end up here!
-//                    playNextClip();
-        }
-        break;
-      case ExoPlayer.STATE_IDLE:
-        break;
-      case ExoPlayer.STATE_PREPARING:
-        break;
-      case ExoPlayer.STATE_READY: // state 4
-        updateClipTextPreview();
-        if (playWhenReady) {
-          // player.seekAudioTo(getClipPositionFromTimeLineTime());
-        }
-        notifyPlayerReady();
-        break;
-      default:
-        break;
+    if (videonaPlayerListener != null) {
+      videonaPlayerListener.newClipPlayed(currentClipIndex());
     }
   }
 
   private void notifyPlayerReady() {
-   if (vmCompositionPlayerListener != null) {
-     vmCompositionPlayerListener.playerReady();
+   if (videonaPlayerListener != null) {
+     videonaPlayerListener.playerReady();
    }
   }
 
@@ -1018,70 +900,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
     return null;
   }
 
-  /**
-   * Sets video preview mute status.
-   *
-   * @param shouldMute true if preview should mute
-   */
-  private void muteVideo(boolean shouldMute) {
-       /* // TODO(jliarte): 1/09/16 test mute
-        if (player != null)
-            if (shouldMute) {
-                musicVolume = 0f;
-                player.sendMessage(rendererBuilder.getAudioRenderer(),
-                                   MediaCodecAudioTrackRenderer.MSG_SET_VOLUME,musicVolume);
-            } else {
-                musicVolume = DEFAULT_VOLUME;
-                player.sendMessage(rendererBuilder.getAudioRenderer(),
-                                   MediaCodecAudioTrackRenderer.MSG_SET_VOLUME,DEFAULT_VOLUME);
-            }
-            */
-  }
-
-
-  @Override
-  public void onPlayWhenReadyCommitted() {
-  }
-
-  @Override
-  public void onPlayerError(ExoPlaybackException error) {
-  }
-
-  private Handler getMainHandler() {
-    return mainHandler;
-  }
-
-  @Override
-  public void onRenderers(TrackRenderer[] renderers, DefaultBandwidthMeter bandwidthMeter) {
-    prebufferNextClip();
-    for (int i = 0; i < RendererBuilder.RENDERER_COUNT; i++) {
-      if (renderers[i] == null) {
-        // Convert a null renderer to a dummy renderer.
-        renderers[i] = new DummyTrackRenderer();
-      }
-    }
-    // Complete preparation.
-    this.videoRenderer = renderers[TYPE_VIDEO];
-    this.codecCounters = videoRenderer instanceof MediaCodecTrackRenderer
-        ? ((MediaCodecTrackRenderer) videoRenderer).codecCounters
-        : renderers[TYPE_AUDIO] instanceof MediaCodecTrackRenderer
-        ? ((MediaCodecTrackRenderer) renderers[TYPE_AUDIO]).codecCounters : null;
-    this.bandwidthMeter = bandwidthMeter;
-
-    if (player == null) {
-      // TODO(jliarte): 25/07/17 should reinit components?
-      return;
-    }
-    pushSurface(false);
-    player.prepare(renderers[TYPE_VIDEO], renderers[TYPE_AUDIO]);
-    player.seekTo(getClipPositionFromTimeLineTime());
-    if (videoHasMusicOrVoiceOver()) {
-      seekAudioTo(currentTimePositionInList);
-    }
-    rendererBuildingState = RENDERER_BUILDING_STATE_BUILT;
-  }
-
-
   private void prebufferNextClip() {
     if (currentClipIndex < mediaTrack.getItems().size() - 1) {
       clearNextBufferedClip();
@@ -1111,17 +929,157 @@ public class VideonaPlayerExo extends RelativeLayout implements VMCompositionPla
   }
 
   private void pushSurface(boolean blockForSurfacePush) {
-    if (videoRenderer == null || player == null) {
+    if (videoRenderer == null || videoListPlayer == null) {
       return;
     }
-
     if (blockForSurfacePush) {
-      player.blockingSendMessage(
+      videoListPlayer.blockingSendMessage(
           videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
+      videoListPlayer.blockingSendMessage(
+          audioRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
+
     } else {
-      player.sendMessage(
+      videoListPlayer.sendMessage(
           videoRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
+      videoListPlayer.sendMessage(
+          audioRenderer, MediaCodecVideoTrackRenderer.MSG_SET_SURFACE, surface);
     }
   }
+
+  // TODO: 18/10/18 Future use videoListPlayer with audio transitions
+  /**
+   public void setVideoTransitionFade() {
+   isSetVideoTransitionFadeActivated = true;
+   }
+
+   public void setAudioTransitionFade() {
+   isSetAudioTransitionFadeActivated = true;
+   }
+
+   private void setupInAnimator() {
+   inAnimator = ValueAnimator.ofFloat(1f, 0f);
+   inAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+  @Override
+  public void onAnimationUpdate(ValueAnimator animation) {
+  float value = (Float) animation.getAnimatedValue();
+  Log.d(TAG, "setupInAnimator value " + value);
+  if (isSetVideoTransitionFadeActivated) {
+  imageTransitionFade.setAlpha(value);
+  }
+  if (isSetAudioTransitionFadeActivated) {
+  //setVideoVolume(value * videoVolume);
+  }
+  }
+  });
+
+   inAnimator.addListener(new Animator.AnimatorListener() {
+  @Override
+  public void onAnimationStart(Animator animation) {
+  if (imageTransitionFade.getVisibility() == INVISIBLE) {
+  imageTransitionFade.setVisibility(VISIBLE);
+  }
+  }
+
+  @Override
+  public void onAnimationEnd(Animator animation) {
+  isInAnimatorLaunched = false;
+  Log.d(TAG, "AnimatorListener onAnimationEnd ");
+  }
+
+  @Override
+  public void onAnimationCancel(Animator animation) {
+
+  }
+
+  @Override
+  public void onAnimationRepeat(Animator animation) {
+
+  }
+  });
+
+   inAnimator.setDuration(TIME_TRANSITION_FADE);
+   inAnimator.setInterpolator(new LinearInterpolator());
+   inAnimator.setRepeatCount(0);
+   }
+
+   private void setupOutAnimator() {
+   outAnimator = ValueAnimator.ofFloat(0f, 1f);
+   outAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+  @Override
+  public void onAnimationUpdate(ValueAnimator animation) {
+  float value = (Float) animation.getAnimatedValue();
+  Log.d(TAG, "setupOutAnimator value " + value);
+  if (isSetVideoTransitionFadeActivated) {
+  imageTransitionFade.setAlpha(value);
+  }
+  if (isSetAudioTransitionFadeActivated) {
+  //setVideoVolume(value*videoVolume);
+  }
+  }
+  });
+   outAnimator.addListener(new Animator.AnimatorListener() {
+  @Override
+  public void onAnimationStart(Animator animation) {
+
+  }
+
+  @Override
+  public void onAnimationEnd(Animator animation) {
+  isOutAnimatorLaunched = false;
+  Log.d(TAG, "AnimatorListener onAnimationEnd ");
+  }
+
+  @Override
+  public void onAnimationCancel(Animator animation) {
+
+  }
+
+  @Override
+  public void onAnimationRepeat(Animator animation) {
+
+  }
+  });
+
+   outAnimator.setDuration(TIME_TRANSITION_FADE);
+   outAnimator.setInterpolator(new LinearInterpolator());
+   outAnimator.setRepeatCount(0);
+   }
+
+   private void previewAVTransitions(int progress) {
+   if (isSetVideoTransitionFadeActivated || isSetAudioTransitionFadeActivated) {
+   if (isPlaying() && shouldLaunchStartTransition(progress)) {
+   if (!isInAnimatorLaunched) {
+   Log.d(TAG, "updateSeekBarProgress inAnimator start ");
+   isInAnimatorLaunched = true;
+   inAnimator.start();
+   }
+   }
+   if (isPlaying() && shouldLaunchEndTransition(progress)) {
+   if (!isOutAnimatorLaunched) {
+   Log.d(TAG, "updateSeekBarProgress outAnimator start ");
+   isOutAnimatorLaunched = true;
+   outAnimator.start();
+   }
+   }
+   }
+   }
+
+   private boolean shouldLaunchEndTransition(int seekBarProgress) {
+   int timeEndClip = (int) clipTimesRanges.get(currentClipIndex()).getUpper();
+   return (seekBarProgress < timeEndClip && seekBarProgress > (timeEndClip - TIME_TRANSITION_FADE) );
+   }
+
+   private boolean shouldLaunchStartTransition(int seekBarProgress) {
+   int timeStartLastClip;
+   if (currentClipIndex() > 0) {
+   timeStartLastClip = (int) clipTimesRanges.get(currentClipIndex()-1).getUpper();
+   } else {
+   timeStartLastClip = 0;
+   }
+   return ((seekBarProgress > timeStartLastClip) && (seekBarProgress < (timeStartLastClip + TIME_TRANSITION_FADE)));
+   }
+
+   **/
+
 
 }
