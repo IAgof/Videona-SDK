@@ -30,8 +30,8 @@ android {
     defaultConfig {
         minSdkVersion 21 // Fix Clip range in VideoPlayerExo and use api 18
         targetSdkVersion 27
-        versionCode 27 // 20181001
-        versionName "v0.5.5" // 20181017
+        versionCode 29 // 20181019
+        versionName "v0.5.6" // 20181019
         multiDexEnabled true
         testInstrumentationRunner 'android.support.test.runner.AndroidJUnitRunner'
     }
@@ -51,6 +51,11 @@ android {
             systemProperty 'robolectric.offline', 'true'
             systemProperty 'robolectric.dependency.dir', "$System.env.ROBOLECTRIC_LIB_PATH"
         }
+    }
+
+    sourceSets.main {
+        jniLibs.srcDir 'src/main/libs' //set libs as default directory for .so files inclusion, instead of jniLibs
+        jni.srcDirs = [] //disable automatic ndk-build call
     }
 }
 
@@ -81,8 +86,8 @@ dependencies {
     // (jliarte) 20171017: unable to get rid of OOM on MovieCreator.build
     // see https://github.com/sannies/mp4parser/issues/151
     // see https://github.com/sannies/mp4parser/issues/139
-    implementation fileTree(include: ['*.jar'], dir: 'libs')
-
+    //    compile 'org.mp4parser:isoparser:1.9.31'
+    //    compile 'org.mp4parser:muxer:1.9.31'
     implementation 'com.google.guava:guava:19.0'
     androidTestImplementation 'org.hamcrest:hamcrest-library:1.3'
     androidTestImplementation 'org.hamcrest:hamcrest-core:1.3'
