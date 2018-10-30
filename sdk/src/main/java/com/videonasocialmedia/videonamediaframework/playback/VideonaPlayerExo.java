@@ -434,16 +434,20 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   @Override
   public void setVideoVolume(float volume) {
-    Log.d(TAG, "setVideoVolume ");
     if (videoListPlayer != null && audioRenderer != null) {
-      Log.d(TAG, "volume " + volume);
-      if (volume == 0f) {
-        mediaTrack.setMute(true);
-      } else {
-        mediaTrack.setVolume(volume);
-      }
+      Log.d(TAG, "setVideoVolume volume " + volume);
+      updateMediaTrack(volume);
       videoListPlayer.sendMessage(audioRenderer,
             MediaCodecAudioTrackRenderer.MSG_SET_VOLUME, volume);
+    }
+  }
+
+  private void updateMediaTrack(float volume) {
+    if (volume == 0f) {
+      mediaTrack.setMute(true);
+    } else {
+      mediaTrack.setMute(false);
+      mediaTrack.setVolume(volume);
     }
   }
 
@@ -526,7 +530,6 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
         break;
       case ExoPlayer.STATE_READY: // state 4
         updateClipTextPreview();
-        Log.d(TAG, "STATE_READY AudioRenderer " + rendererBuilder.getAudioRenderer().toString());
         if (playWhenReady) {
           // videoListPlayer.seekAudioTo(getClipPositionFromTimeLineTime());
           setMediaTrackVolume();
