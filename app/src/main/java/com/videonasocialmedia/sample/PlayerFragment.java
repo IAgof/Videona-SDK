@@ -8,8 +8,15 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.media.Profile;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
+import com.videonasocialmedia.videonamediaframework.model.media.exceptions.IllegalItemOnTrack;
+import com.videonasocialmedia.videonamediaframework.model.media.track.AudioTrack;
+import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoFrameRate;
+import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoQuality;
+import com.videonasocialmedia.videonamediaframework.model.media.utils.VideoResolution;
 import com.videonasocialmedia.videonamediaframework.playback.VideonaPlayerExo;
 
 
@@ -98,15 +105,68 @@ public class PlayerFragment extends Fragment {
   @Override
   public void onResume(){
     super.onResume();
-    videonaPlayer.onShown(getActivity());
 //    showPreviewWithVideoMusicAndVoiceOver();
     //showPreviewWithVideo();
+    videonaPlayer.attachView(getActivity());
+    try {
+      showPreviewFromVMCompositionWithVideoMusicAndVoiceOver();
+    } catch (IllegalItemOnTrack illegalItemOnTrack) {
+      illegalItemOnTrack.printStackTrace();
+    }
+  }
+
+  private void showPreviewFromVMCompositionWithVideoMusicAndVoiceOver() throws IllegalItemOnTrack {
+    List<Video> movieList = new ArrayList<Video>();
+    String videoPath = externalDir + File.separator + "inputvideo.mp4";
+    File inputFile = new File(videoPath);
+    if (!inputFile.exists()) {
+      try {
+        Utils.copyResourceToTemp(getActivity(), externalDir, "inputvideo", R.raw.inputvideo, ".mp4");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    String audioTest = externalDir + File.separator + "audio_test_one.m4a";
+    File audioFile = new File(audioTest);
+    if(!audioFile.exists()){
+      try{
+        Utils.copyResourceToTemp(getActivity(), externalDir, "audio_test_one", R.raw.audio_test_one, ".m4a");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+    String audioTest2 = externalDir + File.separator + "audio_test_two.m4a";
+    File audioFile2 = new File(audioTest2);
+    if(!audioFile2.exists()){
+      try{
+        Utils.copyResourceToTemp(getActivity(), externalDir, "audio_test_two", R.raw.audio_test_two, ".m4a");
+      } catch (IOException e) {
+        e.printStackTrace();
+      }
+    }
+
+    VMComposition vmComposition = getAVMComposition();
+    Video video = new Video(videoPath, Video.DEFAULT_VOLUME);
+    vmComposition.getMediaTrack().insertItem(video);
+    Music music = new Music(audioTest, Music.DEFAULT_VOLUME, 59);
+    int trackMusic = 0;
+    AudioTrack musicTrack = new AudioTrack(trackMusic);
+    musicTrack.insertItem(music);
+    vmComposition.getAudioTracks().add(0, musicTrack);
+    int trackVoiceOver = 1;
+    Music voiceOver = new Music(audioTest2, Music.DEFAULT_VOLUME, 59);
+    AudioTrack voiceOverTrack = new AudioTrack(trackVoiceOver);
+    voiceOverTrack.insertItem(voiceOver);
+    vmComposition.getAudioTracks().add(1, voiceOverTrack);
+
+    videonaPlayer.init(vmComposition);
   }
 
   @Override
   public void onPause() {
     super.onPause();
-    videonaPlayer.onPause();
+    videonaPlayer.detachView();
   }
 
   @Override
@@ -177,9 +237,9 @@ public class PlayerFragment extends Fragment {
 
 
 
-    videonaPlayer.setVoiceOver(new Music(audioTest2, 0.4f, 0));
+    /*videonaPlayer.setVoiceOver(new Music(audioTest2, 0.4f, 0));
     videonaPlayer.bindVideoList(movieList);
-    videonaPlayer.setMusic(new Music(audioTest, 0.3f, 0));
+    videonaPlayer.setMusic(new Music(audioTest, 0.3f, 0));*/
 
   }
 
@@ -199,7 +259,7 @@ public class PlayerFragment extends Fragment {
     Video videoShare = new Video(videoPath, 1f);
     movieList.add(videoShare);
 
-    videonaPlayer.bindVideoList(movieList);
+    //videonaPlayer.bindVideoList(movieList);
     videonaPlayer.seekTo(0);
 
   }
@@ -217,5 +277,13 @@ public class PlayerFragment extends Fragment {
   public interface OnFragmentInteractionListener {
     // TODO: Update argument type and name
     void onFragmentInteraction(Uri uri);
+  }
+
+  private VMComposition getAVMComposition() {
+    String resourceWatermarkFilePath = "some/path";
+    Profile profile = new Profile(VideoResolution.Resolution.HD720, VideoQuality.Quality.GOOD,
+        VideoFrameRate.FrameRate.FPS30);
+    VMComposition vmComposition = new VMComposition(resourceWatermarkFilePath, profile);
+    return vmComposition;
   }
 }

@@ -1,40 +1,38 @@
+/*
+ * Copyright (C) 2018 Videona Socialmedia SL
+ * http://www.videona.com
+ * info@videona.com
+ * All rights reserved
+ */
+
 package com.videonasocialmedia.videonamediaframework.playback;
 
 import android.content.Context;
 
-import com.videonasocialmedia.videonamediaframework.model.media.Music;
+import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 
-import java.util.List;
-
 /**
- * Created by jliarte on 13/05/16.
+ * Created by alvaro on 18/10/18.
  */
+
 public interface VideonaPlayer {
-  void onShown(Context context);
-  void onDestroy();
-  void onPause();
-  void setListener(VideonaPlayerListener videonaPlayerListener);
-  void initPreview(int instantTime);
-  void initPreviewLists(List<Video> videoList);
-  void bindVideoList(List<Video> videoList);
-  void updatePreviewTimeLists();
+  void attachView(Context context);
+  void detachView();
+  void setVideonaPlayerListener(VideonaPlayerListener videonaPlayerListener);
+  void init(VMComposition vmComposition);
+  void initSingleClip(VMComposition vmComposition, int clipPosition);
+  void initSingleVideo(Video video);
   void playPreview();
   void pausePreview();
   void seekTo(int timeInMsec);
-  void seekClipToTime(int seekTimeInMsec);
   void seekToClip(int position);
-  void setMusic(Music music);
-  void setVoiceOver(Music voiceOver);
-  void setVideoVolume(float volume);
-  void setMusicVolume(float volume);
-  void setVoiceOverVolume(float volume);
-  void setVideoTransitionFade();
-  void setAudioTransitionFade();
-  int getCurrentPosition();
-  void setSeekBarProgress(int progress);
   void setSeekBarLayoutEnabled(boolean seekBarEnabled);
-  void resetPreview();
+  void setAspectRatioVerticalVideos(int height);
+  void setImageText(String text, String textPosition, boolean textWithShadow, int width, int height);
+  void setVideoVolume(float volume);
+  void setVoiceOverVolume(float volume);
+  void setMusicVolume(float volume);
 
   /**
    * Created by jliarte on 13/05/16.

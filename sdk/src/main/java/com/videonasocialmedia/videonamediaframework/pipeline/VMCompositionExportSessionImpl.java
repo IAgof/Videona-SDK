@@ -482,6 +482,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         }
         if (mediaList.size() == 1 && mediaList.get(0).getVolume() == 1) {
             Log.d(LOG_TAG, "Just one media with volume 1.0, nothing to do");
+            FileUtils.moveFile(tempExportFilePath, finalVideoExportedFilePath);
             notifyFinalSuccess(finalVideoExportedFilePath);
             return;
         }
