@@ -29,7 +29,7 @@ public interface VideonaPlayer {
   void seekToClip(int position);
   void setSeekBarLayoutEnabled(boolean seekBarEnabled);
   void setAspectRatioVerticalVideos(int height);
-  void setImageText(String text, String textPosition, boolean textWithShadow, int width, int height);
+  void setImageText(String text, String textPosition, boolean textWithShadow);
   void setVideoVolume(float volume);
   void setVoiceOverVolume(float volume);
   void setMusicVolume(float volume);

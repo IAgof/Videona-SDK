@@ -28,7 +28,6 @@ public class TextToDrawable {
                                                       boolean textShadow, int width, int height) {
         Drawable drawable;
         TextPaint textPaint = null;
-//        appContext = VimojoApplication.getAppContext();
         Typeface typeFont;
         TextEffect.TextPosition position = getTypePositionFromString(positionText);
         switch (position){

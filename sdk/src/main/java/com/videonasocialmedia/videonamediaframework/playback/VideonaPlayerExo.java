@@ -425,10 +425,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    * @param textPosition the text position
    */
   @Override
-  public void setImageText(String text, String textPosition, boolean textWithShadow, int width,
-                           int height) {
+  public void setImageText(String text, String textPosition, boolean textWithShadow) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
-        text, textPosition, textWithShadow, width, height);
+        text, textPosition, textWithShadow, videoPreview.getMeasuredWidth(),
+        videoPreview.getMeasuredHeight());
     imageTextPreview.setImageDrawable(textDrawable);
   }
 
@@ -882,8 +882,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
   private void updateClipTextPreview() {
     if (mediaTrack.getItems().size() > 0 && getCurrentClip().hasText()) {
       setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition(),
-          getCurrentClip().hasClipTextShadow(), videoPreview.getMeasuredWidth(),
-          videoPreview.getHeight());
+          getCurrentClip().hasClipTextShadow());
     } else {
       clearImageText();
     }
