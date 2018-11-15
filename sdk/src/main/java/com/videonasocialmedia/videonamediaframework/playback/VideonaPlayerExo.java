@@ -223,6 +223,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
               - mediaTrack.getItems().get(currentClipIndex()).getStartTime();
           setSeekBarProgress(progress);
           currentTimePositionInList = progress;
+          notifySeekbarUpdated(progress);
           //previewAVTransitions(progress);
 
           // detect end of trimming and play next clip or stop
@@ -481,9 +482,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       if (playerHasVideos()) {
         showPauseButton();
         seekTo(progress);
+        notifySeekbarUpdated(progress);
         notifyNewClipPlayed();
       } else {
         setSeekBarProgress(0);
+        notifySeekbarUpdated(0);
       }
     }
   }
@@ -854,6 +857,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       pausePreview();
       clearNextBufferedClip();
       seekToClip(0);
+      notifySeekbarUpdated(0);
       // avoid black frame, imageTransitionFade over videoListPlayer
       imageTransitionFade.setVisibility(INVISIBLE);
     }
@@ -874,6 +878,12 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    if (videonaPlayerListener != null) {
      videonaPlayerListener.playerReady();
    }
+  }
+
+  private void notifySeekbarUpdated(int progress) {
+    if (videonaPlayerListener != null) {
+      videonaPlayerListener.updatedSeekbarProgress(progress);
+    }
   }
 
   /**
