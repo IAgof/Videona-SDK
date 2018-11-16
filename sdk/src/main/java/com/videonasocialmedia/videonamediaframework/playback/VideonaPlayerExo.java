@@ -358,7 +358,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   @Override
   public void seekTo(int seekTimeInMsec) {
-    if (videoListPlayer != null && seekTimeInMsec < totalVideoDuration) {
+    if (videoListPlayer != null && seekTimeInMsec <= totalVideoDuration) {
       currentTimePositionInList = seekTimeInMsec;
       setSeekBarProgress(currentTimePositionInList);
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
