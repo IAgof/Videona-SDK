@@ -289,6 +289,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
           .get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER);
       setVoiceOverTrackVolume(voiceOverTrack);
     }
+    seekTo(0);
   }
 
   @Override
@@ -328,6 +329,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
           .get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER);
       setVoiceOverTrackVolume(voiceOverTrack);
     }
+    seekTo(0);
   }
 
   @Override
@@ -340,6 +342,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     }
     bindMediaTrack(mediaTrack);
     setVideoVolume(video.getVolume());
+    seekTo(0);
   }
 
   @Override
@@ -677,9 +680,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     }
     if (videoHasMusicOrVoiceOver()) {
       if (musicPlayer != null) {
+        musicPlayer.seekAudioTo(videoListPlayer.getCurrentPosition());
         musicPlayer.playAudio();
       }
       if (voiceOverPlayer != null) {
+        voiceOverPlayer.seekAudioTo(videoListPlayer.getCurrentPosition());
         voiceOverPlayer.playAudio();
       }
     }
