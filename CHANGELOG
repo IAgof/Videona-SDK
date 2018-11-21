@@ -1,3 +1,7 @@
+v0.6.0
+- Improved Videona Player. Simplified public interface and init player from VMComposition,
+setting media track, music, voice over and volumes.
+
 v0.5.6
 - Improved mix of audio files.
 

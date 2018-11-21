@@ -223,6 +223,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
               - mediaTrack.getItems().get(currentClipIndex()).getStartTime();
           setSeekBarProgress(progress);
           currentTimePositionInList = progress;
+          notifySeekbarUpdated(progress);
           //previewAVTransitions(progress);
 
           // detect end of trimming and play next clip or stop
@@ -288,6 +289,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
           .get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER);
       setVoiceOverTrackVolume(voiceOverTrack);
     }
+    seekTo(0);
   }
 
   @Override
@@ -327,6 +329,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
           .get(Constants.INDEX_AUDIO_TRACK_VOICE_OVER);
       setVoiceOverTrackVolume(voiceOverTrack);
     }
+    seekTo(0);
   }
 
   @Override
@@ -339,6 +342,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     }
     bindMediaTrack(mediaTrack);
     setVideoVolume(video.getVolume());
+    seekTo(0);
   }
 
   @Override
@@ -357,7 +361,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
 
   @Override
   public void seekTo(int seekTimeInMsec) {
-    if (videoListPlayer != null && seekTimeInMsec < totalVideoDuration) {
+    if (videoListPlayer != null && seekTimeInMsec <= totalVideoDuration) {
       currentTimePositionInList = seekTimeInMsec;
       setSeekBarProgress(currentTimePositionInList);
       int clipIndex = getClipIndexByProgress(currentTimePositionInList);
@@ -425,10 +429,10 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    * @param textPosition the text position
    */
   @Override
-  public void setImageText(String text, String textPosition, boolean textWithShadow, int width,
-                           int height) {
+  public void setImageText(String text, String textPosition, boolean textWithShadow) {
     Drawable textDrawable = drawableGenerator.createDrawableWithTextAndPosition(
-        text, textPosition, textWithShadow, width, height);
+        text, textPosition, textWithShadow, videoPreview.getMeasuredWidth(),
+        videoPreview.getMeasuredHeight());
     imageTextPreview.setImageDrawable(textDrawable);
   }
 
@@ -481,9 +485,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       if (playerHasVideos()) {
         showPauseButton();
         seekTo(progress);
+        notifySeekbarUpdated(progress);
         notifyNewClipPlayed();
       } else {
         setSeekBarProgress(0);
+        notifySeekbarUpdated(0);
       }
     }
   }
@@ -674,9 +680,11 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
     }
     if (videoHasMusicOrVoiceOver()) {
       if (musicPlayer != null) {
+        musicPlayer.seekAudioTo(videoListPlayer.getCurrentPosition());
         musicPlayer.playAudio();
       }
       if (voiceOverPlayer != null) {
+        voiceOverPlayer.seekAudioTo(videoListPlayer.getCurrentPosition());
         voiceOverPlayer.playAudio();
       }
     }
@@ -854,6 +862,7 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
       pausePreview();
       clearNextBufferedClip();
       seekToClip(0);
+      notifySeekbarUpdated(0);
       // avoid black frame, imageTransitionFade over videoListPlayer
       imageTransitionFade.setVisibility(INVISIBLE);
     }
@@ -876,14 +885,19 @@ public class VideonaPlayerExo extends RelativeLayout implements VideonaPlayer,
    }
   }
 
+  private void notifySeekbarUpdated(int progress) {
+    if (videonaPlayerListener != null) {
+      videonaPlayerListener.updatedSeekbarProgress(progress);
+    }
+  }
+
   /**
    * Renders text if has been set for current clip.
    */
   private void updateClipTextPreview() {
     if (mediaTrack.getItems().size() > 0 && getCurrentClip().hasText()) {
       setImageText(getCurrentClip().getClipText(), getCurrentClip().getClipTextPosition(),
-          getCurrentClip().hasClipTextShadow(), videoPreview.getMeasuredWidth(),
-          videoPreview.getHeight());
+          getCurrentClip().hasClipTextShadow());
     } else {
       clearImageText();
     }
