@@ -13,6 +13,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.exceptions.Illeg
 import com.videonasocialmedia.videonamediaframework.muxer.Appender;
 import com.videonasocialmedia.videonamediaframework.muxer.IntermediateFileException;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
+import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -60,6 +61,7 @@ public class VMCompositionExportSessionImplTest {
   @Mock Movie mockedMovie;
   @Mock ListenableFuture<Void> mockedListenableFutureVoid;
   @Mock ListenableFuture<Long> mockedListenableFutureLong;
+  @Mock TextToDrawable mockedTextToDrawable;
 
   @Before
   public void init() {
@@ -252,7 +254,8 @@ public class VMCompositionExportSessionImplTest {
   @NonNull
   private VMCompositionExportSessionImpl getVmCompositionExportSession(VMComposition vmComposition) {
     return new VMCompositionExportSessionImpl(vmComposition, "result/path",
-            "temp/path", "tmp/audio/path", mockedExportEndedListener);
+            "temp/path", "tmp/audio/path",
+          mockedTextToDrawable, mockedExportEndedListener);
   }
 
 }
