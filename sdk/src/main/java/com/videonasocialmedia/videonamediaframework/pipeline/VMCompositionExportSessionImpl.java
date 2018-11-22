@@ -23,6 +23,7 @@ import com.videonasocialmedia.videonamediaframework.model.VMComposition;
 import com.videonasocialmedia.videonamediaframework.model.media.Media;
 import com.videonasocialmedia.videonamediaframework.model.media.Video;
 import com.videonasocialmedia.videonamediaframework.utils.FileUtils;
+import com.videonasocialmedia.videonamediaframework.utils.TextToDrawable;
 
 
 import org.mp4parser.muxer.Movie;
@@ -70,7 +71,8 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
 
     public VMCompositionExportSessionImpl(
             VMComposition vmComposition, String outputFilesDirectory, String tempFilesDirectory, 
-            String intermediatesTempAudioFadeDirectory, ExportListener exportListener) {
+            String intermediatesTempAudioFadeDirectory, TextToDrawable drawableGenerator,
+            ExportListener exportListener) {
         // TODO(jliarte): 29/04/17 should move the parameters to export method to have them defined
         // by the interface?
         this.exportListener = exportListener;
@@ -85,7 +87,7 @@ public class VMCompositionExportSessionImpl implements VMCompositionExportSessio
         audioTrimmer = new AudioTrimmer();
         appender = new Appender();
         this.mediaTranscoder = MediaTranscoder.getInstance();
-        this.transcoderHelper = new TranscoderHelper(mediaTranscoder);
+        this.transcoderHelper = new TranscoderHelper(drawableGenerator, mediaTranscoder);
     }
 
     @Override
