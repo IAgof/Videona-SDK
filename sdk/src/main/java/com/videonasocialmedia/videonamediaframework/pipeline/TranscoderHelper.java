@@ -228,22 +228,15 @@ public class TranscoderHelper {
     return videoListenableFuture;
   }
 
-  public void adaptVideoWithRotationToDefaultFormatAsync(
+  public ListenableFuture<Video> adaptVideoWithRotationToDefaultFormatAsync(
           final Video videoToAdapt, final VideonaFormat format, final String destVideoPath,
           final int rotation, final TranscoderHelperListener listener, final String tempDirectory)
           throws IOException {
-    ListenableFuture<Void> transcodingJob;
-    String tempPath;
-    try {
-      tempPath = videoToAdapt.getVolume() != Video.DEFAULT_VOLUME
-              ? videoToAdapt.getTempPath() : destVideoPath;
-      transcodingJob = mediaTranscoder.transcodeVideoWithRotationToDefaultFormat(
-              videoToAdapt.getMediaPath(), format, tempPath, rotation);
-    } catch (IOException e) {
-      e.printStackTrace();
-      listener.onErrorTranscoding(videoToAdapt, e.getMessage());
-      return;
-    }
+    ListenableFuture<Void> transcodingJob = null;
+    String tempPath = videoToAdapt.getVolume() != Video.DEFAULT_VOLUME
+        ? videoToAdapt.getTempPath() : destVideoPath;
+    transcodingJob = mediaTranscoder.transcodeVideoWithRotationToDefaultFormat(
+        videoToAdapt.getMediaPath(), format, tempPath, rotation);
 
     if (videoToAdapt.getVolume() != Video.DEFAULT_VOLUME) {
       transcodingJob = Futures.transform(transcodingJob,
@@ -260,6 +253,7 @@ public class TranscoderHelper {
     ListenableFuture<Video> videoListenableFuture = Futures.transform(transcodingJob,
             transformIntoVideo(videoToAdapt));
     videoToAdapt.setTranscodingTask(videoListenableFuture);
+    return videoListenableFuture;
     // TODO(jliarte): 18/09/17 do we still need to wait for job to start?
 //    final ScheduledThreadPoolExecutor executor = new ScheduledThreadPoolExecutor(1);
 //    executor.schedule(runnable, 2, TimeUnit.SECONDS);
