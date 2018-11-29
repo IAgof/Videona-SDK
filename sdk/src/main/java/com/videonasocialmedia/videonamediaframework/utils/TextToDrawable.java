@@ -17,7 +17,7 @@ import com.videonasocialmedia.videonamediaframework.model.media.effects.TextEffe
  */
 public class TextToDrawable {
 
-    private final static float SIZE_FONT= 90f;
+    private static float sizeFont = 90f;
     private Context appContext;
 
     public TextToDrawable(Context appContext) {
@@ -29,6 +29,7 @@ public class TextToDrawable {
         Drawable drawable;
         TextPaint textPaint = null;
         Typeface typeFont;
+        sizeFont = (float) (0.125 * height);
         TextEffect.TextPosition position = getTypePositionFromString(positionText);
         switch (position){
             case TOP:
@@ -69,8 +70,8 @@ public class TextToDrawable {
         return TextEffect.TextPosition.CENTER;
     }
 
-    private static Bitmap createCanvas(String text, int width, int height, TextPaint textPaint,
-                                       TextEffect.TextPosition position) {
+    private Bitmap createCanvas(String text, int width, int height, TextPaint textPaint,
+                                TextEffect.TextPosition position) {
 
         final Bitmap bmp = Bitmap.createBitmap(width, height, Bitmap.Config.ARGB_8888);
         bmp.eraseColor(Color.TRANSPARENT);
@@ -80,7 +81,7 @@ public class TextToDrawable {
         switch (position){
             case TOP:
                 xPos = 10;
-                yPos = (int) SIZE_FONT;
+                yPos = (int) sizeFont;
                 break;
             case CENTER:
                 xPos = (canvas.getWidth() / 2);
@@ -102,7 +103,7 @@ public class TextToDrawable {
                 setColor(Color.WHITE);
                 setTextAlign(align);
                 setTypeface(typeface);
-                setTextSize(SIZE_FONT);
+                setTextSize(sizeFont);
                 setAntiAlias(true);
                 if (textShadow) {
                     setShadowLayer(1, 4, 4, Color.BLACK);
