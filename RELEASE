@@ -1,3 +1,5 @@
-v0.6.1
-- Update setImageText. Not needed width, height, params, getting values from video preview in method.
-- Added updatedSeekbarProgress to VideonaPlayer.VideonaPlayerListener.
+v0.6.2
+- Fixed size text in video, same in preview and video exported.
+- Fixed initialization of TranscoderHelper, needed TextToDrawable object.
+- TranscoderHelper. Added return ListenableFuture to adaptVideoWithRotationToDefaultFormatAsync.
+

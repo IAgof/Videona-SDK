@@ -1,3 +1,7 @@
+v0.6.1
+- Update setImageText. Not needed width, height, params, getting values from video preview in method.
+- Added updatedSeekbarProgress to VideonaPlayer.VideonaPlayerListener.
+
 v0.6.0
 - Improved Videona Player. Simplified public interface and init player from VMComposition,
 setting media track, music, voice over and volumes.
